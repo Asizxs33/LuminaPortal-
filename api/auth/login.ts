@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { cors } from '../_lib/cors.js';
+import { cors } from '../_lib/cors';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -31,8 +31,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             { expiresIn: '7d' }
         );
         res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+    } catch (err: any) {
+        console.error('Login error:', err.message);
+        res.status(500).json({ error: err.message });
     }
 }

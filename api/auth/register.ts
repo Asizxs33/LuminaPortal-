@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
-import { cors } from '../_lib/cors.js';
+import { cors } from '../_lib/cors';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -26,8 +26,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             [name, email, password_hash, role, group_name || null]
         );
         res.status(201).json({ user: rows[0] });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+    } catch (err: any) {
+        console.error('Register error:', err.message);
+        res.status(500).json({ error: err.message });
     }
 }

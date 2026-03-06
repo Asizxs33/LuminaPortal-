@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
-import { cors } from '../_lib/cors.js';
+import { cors } from '../_lib/cors';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -31,8 +31,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(201).json(rows[0]);
         }
         res.status(405).json({ error: 'Method not allowed' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+    } catch (err: any) {
+        console.error('Tests error:', err.message);
+        res.status(500).json({ error: err.message });
     }
 }
