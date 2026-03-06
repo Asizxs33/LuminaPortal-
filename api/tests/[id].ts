@@ -1,14 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
-import { cors } from '../../_lib/cors';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
 });
 
+function setCors(res: VercelResponse) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    cors(res);
+    setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -29,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const questionsWithOptions = questions.rows.map(q => ({
             ...q,
-            options: optionsRes.rows.filter(o => o.question_id === q.id),
+            options: optionsRes.rows.filter((o: any) => o.question_id === q.id),
         }));
 
         res.json({ ...testRes.rows[0], questions: questionsWithOptions });
