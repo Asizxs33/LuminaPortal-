@@ -67,16 +67,6 @@ const AbstractHeroGraphic = () => (
 export default function LandingPage() {
   const { isAuthenticated, user, logout } = useAuth();
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  const isDesktop = width >= 1024;
-  const isTablet = width >= 768 && width < 1024;
-
   const handleStart = () => {
     if (isAuthenticated) {
       if (user?.role === 'admin') router.push('/(admin)/dashboard');
@@ -87,8 +77,6 @@ export default function LandingPage() {
   };
 
 
-  if (!isMounted) return null;
-
   return (
     <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <ScrollView
@@ -98,8 +86,8 @@ export default function LandingPage() {
           {/* ----- HEADER ----- */}
           <View style={{ borderBottomWidth: 1, borderBottomColor: '#f1f5f9', backgroundColor: 'white' }}>
             <View style={{ 
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
-              paddingHorizontal: isDesktop ? 60 : 24, paddingVertical: 16, 
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
+              paddingHorizontal: '5%', paddingVertical: 16, 
               alignSelf: 'center', width: '100%', maxWidth: 1400
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -108,7 +96,7 @@ export default function LandingPage() {
                 </View>
                 <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a', letterSpacing: -0.5 }}>LuminaPortal</Text>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 }}>
                 {!isAuthenticated ? (
                   <>
                     <Link href="/login" asChild>
@@ -139,50 +127,48 @@ export default function LandingPage() {
             
             {/* HERO SECTION */}
             <View style={{ 
-              flexDirection: isDesktop ? 'row' : 'column', 
               alignItems: 'center', 
-              paddingHorizontal: isDesktop ? 60 : 24, 
-              paddingTop: isDesktop ? 80 : 40,
-              paddingBottom: isDesktop ? 60 : 40,
-              gap: 40
+              paddingHorizontal: '5%', 
+              paddingTop: 80,
+              paddingBottom: 60,
+              gap: 40,
             }}>
               {/* Text Side */}
-              <View style={[ { alignItems: isDesktop ? 'flex-start' : 'center', width: '100%' }, isDesktop && { flex: 1 } ]}>
+              <View style={{ alignItems: 'center', width: '100%', maxWidth: 800 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#eef2ff', marginBottom: 24 }}>
                   <Zap size={16} color="#4848e5" />
                   <Text style={{ color: '#4848e5', fontSize: 14, fontWeight: '800' }}>Жаңа буынды платформа</Text>
                 </View>
 
                 <Text style={{ 
-                  fontSize: isDesktop ? 56 : 40, 
-                  textAlign: isDesktop ? 'left' : 'center', 
+                  fontSize: 40, 
+                  textAlign: 'center', 
                   fontWeight: '900', 
                   color: '#0f172a', 
                   marginBottom: 24, 
-                  lineHeight: isDesktop ? 64 : 48,
+                  lineHeight: 48,
                   letterSpacing: -1.5
                 }}>
                   Оқу процесін <Text style={{ color: '#4848e5' }}>сандық</Text> деңгейге көтеріңіз
                 </Text>
 
                 <Text style={{ 
-                  fontSize: isDesktop ? 18 : 16, 
-                  textAlign: isDesktop ? 'left' : 'center', 
+                  fontSize: 18, 
+                  textAlign: 'center', 
                   color: '#64748b', 
                   marginBottom: 40, 
                   lineHeight: 28,
-                  maxWidth: isDesktop ? '90%' : '100%'
+                  maxWidth: '90%'
                 }}>
                   LuminaPortal — сіздің оқу орныңызға немесе бизнесіңізге арналған қауіпсіз, ЖИ қамтылған және ең озық онлайн бағалау жүйесі. 
                 </Text>
 
-                <View style={{ flexDirection: isDesktop || isTablet ? 'row' : 'column', width: '100%', gap: 16, alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', width: '100%', gap: 16 }}>
                   <Link href={isAuthenticated ? (user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard') : '/login'} asChild>
                     <TouchableOpacity
                       style={{ 
                         backgroundColor: '#4848e5', paddingVertical: 18, paddingHorizontal: 32, borderRadius: 16, 
                         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-                        width: isDesktop || isTablet ? 'auto' : '100%',
                         shadowColor: '#4848e5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8
                       }}
                     >
@@ -198,7 +184,6 @@ export default function LandingPage() {
                       style={{ 
                         backgroundColor: 'white', borderWidth: 2, borderColor: '#e2e8f0', paddingVertical: 16, paddingHorizontal: 32, borderRadius: 16, 
                         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-                        width: isDesktop || isTablet ? 'auto' : '100%'
                       }}
                     >
                       <Play size={20} color="#64748b" />
@@ -208,7 +193,7 @@ export default function LandingPage() {
                 </View>
 
                 {/* Trust badges */}
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: isDesktop ? 'flex-start' : 'center', gap: 20, marginTop: 40 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 20, marginTop: 40 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <CheckCircle2 size={20} color="#10b981" />
                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748b' }}>ЖИ генератор</Text>
@@ -224,50 +209,45 @@ export default function LandingPage() {
                 </View>
               </View>
 
-              {/* Graphic Side */}
-              {isDesktop && (
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <AbstractHeroGraphic />
-                </View>
-              )}
             </View>
 
             {/* FULL WIDTH STATS BANNER */}
             <View style={{ 
-              marginHorizontal: isDesktop ? 60 : 24, 
+              marginHorizontal: '5%', 
               backgroundColor: '#0f172a', 
               borderRadius: 32, 
-              padding: isDesktop ? 60 : 32, 
+              padding: 40, 
               marginBottom: 80,
-              flexDirection: isTablet || isDesktop ? 'row' : 'column',
+              flexDirection: 'row',
+              flexWrap: 'wrap',
               justifyContent: 'space-around',
               alignItems: 'center',
-              gap: isTablet || isDesktop ? 0 : 40,
+              gap: 40,
               shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.1, shadowRadius: 30, elevation: 10
             }}>
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#38bdf8', fontSize: isDesktop ? 48 : 40, fontWeight: '900', letterSpacing: -1 }}>10K+</Text>
+                <Text style={{ color: '#38bdf8', fontSize: 40, fontWeight: '900', letterSpacing: -1 }}>10K+</Text>
                 <Text style={{ color: '#94a3b8', fontSize: 15, fontWeight: '600', marginTop: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Студент</Text>
               </View>
-              {(isTablet || isDesktop) && <View style={{ width: 1, height: 60, backgroundColor: '#334155' }} />}
+              {/* Spacer on Desktop implicitly handled by flex-wrap */}
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#a78bfa', fontSize: isDesktop ? 48 : 40, fontWeight: '900', letterSpacing: -1 }}>500+</Text>
+                <Text style={{ color: '#a78bfa', fontSize: 40, fontWeight: '900', letterSpacing: -1 }}>500+</Text>
                 <Text style={{ color: '#94a3b8', fontSize: 15, fontWeight: '600', marginTop: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Тест & Құжат</Text>
               </View>
-              {(isTablet || isDesktop) && <View style={{ width: 1, height: 60, backgroundColor: '#334155' }} />}
+              {/* Spacer on Desktop implicitly handled by flex-wrap */}
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#34d399', fontSize: isDesktop ? 48 : 40, fontWeight: '900', letterSpacing: -1 }}>98%</Text>
+                <Text style={{ color: '#34d399', fontSize: 40, fontWeight: '900', letterSpacing: -1 }}>98%</Text>
                 <Text style={{ color: '#94a3b8', fontSize: 15, fontWeight: '600', marginTop: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Дәлдік</Text>
               </View>
             </View>
 
             {/* FEATURES */}
-            <View style={{ paddingHorizontal: isDesktop ? 60 : 24, marginBottom: 80 }}>
-              <View style={{ alignItems: isDesktop ? 'center' : 'flex-start', marginBottom: 40 }}>
-                <Text style={{ fontSize: isDesktop ? 40 : 32, fontWeight: '900', color: '#0f172a', marginBottom: 16, letterSpacing: -1, textAlign: isDesktop ? 'center' : 'left' }}>
+            <View style={{ paddingHorizontal: '5%', marginBottom: 80 }}>
+              <View style={{ alignItems: 'center', marginBottom: 40 }}>
+                <Text style={{ fontSize: 32, fontWeight: '900', color: '#0f172a', marginBottom: 16, letterSpacing: -1, textAlign: 'center' }}>
                   Мүмкіндіктердің <Text style={{ color: '#4848e5' }}>жаңа шегі</Text>
                 </Text>
-                <Text style={{ fontSize: 18, color: '#64748b', textAlign: isDesktop ? 'center' : 'left', maxWidth: 600, lineHeight: 28 }}>
+                <Text style={{ fontSize: 18, color: '#64748b', textAlign: 'center', maxWidth: 600, lineHeight: 28 }}>
                   Сізге оқу процесін бақылау және басқару үшін қажетті барлық құралдар бір жерде жинақталған.
                 </Text>
               </View>
@@ -280,7 +260,7 @@ export default function LandingPage() {
                   { icon: <Users size={28} color="#ea580c" />, title: 'Рөлдік жүйе', desc: 'Студент және Әкімші — әрқайсысына арнайы функционал және интерфейс.', bg: '#ffedd5' },
                 ].map((ft, idx) => (
                   <View key={idx} style={{ 
-                    width: isDesktop ? '48%' : (isTablet ? '48%' : '100%'), 
+                    flexBasis: 300, flexGrow: 1, 
                     backgroundColor: '#f8fafc', padding: 32, borderRadius: 24, borderWidth: 1, borderColor: '#e2e8f0',
                     gap: 20
                   }}>
@@ -297,19 +277,19 @@ export default function LandingPage() {
             </View>
 
             {/* CTA */}
-            <View style={{ marginHorizontal: isDesktop ? 60 : 24, marginBottom: 60 }}>
+            <View style={{ marginHorizontal: '5%', marginBottom: 60, alignSelf: 'center', width: '100%' }}>
               <View style={{ 
-                backgroundColor: '#4848e5', padding: isDesktop ? 60 : 32, borderRadius: 32,
-                flexDirection: isDesktop ? 'row' : 'column', alignItems: 'center', justifyContent: 'space-between',
-                gap: 32, overflow: 'hidden', position: 'relative'
+                backgroundColor: '#4848e5', padding: 40, borderRadius: 32,
+                alignItems: 'center', justifyContent: 'space-between',
+                gap: 32, overflow: 'hidden', position: 'relative', width: '100%'
               }}>
                 {/* Decorative circles */}
                 <View style={{ position: 'absolute', width: 400, height: 400, borderRadius: 200, backgroundColor: 'rgba(255,255,255,0.1)', top: -200, right: -100 }} />
                 <View style={{ position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.05)', bottom: -50, left: -50 }} />
 
-                <View style={[ { zIndex: 10 }, isDesktop && { flex: 1 } ]}>
-                  <Text style={{ color: 'white', fontSize: isDesktop ? 40 : 32, fontWeight: '900', marginBottom: 16, textAlign: isDesktop ? 'left' : 'center', letterSpacing: -1 }}>Келесі қадам жасаңыз</Text>
-                  <Text style={{ color: '#e0e7ff', fontSize: 18, textAlign: isDesktop ? 'left' : 'center', lineHeight: 28, maxWidth: 500 }}>
+                <View style={{ zIndex: 10, alignItems: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 32, fontWeight: '900', marginBottom: 16, textAlign: 'center', letterSpacing: -1 }}>Келесі қадам жасаңыз</Text>
+                  <Text style={{ color: '#e0e7ff', fontSize: 18, textAlign: 'center', lineHeight: 28, maxWidth: 500 }}>
                     Платформаның барлық мүмкіндіктеріне ие болыңыз. Тегін тіркеліп, студенттеріңізді бүгіннен бастап бағалаңыз.
                   </Text>
                 </View>
@@ -330,7 +310,7 @@ export default function LandingPage() {
             </View>
 
             {/* FOOTER */}
-            <View style={{ borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 40, paddingHorizontal: isDesktop ? 60 : 24, flexDirection: isDesktop || isTablet ? 'row' : 'column', justifyContent: 'space-between', alignItems: 'center', gap: 24 }}>
+            <View style={{ borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 40, paddingHorizontal: '5%', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 24 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                  <View style={{ backgroundColor: '#f1f5f9', padding: 6, borderRadius: 8 }}>
                   <BookOpen size={16} color="#64748b" />
