@@ -68,14 +68,14 @@ body {
   }
 
   /* Push main content to the right of the sidebar */
-  #main-content {
-    margin-left: 240px;
+  .layout-main-content {
+    margin-left: 240px !important;
     min-height: 100vh;
     background: #eef1f8;
   }
 
   /* Constrain page content width inside main area */
-  #main-content > div {
+  .layout-main-content > div {
     max-width: 960px;
     margin: 0 auto;
   }

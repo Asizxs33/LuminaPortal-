@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '../context/AuthContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import WebSidebar from '../components/WebSidebar';
 
 const isWeb = Platform.OS === 'web';
@@ -12,9 +12,14 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        {/* Sidebar renders itself only on desktop web via internal Platform check */}
-        {isWeb && <WebSidebar />}
-        <div id="main-content" style={isWeb ? undefined : undefined}>
+        {/* Sidebar conditionally renders via internal Platform check */}
+        <WebSidebar />
+        
+        {/* Wrap Stack in a standard View. Native HTML divs break RN Gesture Responder */}
+        <View 
+          style={isWeb ? ({ marginLeft: 'var(--sidebar-width, 0px)', flex: 1 } as any) : { flex: 1 }}
+          className={isWeb ? 'layout-main-content' : undefined}
+        >
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="login" />
@@ -25,7 +30,7 @@ export default function RootLayout() {
             <Stack.Screen name="test/[id]/take" />
             <Stack.Screen name="test/[id]/result" />
           </Stack>
-        </div>
+        </View>
         <StatusBar style="auto" />
       </AuthProvider>
     </SafeAreaProvider>
