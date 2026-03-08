@@ -139,19 +139,12 @@ export default function LandingPage() {
                   LuminaPortal — сіздің оқу орныңызға немесе бизнесіңізге арналған қауіпсіз, ЖИ қамтылған және ең озық онлайн бағалау жүйесі. 
                 </Text>
 
-                <View className="flex-col lg:flex-row w-full lg:w-auto gap-4 items-center">
+                <View className="flex-col w-full lg:w-auto items-center lg:items-start mt-2">
                   <Link href={isAuthenticated ? (user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard') : '/login'} asChild>
                     <TouchableOpacity className="flex-row items-center justify-center gap-3 bg-indigo-600 px-8 py-4 rounded-2xl shadow-lg shadow-indigo-600/30 w-full lg:w-auto">
                       <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>
-                        {isAuthenticated ? 'Панельге өту' : 'Тегін бастау'}
+                        {isAuthenticated ? 'Панельге өту' : 'Бастау'}
                       </Text>
-                      <ArrowRight size={20} color="#ffffff" />
-                    </TouchableOpacity>
-                  </Link>
-
-                  <Link href="/login" asChild>
-                    <TouchableOpacity className="flex-row items-center justify-center gap-3 bg-indigo-600 px-8 py-4 rounded-2xl shadow-lg shadow-indigo-600/30 w-full lg:w-auto">
-                      <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>Бастау</Text>
                       <ArrowRight size={20} color="#ffffff" />
                     </TouchableOpacity>
                   </Link>
