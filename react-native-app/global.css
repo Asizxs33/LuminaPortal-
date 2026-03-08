@@ -1,10 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* PWA / Web Base */
+/* Base */
 html, body, #root {
   height: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 body {
@@ -12,35 +15,54 @@ body {
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
 }
 
-/* Mobile & PWA: narrow phone-like frame */
+/* Mobile: constrained phone frame */
 #root {
   max-width: 500px;
   margin: 0 auto;
   background-color: white;
-  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow-x: hidden;
   height: 100%;
 }
 
-/* Desktop: full-width with sidebar-like padding */
+/* Desktop: full width, sidebar handled by React */
 @media (min-width: 768px) {
   body {
-    background-color: #eef0f6;
+    background-color: #eef1f8;
   }
 
   #root {
     max-width: 100%;
     margin: 0;
     box-shadow: none;
-    background-color: #f6f6f8;
-    display: flex;
-    flex-direction: row;
+    background-color: transparent;
+    overflow-x: visible;
+  }
+
+  /* Nicer scrollbar on desktop */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Allow text selection on desktop */
+  body {
+    user-select: text;
+    -webkit-user-select: text;
   }
 }
