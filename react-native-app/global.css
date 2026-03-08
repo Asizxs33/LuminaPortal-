@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* PWA Enhancements */
+/* PWA / Web Base */
 html, body, #root {
   height: 100%;
 }
@@ -18,12 +18,29 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Mobile & PWA: narrow phone-like frame */
 #root {
   max-width: 500px;
   margin: 0 auto;
   background-color: white;
-  box-shadow: 0 0 40px rgba(0,0,0,0.08); /* slight shadow for desktop mode */
+  box-shadow: 0 0 40px rgba(0,0,0,0.08);
   position: relative;
   overflow-x: hidden;
   height: 100%;
+}
+
+/* Desktop: full-width with sidebar-like padding */
+@media (min-width: 768px) {
+  body {
+    background-color: #eef0f6;
+  }
+
+  #root {
+    max-width: 100%;
+    margin: 0;
+    box-shadow: none;
+    background-color: #f6f6f8;
+    display: flex;
+    flex-direction: row;
+  }
 }
