@@ -145,7 +145,7 @@ export default function LandingPage() {
 
                 <View className="flex-col lg:flex-row w-full lg:w-auto gap-4 items-center">
                   <Link href={isAuthenticated ? (user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard') : '/login'} asChild>
-                    <TouchableOpacity
+                    <TouchableOpacity>
                       <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>
                         {isAuthenticated ? 'Панельге өту' : 'Тегін бастау'}
                       </Text>
@@ -154,7 +154,7 @@ export default function LandingPage() {
                   </Link>
 
                   <Link href="/login" asChild>
-                    <TouchableOpacity
+                    <TouchableOpacity>
                       <Text style={{ color: '#475569', fontSize: 16, fontWeight: '800' }}>Демо қарау</Text>
                     </TouchableOpacity>
                   </Link>
