@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* PWA Enhancements */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: #f6f6f8;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+#root {
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: white;
+  box-shadow: 0 0 40px rgba(0,0,0,0.08); /* slight shadow for desktop mode */
+  position: relative;
+  overflow-x: hidden;
+  height: 100%;
+}
