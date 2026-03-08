@@ -27,22 +27,22 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       {/* On Web, we wrap the whole app in a flex-row View to put Sidebar next to Stack */}
-      <View style={{ flex: 1, flexDirection: isWeb && width > 768 ? 'row' : 'column', backgroundColor: isWeb ? '#eef1f8' : 'white', alignItems: isMobileDesktop ? 'center' : 'stretch' }}>
+      <View style={{ flex: 1, height: isWeb ? '100vh' : '100%', flexDirection: isWeb && width > 768 ? 'row' : 'column', backgroundColor: isWeb ? '#eef1f8' : 'white', alignItems: isMobileDesktop ? 'center' : 'stretch' }}>
         
         {/* Sidebar conditionally renders via internal Platform check */}
         {(!isWeb || width > 768) && <WebSidebar />}
         
         {/* Main Content Area Wrapper */}
-        <View style={{ flex: 1, alignItems: 'center', backgroundColor: isWeb ? '#eef1f8' : 'white' }}>
+        <View style={{ flex: 1, height: '100%', alignItems: 'center', backgroundColor: isWeb ? '#eef1f8' : 'white' }}>
           
           <View style={[
-            { flex: 1, overflow: 'hidden' as any, width: '100%' },
+            { flex: 1, height: '100%', overflow: 'hidden' as any, width: '100%' },
             // On web desktop, allow full expansion for landing page edge-to-edge
             isWeb && width > 768 && { flex: 1, backgroundColor: '#eef1f8' },
             // Mobile constrain (shadow frame)
             isMobileDesktop && { maxWidth: 500, backgroundColor: 'white', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 40, elevation: 5 }
           ]}>
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'white' } }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="login" />
               <Stack.Screen name="register" />
