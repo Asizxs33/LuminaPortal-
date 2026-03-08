@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, Image } 
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { BookOpen, ArrowRight, ShieldCheck, CheckCircle2, Zap, BarChart3, Users, Lock, ChevronRight, Play, Sparkles } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 
 const AbstractHeroGraphic = () => (
   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', position: 'relative', height: 400 }}>
@@ -90,12 +90,11 @@ export default function LandingPage() {
   if (!isMounted) return null;
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 60 }}
-          showsVerticalScrollIndicator={false}
-        >
+    <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 60 }}
+        showsVerticalScrollIndicator={false}
+      >
           {/* ----- HEADER ----- */}
           <View style={{ borderBottomWidth: 1, borderBottomColor: '#f1f5f9', backgroundColor: 'white' }}>
             <View style={{ 
@@ -112,18 +111,16 @@ export default function LandingPage() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 {!isAuthenticated ? (
                   <>
-                    <TouchableOpacity
-                      onPress={() => router.push('/login')}
-                      style={{ paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 }}
-                    >
-                      <Text style={{ color: '#475569', fontSize: 15, fontWeight: '700' }}>Кіру</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => router.push('/register')}
-                      style={{ paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#0f172a', borderRadius: 12 }}
-                    >
-                      <Text style={{ color: 'white', fontSize: 15, fontWeight: '700' }}>Тіркелу</Text>
-                    </TouchableOpacity>
+                    <Link href="/login" asChild>
+                      <TouchableOpacity style={{ paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 }}>
+                        <Text style={{ color: '#475569', fontSize: 15, fontWeight: '700' }}>Кіру</Text>
+                      </TouchableOpacity>
+                    </Link>
+                    <Link href="/register" asChild>
+                      <TouchableOpacity style={{ paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#0f172a', borderRadius: 12 }}>
+                        <Text style={{ color: 'white', fontSize: 15, fontWeight: '700' }}>Тіркелу</Text>
+                      </TouchableOpacity>
+                    </Link>
                   </>
                 ) : (
                   <TouchableOpacity
@@ -180,32 +177,34 @@ export default function LandingPage() {
                 </Text>
 
                 <View style={{ flexDirection: isDesktop || isTablet ? 'row' : 'column', width: '100%', gap: 16, alignItems: 'center' }}>
-                  <TouchableOpacity
-                    onPress={handleStart}
-                    style={{ 
-                      backgroundColor: '#4848e5', paddingVertical: 18, paddingHorizontal: 32, borderRadius: 16, 
-                      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-                      width: isDesktop || isTablet ? 'auto' : '100%',
-                      shadowColor: '#4848e5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8
-                    }}
-                  >
-                    <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>
-                      {isAuthenticated ? 'Панельге өту' : 'Тегін бастау'}
-                    </Text>
-                    <ArrowRight size={20} color="#ffffff" />
-                  </TouchableOpacity>
+                  <Link href={isAuthenticated ? (user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard') : '/login'} asChild>
+                    <TouchableOpacity
+                      style={{ 
+                        backgroundColor: '#4848e5', paddingVertical: 18, paddingHorizontal: 32, borderRadius: 16, 
+                        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
+                        width: isDesktop || isTablet ? 'auto' : '100%',
+                        shadowColor: '#4848e5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8
+                      }}
+                    >
+                      <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>
+                        {isAuthenticated ? 'Панельге өту' : 'Тегін бастау'}
+                      </Text>
+                      <ArrowRight size={20} color="#ffffff" />
+                    </TouchableOpacity>
+                  </Link>
 
-                  <TouchableOpacity
-                    onPress={() => router.push('/login')}
-                    style={{ 
-                      backgroundColor: 'white', borderWidth: 2, borderColor: '#e2e8f0', paddingVertical: 16, paddingHorizontal: 32, borderRadius: 16, 
-                      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-                      width: isDesktop || isTablet ? 'auto' : '100%'
-                    }}
-                  >
-                    <Play size={20} color="#64748b" />
-                    <Text style={{ color: '#475569', fontSize: 16, fontWeight: '800' }}>Демо қарау</Text>
-                  </TouchableOpacity>
+                  <Link href="/login" asChild>
+                    <TouchableOpacity
+                      style={{ 
+                        backgroundColor: 'white', borderWidth: 2, borderColor: '#e2e8f0', paddingVertical: 16, paddingHorizontal: 32, borderRadius: 16, 
+                        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
+                        width: isDesktop || isTablet ? 'auto' : '100%'
+                      }}
+                    >
+                      <Play size={20} color="#64748b" />
+                      <Text style={{ color: '#475569', fontSize: 16, fontWeight: '800' }}>Демо қарау</Text>
+                    </TouchableOpacity>
+                  </Link>
                 </View>
 
                 {/* Trust badges */}
@@ -315,17 +314,18 @@ export default function LandingPage() {
                   </Text>
                 </View>
 
-                <TouchableOpacity
-                  onPress={() => router.push('/register')}
-                  style={{ 
-                    backgroundColor: 'white', paddingVertical: 20, paddingHorizontal: 40, borderRadius: 100,
-                    flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10,
-                    zIndex: 10
-                  }}
-                >
-                  <Text style={{ color: '#4848e5', fontSize: 18, fontWeight: '800' }}>Тіркелу — Тегін</Text>
-                  <ArrowRight size={20} color="#4848e5" />
-                </TouchableOpacity>
+                <Link href="/register" asChild>
+                  <TouchableOpacity
+                    style={{ 
+                      backgroundColor: 'white', paddingVertical: 20, paddingHorizontal: 40, borderRadius: 100,
+                      flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10,
+                      zIndex: 10
+                    }}
+                  >
+                    <Text style={{ color: '#4848e5', fontSize: 18, fontWeight: '800' }}>Тіркелу — Тегін</Text>
+                    <ArrowRight size={20} color="#4848e5" />
+                  </TouchableOpacity>
+                </Link>
               </View>
             </View>
 
@@ -342,7 +342,6 @@ export default function LandingPage() {
 
           </View>
         </ScrollView>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    </View>
   );
 }
