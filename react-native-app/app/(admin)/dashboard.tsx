@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, useWindowDimensions, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, FileText, CheckCircle, Archive, Sparkles, Trash2, X, Circle, CheckSquare, AlignLeft, Eye, EyeOff, User, LogOut, ArrowRight, ShieldCheck, Settings, Users } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -39,10 +39,7 @@ export default function AdminDashboard() {
   const [aiTopic, setAiTopic] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 1024;
-  const isTablet = width >= 768 && width < 1024;
-
+ 
   useEffect(() => {
     fetchTests();
   }, []);
@@ -297,163 +294,150 @@ export default function AdminDashboard() {
         </View>
       </View>
       
-      <TouchableOpacity onPress={() => router.push('/(student)/dashboard')} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <TouchableOpacity onPress={() => router.push('/(student)/dashboard')} className="flex-row items-center justify-between p-4 border-b border-slate-200">
+        <View className="flex-row items-center gap-3">
           <User size={18} color="#4848e5" />
-          <Text style={{ fontWeight: '700', color: '#334155', fontSize: 14 }}>Студент режиміне өту</Text>
+          <Text className="font-bold text-slate-700 text-sm">Студент режиміне өту</Text>
         </View>
         <ArrowRight size={16} color="#cbd5e1" />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleLogout} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <TouchableOpacity onPress={handleLogout} className="flex-row items-center justify-between p-4">
+        <View className="flex-row items-center gap-3">
           <LogOut size={18} color="#ef4444" />
-          <Text style={{ fontWeight: '700', color: '#ef4444', fontSize: 14 }}>Аккаунттан шығу</Text>
+          <Text className="font-bold text-red-500 text-sm">Аккаунттан шығу</Text>
         </View>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
+    <SafeAreaView className="flex-1 bg-slate-50">
       
       {/* Mobile Tab Bar Header */}
-      {!isDesktop && (
-        <View style={{ flexDirection: 'row', backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#e2e8f0' }}>
-          {[
-            { key: 'tests', label: 'Тесттер' },
-            { key: 'create', label: 'Жасау' },
-            { key: 'ai', label: '✨ ЖИ' },
-            { key: 'profile', label: 'Профиль' },
-          ].map(tab => (
-            <TouchableOpacity
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key as any)}
-              style={{
-                flex: 1, paddingVertical: 14, alignItems: 'center',
-                borderBottomWidth: 2, borderBottomColor: activeTab === tab.key ? '#4848e5' : 'transparent'
-              }}
-            >
-              <Text style={{ fontWeight: '700', color: activeTab === tab.key ? '#4848e5' : '#64748b', fontSize: 13 }}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+      <View className="flex lg:hidden flex-row bg-white border-b border-slate-200">
+        {[
+          { key: 'tests', label: 'Тесттер' },
+          { key: 'create', label: 'Жасау' },
+          { key: 'ai', label: '✨ ЖИ' },
+          { key: 'profile', label: 'Профиль' },
+        ].map(tab => (
+          <TouchableOpacity
+            key={tab.key}
+            onPress={() => setActiveTab(tab.key as any)}
+            className={`flex-1 py-3.5 items-center border-b-2 transition-all ${activeTab === tab.key ? 'border-indigo-600' : 'border-transparent'}`}
+          >
+            <Text className={`font-bold text-[13px] ${activeTab === tab.key ? 'text-indigo-600' : 'text-slate-500'}`}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: isDesktop ? 40 : 24, paddingHorizontal: isDesktop ? 40 : 16, paddingBottom: 60 }}>
+      <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16">
         
         {/* Header Section (Desktop) */}
-        {isDesktop && (
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
-             <View>
-              <Text style={{ fontSize: 14, color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Мұғалім кабинеті</Text>
-              <Text style={{ fontSize: 32, fontWeight: '900', color: '#0f172a', marginTop: 4 }}>Басқару тақтасы ⚙️</Text>
-            </View>
+        <View className="hidden lg:flex flex-row justify-between items-end mb-8">
+           <View>
+            <Text className="text-sm text-slate-500 font-semibold uppercase tracking-wider">Мұғалім кабинеті</Text>
+            <Text className="text-[32px] font-black text-slate-900 mt-1">Басқару тақтасы ⚙️</Text>
           </View>
-        )}
+        </View>
 
-        <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 32 }}>
+        <View className="flex-col lg:flex-row gap-8">
           
           {/* LEFT/MAIN COLUMN - Tests Management */}
-          {(!isDesktop ? activeTab === 'tests' : true) && (
-            <View style={{ flex: isDesktop ? 2.5 : 1 }}>
+          <View className={`flex-1 lg:flex-[2.5] ${activeTab === 'tests' ? 'flex' : 'hidden lg:flex'}`}>
+            
+            {/* Stat Cards */}
+            <View className="flex-col md:flex-row flex-wrap lg:flex-nowrap gap-4 mb-6">
+              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
+                 <View className="bg-indigo-50 p-3 rounded-xl"><FileText size={24} color="#4848e5" /></View>
+                 <View>
+                  <Text className="text-2xl font-black text-slate-900">{tests.length}</Text>
+                  <Text className="text-[13px] text-slate-500 font-semibold">Барлық тест</Text>
+                 </View>
+              </View>
+
+              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
+                 <View className="bg-green-50 p-3 rounded-xl"><CheckCircle size={24} color="#15803d" /></View>
+                 <View>
+                  <Text className="text-2xl font-black text-slate-900">{published.length}</Text>
+                  <Text className="text-[13px] text-slate-500 font-semibold">Жарияланған</Text>
+                 </View>
+              </View>
               
-              {/* Stat Cards */}
-              <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24, flexWrap: isTablet ? 'wrap' : 'nowrap' }}>
-                <View style={{ flex: 1, minWidth: isTablet ? '45%' : 'auto', backgroundColor: 'white', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                   <View style={{ backgroundColor: '#eef2ff', padding: 12, borderRadius: 12 }}><FileText size={24} color="#4848e5" /></View>
-                   <View>
-                    <Text style={{ fontSize: 24, fontWeight: '900', color: '#0f172a' }}>{tests.length}</Text>
-                    <Text style={{ fontSize: 13, color: '#64748b', fontWeight: '600' }}>Барлық тест</Text>
-                   </View>
-                </View>
-
-                <View style={{ flex: 1, minWidth: isTablet ? '45%' : 'auto', backgroundColor: 'white', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                   <View style={{ backgroundColor: '#dcfce7', padding: 12, borderRadius: 12 }}><CheckCircle size={24} color="#15803d" /></View>
-                   <View>
-                    <Text style={{ fontSize: 24, fontWeight: '900', color: '#0f172a' }}>{published.length}</Text>
-                    <Text style={{ fontSize: 13, color: '#64748b', fontWeight: '600' }}>Жарияланған</Text>
-                   </View>
-                </View>
-                
-                <View style={{ flex: 1, minWidth: isTablet ? '45%' : 'auto', backgroundColor: 'white', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                   <View style={{ backgroundColor: '#f1f5f9', padding: 12, borderRadius: 12 }}><Archive size={24} color="#64748b" /></View>
-                   <View>
-                    <Text style={{ fontSize: 24, fontWeight: '900', color: '#0f172a' }}>{unpublished.length}</Text>
-                    <Text style={{ fontSize: 13, color: '#64748b', fontWeight: '600' }}>Жабық/Черновик</Text>
-                   </View>
-                </View>
+              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
+                 <View className="bg-slate-100 p-3 rounded-xl"><Archive size={24} color="#64748b" /></View>
+                 <View>
+                  <Text className="text-2xl font-black text-slate-900">{unpublished.length}</Text>
+                  <Text className="text-[13px] text-slate-500 font-semibold">Жабық/Черновик</Text>
+                 </View>
               </View>
+            </View>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a' }}>Тесттер тізімі</Text>
-              </View>
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-extrabold text-slate-900">Тесттер тізімі</Text>
+            </View>
 
-              {/* TESTS GRID */}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-                {tests.length === 0 ? (
-                  <View style={{ width: '100%', backgroundColor: 'white', padding: 60, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0' }}>
-                    <FileText size={48} color="#cbd5e1" />
-                    <Text style={{ color: '#94a3b8', marginTop: 12, fontWeight: '700', fontSize: 16 }}>Тест жоқ</Text>
-                    <Text style={{ color: '#cbd5e1', marginTop: 6, fontSize: 13 }}>Дерекқорда әзірге тесттер жоқ</Text>
-                  </View>
-                ) : (
-                  tests.map(test => (
-                    <View key={test.id} style={{ 
-                      width: getCardWidth(), marginBottom: 16, 
-                      backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', overflow: 'hidden' 
-                    }}>
+            {/* TESTS GRID */}
+            <View className="flex-row flex-wrap justify-between">
+              {tests.length === 0 ? (
+                <View className="w-full bg-white p-16 rounded-2xl items-center border border-slate-200">
+                  <FileText size={48} color="#cbd5e1" />
+                  <Text className="text-slate-400 mt-3 font-bold text-base">Тест жоқ</Text>
+                  <Text className="text-slate-300 mt-1.5 text-[13px]">Дерекқорда әзірге тесттер жоқ</Text>
+                </View>
+              ) : (
+                tests.map(test => (
+                  <View key={test.id} className="w-full md:w-[48%] mb-4 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                    <TouchableOpacity
+                      onPress={() => router.push(`/test/${test.id}/edit` as any)}
+                      className="p-5"
+                    >
+                      <View className="flex-row items-center gap-2 mb-3">
+                        <View className={`px-2 py-1 rounded-md ${test.is_published ? 'bg-green-100' : 'bg-slate-100'}`}>
+                          <Text className={`text-[11px] font-extrabold uppercase tracking-wide ${test.is_published ? 'text-green-700' : 'text-slate-500'}`}>
+                            {test.is_published ? '● Жарияланған' : '○ Жабық'}
+                          </Text>
+                        </View>
+                        <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{test.subject}</Text>
+                      </View>
+                      
+                      <Text className="text-lg font-extrabold text-slate-900 leading-normal mb-4" numberOfLines={2}>{test.title}</Text>
+                      
+                      <View className="flex-row gap-4 pt-4 border-t border-slate-100">
+                        <Text className="text-slate-500 text-[13px] font-semibold">📝 {test.question_count} сұрақ</Text>
+                        <Text className="text-slate-500 text-[13px] font-semibold">⏱ {test.duration_minutes} мин</Text>
+                      </View>
+                    </TouchableOpacity>
+
+                    <View className="flex-row border-t border-slate-100 bg-slate-50">
                       <TouchableOpacity
-                        onPress={() => router.push(`/test/${test.id}/edit` as any)}
-                        style={{ padding: 20 }}
+                        onPress={() => Alert.alert(
+                          test.is_published ? 'Тестті жабу' : 'Тестті ашу',
+                          `«${test.title}» ${test.is_published ? 'жабылсын ба?' : 'қайта ашылсын ба?'}`,
+                          [
+                            { text: 'Бас тарту', style: 'cancel' },
+                            { text: test.is_published ? 'Жабу' : 'Ашу', onPress: () => togglePublish(test) }
+                          ]
+                        )}
+                        className="flex-1 py-3.5 flex-row items-center justify-center gap-1.5 border-r border-slate-100"
                       >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                          <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: test.is_published ? '#dcfce7' : '#f1f5f9' }}>
-                            <Text style={{ fontSize: 11, fontWeight: '800', color: test.is_published ? '#15803d' : '#64748b', textTransform: 'uppercase' }}>
-                              {test.is_published ? '● Жарияланған' : '○ Жабық'}
-                            </Text>
-                          </View>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>{test.subject}</Text>
-                        </View>
-                        
-                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f172a', lineHeight: 24, marginBottom: 16 }} numberOfLines={2}>{test.title}</Text>
-                        
-                        <View style={{ flexDirection: 'row', gap: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#f1f5f9' }}>
-                          <Text style={{ color: '#64748b', fontSize: 13, fontWeight: '600' }}>📝 {test.question_count} сұрақ</Text>
-                          <Text style={{ color: '#64748b', fontSize: 13, fontWeight: '600' }}>⏱ {test.duration_minutes} мин</Text>
-                        </View>
+                        {test.is_published
+                          ? <><EyeOff size={16} color="#64748b" /><Text className="text-slate-500 font-bold text-[13px]">Жабу</Text></>
+                          : <><Eye size={16} color="#4848e5" /><Text className="text-indigo-600 font-bold text-[13px]">Жариялау</Text></>
+                        }
                       </TouchableOpacity>
 
-                      <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#f1f5f9', backgroundColor: '#f8fafc' }}>
-                        <TouchableOpacity
-                          onPress={() => Alert.alert(
-                            test.is_published ? 'Тестті жабу' : 'Тестті ашу',
-                            `«${test.title}» ${test.is_published ? 'жабылсын ба?' : 'қайта ашылсын ба?'}`,
-                            [
-                              { text: 'Бас тарту', style: 'cancel' },
-                              { text: test.is_published ? 'Жабу' : 'Ашу', onPress: () => togglePublish(test) }
-                            ]
-                          )}
-                          style={{ flex: 1, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRightWidth: 1, borderRightColor: '#f1f5f9' }}
-                        >
-                          {test.is_published
-                            ? <><EyeOff size={16} color="#64748b" /><Text style={{ color: '#64748b', fontWeight: '700', fontSize: 13 }}>Жабу</Text></>
-                            : <><Eye size={16} color="#4848e5" /><Text style={{ color: '#4848e5', fontWeight: '700', fontSize: 13 }}>Жариялау</Text></>
-                          }
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          onPress={() => deleteTest(test)}
-                          style={{ flex: 1, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                        >
-                          <Trash2 size={16} color="#ef4444" />
-                          <Text style={{ color: '#ef4444', fontWeight: '700', fontSize: 13 }}>Өшіру</Text>
-                        </TouchableOpacity>
-                      </View>
+                      <TouchableOpacity
+                        onPress={() => deleteTest(test)}
+                        className="flex-1 py-3.5 flex-row items-center justify-center gap-1.5"
+                      >
+                        <Trash2 size={16} color="#ef4444" />
+                        <Text className="text-red-500 font-bold text-[13px]">Өшіру</Text>
+                      </TouchableOpacity>
                     </View>
-                  ))
                 )}
               </View>
             </View>
