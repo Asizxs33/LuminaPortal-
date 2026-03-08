@@ -84,38 +84,34 @@ export default function LandingPage() {
         showsVerticalScrollIndicator={false}
       >
           {/* ----- HEADER ----- */}
-          <View style={{ borderBottomWidth: 1, borderBottomColor: '#f1f5f9', backgroundColor: 'white' }}>
-            <View style={{ 
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
-              paddingHorizontal: '5%', paddingVertical: 16, 
-              alignSelf: 'center', width: '100%', maxWidth: 1400
-            }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ backgroundColor: '#4848e5', padding: 8, borderRadius: 10 }}>
+          <View className="border-b border-slate-100 bg-white">
+            <View className="flex-row items-center justify-between px-4 md:px-8 py-4 self-center w-full max-w-[1400px]">
+              <View className="flex-row items-center gap-2 md:gap-3">
+                <View className="bg-indigo-600 p-2 md:p-2.5 rounded-xl">
                   <BookOpen size={20} color="white" />
                 </View>
-                <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a', letterSpacing: -0.5 }}>LuminaPortal</Text>
+                <Text className="text-[18px] md:text-[22px] font-black text-slate-900 tracking-tight">LuminaPortal</Text>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 }}>
+              <View className="flex-row items-center gap-2 md:gap-3">
                 {!isAuthenticated ? (
                   <>
                     <Link href="/login" asChild>
-                      <TouchableOpacity style={{ paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 }}>
-                        <Text style={{ color: '#475569', fontSize: 15, fontWeight: '700' }}>Кіру</Text>
+                      <TouchableOpacity className="px-3 md:px-5 py-2 md:py-2.5 rounded-xl">
+                        <Text className="text-slate-600 text-[14px] md:text-[15px] font-bold">Кіру</Text>
                       </TouchableOpacity>
                     </Link>
                     <Link href="/register" asChild>
-                      <TouchableOpacity style={{ paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#0f172a', borderRadius: 12 }}>
-                        <Text style={{ color: 'white', fontSize: 15, fontWeight: '700' }}>Тіркелу</Text>
+                      <TouchableOpacity className="px-4 md:px-5 py-2 md:py-3 bg-slate-900 rounded-xl">
+                        <Text className="text-white text-[14px] md:text-[15px] font-bold">Тіркелу</Text>
                       </TouchableOpacity>
                     </Link>
                   </>
                 ) : (
                   <TouchableOpacity
                     onPress={logout}
-                    style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#f1f5f9', borderRadius: 12 }}
+                    className="px-4 md:px-5 py-2 md:py-2.5 bg-slate-100 rounded-xl"
                   >
-                    <Text style={{ color: '#475569', fontSize: 15, fontWeight: '700' }}>Шығу</Text>
+                    <Text className="text-slate-600 text-[14px] md:text-[15px] font-bold">Шығу</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -186,32 +182,18 @@ export default function LandingPage() {
             </View>
 
             {/* FULL WIDTH STATS BANNER */}
-            <View style={{ 
-              marginHorizontal: '5%', 
-              backgroundColor: '#0f172a', 
-              borderRadius: 32, 
-              padding: 40, 
-              marginBottom: 80,
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-              gap: 40,
-              shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.1, shadowRadius: 30, elevation: 10
-            }}>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#38bdf8', fontSize: 40, fontWeight: '900', letterSpacing: -1 }}>10K+</Text>
-                <Text style={{ color: '#94a3b8', fontSize: 15, fontWeight: '600', marginTop: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Студент</Text>
+            <View className="mx-4 md:mx-6 lg:mx-10 bg-slate-900 rounded-[32px] p-10 mb-16 lg:mb-20 flex-col md:flex-row justify-around items-center gap-10 lg:gap-8 shadow-2xl shadow-indigo-900/10">
+              <View className="items-center">
+                <Text className="text-[#38bdf8] text-5xl md:text-5xl lg:text-5xl font-black tracking-tighter">10K+</Text>
+                <Text className="text-slate-400 text-sm md:text-base font-bold mt-2 uppercase tracking-wide">Студент</Text>
               </View>
-              {/* Spacer on Desktop implicitly handled by flex-wrap */}
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#a78bfa', fontSize: 40, fontWeight: '900', letterSpacing: -1 }}>500+</Text>
-                <Text style={{ color: '#94a3b8', fontSize: 15, fontWeight: '600', marginTop: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Тест & Құжат</Text>
+              <View className="items-center">
+                <Text className="text-[#a78bfa] text-5xl md:text-5xl lg:text-5xl font-black tracking-tighter">500+</Text>
+                <Text className="text-slate-400 text-sm md:text-base font-bold mt-2 uppercase tracking-wide">Тест & Құжат</Text>
               </View>
-              {/* Spacer on Desktop implicitly handled by flex-wrap */}
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#34d399', fontSize: 40, fontWeight: '900', letterSpacing: -1 }}>98%</Text>
-                <Text style={{ color: '#94a3b8', fontSize: 15, fontWeight: '600', marginTop: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Дәлдік</Text>
+              <View className="items-center">
+                <Text className="text-[#34d399] text-5xl md:text-5xl lg:text-5xl font-black tracking-tighter">98%</Text>
+                <Text className="text-slate-400 text-sm md:text-base font-bold mt-2 uppercase tracking-wide">Дәлдік</Text>
               </View>
             </View>
 
@@ -251,32 +233,22 @@ export default function LandingPage() {
             </View>
 
             {/* CTA */}
-            <View style={{ marginHorizontal: '5%', marginBottom: 60, alignSelf: 'center', width: '100%' }}>
-              <View style={{ 
-                backgroundColor: '#4848e5', padding: 40, borderRadius: 32,
-                alignItems: 'center', justifyContent: 'space-between',
-                gap: 32, overflow: 'hidden', position: 'relative', width: '100%'
-              }}>
+            <View className="px-5 w-full self-center mb-16">
+              <View className="bg-indigo-600 p-8 md:p-12 rounded-[32px] items-center flex-col gap-8 overflow-hidden relative w-full shadow-2xl shadow-indigo-600/20">
                 {/* Decorative circles */}
-                <View style={{ position: 'absolute', width: 400, height: 400, borderRadius: 200, backgroundColor: 'rgba(255,255,255,0.1)', top: -200, right: -100 }} />
-                <View style={{ position: 'absolute', width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.05)', bottom: -50, left: -50 }} />
+                <View className="absolute w-[400px] h-[400px] rounded-full bg-white/10 -top-[200px] -right-[100px]" />
+                <View className="absolute w-[200px] h-[200px] rounded-full bg-white/5 -bottom-[50px] -left-[50px]" />
 
-                <View style={{ zIndex: 10, alignItems: 'center' }}>
-                  <Text style={{ color: 'white', fontSize: 32, fontWeight: '900', marginBottom: 16, textAlign: 'center', letterSpacing: -1 }}>Келесі қадам жасаңыз</Text>
-                  <Text style={{ color: '#e0e7ff', fontSize: 18, textAlign: 'center', lineHeight: 28, maxWidth: 500 }}>
+                <View className="z-10 items-center">
+                  <Text className="text-white text-3xl md:text-4xl font-black mb-4 text-center tracking-tight">Келесі қадам жасаңыз</Text>
+                  <Text className="text-indigo-100 text-[16px] md:text-lg text-center leading-7 max-w-[500px]">
                     Платформаның барлық мүмкіндіктеріне ие болыңыз. Тегін тіркеліп, студенттеріңізді бүгіннен бастап бағалаңыз.
                   </Text>
                 </View>
 
                 <Link href="/register" asChild>
-                  <TouchableOpacity
-                    style={{ 
-                      backgroundColor: 'white', paddingVertical: 20, paddingHorizontal: 40, borderRadius: 100,
-                      flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10,
-                      zIndex: 10
-                    }}
-                  >
-                    <Text style={{ color: '#4848e5', fontSize: 18, fontWeight: '800' }}>Тіркелу — Тегін</Text>
+                  <TouchableOpacity className="bg-white py-4 md:py-5 px-8 md:px-10 rounded-full flex-row items-center justify-center gap-3 shadow-xl shadow-black/10 z-10 w-full sm:w-auto">
+                    <Text className="text-indigo-600 text-[16px] md:text-lg font-black">Тіркелу — Тегін</Text>
                     <ArrowRight size={20} color="#4848e5" />
                   </TouchableOpacity>
                 </Link>
