@@ -100,7 +100,7 @@ export default function LandingPage() {
             <View style={{ 
               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
               paddingHorizontal: isDesktop ? 60 : 24, paddingVertical: 16, 
-              alignSelf: 'center', width: '100%'
+              alignSelf: 'center', width: '100%', maxWidth: 1400
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ backgroundColor: '#4848e5', padding: 8, borderRadius: 10 }}>
@@ -135,7 +135,7 @@ export default function LandingPage() {
           </View>
 
           {/* ----- MAIN CONTENT WRAPPER ----- */}
-          <View style={{ flex: 1, width: '100%' }}>
+          <View style={{ flex: 1, width: '100%', maxWidth: 1400, alignSelf: 'center' }}>
             
             {/* HERO SECTION */}
             <View style={{ 
