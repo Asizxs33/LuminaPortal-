@@ -57,7 +57,7 @@ export default function WebSidebar() {
       borderRightWidth: 1,
       borderRightColor: '#f1f5f9',
       flexDirection: 'column',
-      minHeight: '100vh' as any,
+      flex: 1,
     }}>
       {/* Brand */}
       <View style={{ padding: 24, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
