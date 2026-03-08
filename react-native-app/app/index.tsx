@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookOpen, ArrowRight, ShieldCheck, CheckCircle2, Zap, BarChart3, Users, Lock, ChevronRight, Play, Sparkles } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useRouter, Link } from 'expo-router';
@@ -78,7 +78,7 @@ export default function LandingPage() {
 
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
@@ -296,6 +296,6 @@ export default function LandingPage() {
 
           </View>
         </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

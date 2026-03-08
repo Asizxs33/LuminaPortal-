@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '../context/AuthContext';
 import { Platform, View } from 'react-native';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import WebSidebar from '../components/WebSidebar';
 
 const isWeb = Platform.OS === 'web';
@@ -20,11 +21,12 @@ if (isWeb) {
 export default function RootLayout() {
 
   return (
-    <AuthProvider>
-      {/* On Web, we wrap the whole app in a flex-row View to put Sidebar next to Stack */}
-      <View 
-        className={isWeb ? "flex-1 h-[100vh] bg-[#eef1f8] flex-col md:flex-row items-center md:items-stretch" : "flex-1 h-full bg-white flex-col items-stretch"}
-      >
+    <SafeAreaProvider initialMetrics={initialWindowMetrics} style={{ flex: 1 }}>
+      <AuthProvider>
+        {/* On Web, we wrap the whole app in a flex-row View to put Sidebar next to Stack */}
+        <View 
+          className={isWeb ? "flex-1 min-h-screen bg-[#eef1f8] flex-col md:flex-row items-center md:items-stretch" : "flex-1 h-full bg-white flex-col items-stretch"}
+        >
         
         {/* Sidebar conditionally renders visually on web desktop */}
         {isWeb ? (
@@ -57,6 +59,7 @@ export default function RootLayout() {
 
       <StatusBar style="auto" />
     </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
