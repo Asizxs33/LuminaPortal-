@@ -78,4 +78,32 @@ router.post('/', async (req, res) => {
     }
 });
 
+// PATCH /api/tests/:id/publish - toggle publish status (admin)
+router.patch('/:id/publish', async (req, res) => {
+    try {
+        const { is_published } = req.body;
+        const [test] = await sql`
+      UPDATE tests SET is_published = ${is_published}, published = ${is_published}
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+        if (!test) return res.status(404).json({ error: 'Test not found' });
+        res.json(test);
+    } catch (err) {
+        console.error('Publish test error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// DELETE /api/tests/:id - delete test (admin)
+router.delete('/:id', async (req, res) => {
+    try {
+        await sql`DELETE FROM tests WHERE id = ${req.params.id}`;
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Delete test error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 export default router;

@@ -1,0 +1,450 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, AppState, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle2, Code2, Terminal, Play } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuth } from '../../../context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API = 'http://172.20.10.2:3001';
+
+interface Option {
+  id: number;
+  text: string;
+  is_correct: boolean;
+}
+
+interface Question {
+  id: number;
+  type: 'MULTIPLE_CHOICE' | 'CODE';
+  text: string;
+  initial_code?: string;
+  test_cases?: any[];
+  options: Option[];
+}
+
+interface TestDetail {
+  id: string;
+  title: string;
+  subject: string;
+  duration_minutes: number;
+  passing_score: number;
+  questions: Question[];
+}
+
+export default function TestTake() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { user } = useAuth();
+  
+  const [test, setTest] = useState<TestDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, any>>({});
+  const [codeAnswers, setCodeAnswers] = useState<Record<number, string>>({});
+  const [codeStatuses, setCodeStatuses] = useState<Record<number, { status: string, output: string, passed: number, total: number }>>({});
+  const [runningCode, setRunningCode] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  const appState = useRef(AppState.currentState);
+  const hasFinished = useRef(false);
+
+  useEffect(() => {
+    fetchTest();
+  }, [id]);
+
+  useEffect(() => {
+    // Anti-Cheat: Listen for background state
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (!hasFinished.current && test && !loading && !submitting) {
+        if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
+          Alert.alert(
+            'Ереже бұзылды!',
+            'Анти-читерлік саясатқа сәйкес, тест кезінде қолданбадан шығуға болмайды. Тест автоматты түрде аяқталды.'
+          );
+          handleFinish(true); // Forced finish
+        }
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [test, loading, submitting]);
+
+  useEffect(() => {
+    if (!test || timeLeft <= 0 || hasFinished.current) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setTimeout(() => {
+            Alert.alert('Уақыт бітті!', 'Тестке бөлінген уақыт аяқталды. Нәтижелер сақталуда...');
+            handleFinish();
+          }, 0);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [test, timeLeft]);
+
+  const fetchTest = async () => {
+    try {
+      const token = await AsyncStorage.getItem('lumina_token');
+      const res = await fetch(`${API}/api/tests/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTest(data);
+        setTimeLeft(data.duration_minutes * 60);
+        
+        // Initialize code answers
+        const initialCodes: Record<number, string> = {};
+        data.questions.forEach((q: Question, idx: number) => {
+            if (q.type === 'CODE' && q.initial_code) {
+                initialCodes[idx] = q.initial_code;
+            }
+        });
+        setCodeAnswers(initialCodes);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRunCode = async () => {
+      if (!test) return;
+      const q = test.questions[currentQuestionIndex];
+      const code = codeAnswers[currentQuestionIndex] || q.initial_code;
+
+      setRunningCode(true);
+      try {
+          const token = await AsyncStorage.getItem('lumina_token');
+          const res = await fetch(`${API}/api/execute`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                  code: code,
+                  language: 'python', // Switched from JS to Python
+                  test_id: test.id,
+                  question_index: currentQuestionIndex
+              })
+          });
+
+          const data = await res.json();
+          setCodeStatuses(prev => ({
+              ...prev,
+              [currentQuestionIndex]: data
+          }));
+      } catch (err) {
+          Alert.alert('Қате', 'Кодты тексеру мүмкін болмады. Интернетті тексеріңіз.');
+      } finally {
+          setRunningCode(false);
+      }
+  };
+
+  const handleFinish = async (forced = false) => {
+    if (!test || !user || submitting || hasFinished.current) return;
+    
+    hasFinished.current = true;
+    setSubmitting(true);
+
+    try {
+      let score = 0;
+      test.questions.forEach((q, index) => {
+        if (q.type === 'CODE') {
+             // For code questions, user gets a point if passed status is PASSED
+             if (codeStatuses[index]?.status === 'PASSED') {
+                 score += 1;
+             }
+        } else {
+            const selectedId = answers[index];
+            const option = q.options?.find(o => o.id === selectedId);
+            if (option && option.is_correct) {
+            score += 1;
+            }
+        }
+      });
+
+      const total = test.questions.length;
+      
+      const token = await AsyncStorage.getItem('lumina_token');
+      const res = await fetch(`${API}/api/results`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          test_id: test.id,
+          user_id: user.id,
+          score,
+          total
+        })
+      });
+
+      if (res.ok) {
+        router.replace({
+          pathname: '/test/[id]/result',
+          params: { id: test.id, title: test.title, score: String(score), total: String(total), passScore: String(test.passing_score) }
+        });
+      } else {
+         Alert.alert('Қате', 'Нәтижені сақтау мүмкін болмады');
+         setSubmitting(false);
+         hasFinished.current = false;
+      }
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Қате', 'Серверге қосылу мүмкін болмады');
+      setSubmitting(false);
+      hasFinished.current = false;
+    }
+  };
+
+  const confirmFinish = () => {
+    Alert.alert(
+      "Аяқтау", 
+      "Тестті ерте аяқтағыңыз келе ме?",
+      [
+        { text: "Жоқ", style: "cancel" },
+        { text: "Иә, аяқтау", onPress: () => handleFinish(false), style: "destructive" }
+      ]
+    );
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  if (loading || submitting) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#4848e5" />
+        <Text style={{ marginTop: 12, color: '#64748b', fontWeight: '600' }}>
+          {submitting ? 'Тексерілуде...' : 'Сұрақтар жүктелуде...'}
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!test || !test.questions?.length) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: '#0f172a', marginBottom: 16 }}>Сұрақтар жоқ</Text>
+        <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#4848e5', borderRadius: 12 }}>
+          <Text style={{ color: 'white', fontWeight: '700' }}>Тақтаға оралу</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  const currentQuestion = test.questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === test.questions.length - 1;
+  const isCodeQuestion = currentQuestion.type === 'CODE';
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8' }} edges={['top', 'left', 'right']}>
+      {/* Header */}
+      <View style={{ borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'white', zIndex: 50 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+            <View style={{ backgroundColor: '#e0e7ff', padding: 8, borderRadius: 10 }}>
+              <BookOpen size={20} color="#4848e5" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: '#0f172a' }} numberOfLines={1}>{test.title}</Text>
+              <Text style={{ fontSize: 12, color: '#64748b' }}>{test.subject}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ 
+            flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, 
+            borderRadius: 10, borderWidth: 1, 
+            backgroundColor: timeLeft < 300 ? '#fef2f2' : '#f8fafc',
+            borderColor: timeLeft < 300 ? '#fca5a5' : '#e2e8f0'
+          }}>
+            <Clock size={16} color={timeLeft < 300 ? '#dc2626' : '#475569'} />
+            <Text style={{ fontWeight: '800', color: timeLeft < 300 ? '#dc2626' : '#475569' }}>{formatTime(timeLeft)}</Text>
+          </View>
+          <TouchableOpacity onPress={confirmFinish} style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#ef4444', borderRadius: 10 }}>
+            <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>Ерте аяқтау</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        
+        {/* Question Card */}
+        <View style={{ backgroundColor: 'white', borderRadius: 20, borderWidth: 1, borderColor: '#e2e8f0', padding: 24, marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <View style={{ backgroundColor: isCodeQuestion ? '#fef3c7' : '#e0e7ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
+              <Text style={{ color: isCodeQuestion ? '#d97706' : '#4848e5', fontSize: 11, fontWeight: '800', uppercase: true }}>{currentQuestionIndex + 1}-СҰРАҚ</Text>
+            </View>
+            <Text style={{ color: '#94a3b8', fontSize: 12, fontWeight: '700' }}>
+              {isCodeQuestion ? 'Код жазу (Олимпиада)' : 'Бірнеше таңдау'}
+            </Text>
+          </View>
+
+          <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a', marginBottom: isCodeQuestion ? 16 : 24, lineHeight: 28 }}>
+            {currentQuestion.text}
+          </Text>
+
+          {isCodeQuestion ? (
+              // CODE IDE UI
+              <View style={{ gap: 16 }}>
+                 <View style={{ backgroundColor: '#1e293b', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#334155' }}>
+                    <View style={{ backgroundColor: '#0f172a', paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                       <Code2 size={16} color="#94a3b8" />
+                       <Text style={{ color: '#94a3b8', fontSize: 12, fontWeight: '800', flex: 1 }}>Python 3.10</Text>
+                    </View>
+                    <TextInput
+                        multiline
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        spellCheck={false}
+                        style={{
+                            color: '#e2e8f0',
+                            fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+                            fontSize: 14,
+                            minHeight: 180,
+                            padding: 16,
+                            textAlignVertical: 'top',
+                            lineHeight: 22
+                        }}
+                        value={codeAnswers[currentQuestionIndex]}
+                        onChangeText={(text) => setCodeAnswers(prev => ({ ...prev, [currentQuestionIndex]: text }))}
+                        placeholder="# Кодты осы жерге жазыңыз"
+                        placeholderTextColor="#475569"
+                    />
+                 </View>
+
+                 <TouchableOpacity 
+                    onPress={handleRunCode}
+                    disabled={runningCode}
+                    style={{ backgroundColor: runningCode ? '#94a3b8' : '#0ea5e9', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                 >
+                    {runningCode ? <ActivityIndicator size="small" color="white" /> : <Play size={18} color="white" />}
+                    <Text style={{ color: 'white', fontWeight: '800', fontSize: 15 }}>{runningCode ? 'Орындалуда...' : 'Кодты тексеру'}</Text>
+                 </TouchableOpacity>
+
+                 {/* Console Output */}
+                 {codeStatuses[currentQuestionIndex] && (
+                     <View style={{ backgroundColor: '#f8fafc', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', overflow: 'hidden', marginTop: 8 }}>
+                         <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#e2e8f0', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Terminal size={14} color="#64748b" />
+                            <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '800' }}>ТЕСТ НӘТИЖЕСІ</Text>
+                         </View>
+                         <View style={{ padding: 16 }}>
+                             <Text style={{
+                                 color: codeStatuses[currentQuestionIndex]?.status === 'PASSED' ? '#059669' : '#dc2626',
+                                 fontWeight: '800', fontSize: 16, marginBottom: 8
+                             }}>
+                                 {codeStatuses[currentQuestionIndex]?.status === 'PASSED' ? '✅ Барлық тесттерден өтті!' : '❌ Қателік табылды'}
+                             </Text>
+                             {!codeStatuses[currentQuestionIndex]?.status?.includes('PASSED') && (
+                                <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 12, color: '#475569', backgroundColor: 'white', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                                    {codeStatuses[currentQuestionIndex]?.output}
+                                </Text>
+                             )}
+                         </View>
+                     </View>
+                 )}
+              </View>
+          ) : (
+            // MULTIPLE CHOICE UI
+            <View style={{ gap: 12 }}>
+                {currentQuestion.options?.map((option, idx) => {
+                const isSelected = answers[currentQuestionIndex] === option.id;
+                const letter = String.fromCharCode(65 + idx);
+                return (
+                    <TouchableOpacity
+                    key={option.id}
+                    onPress={() => setAnswers(prev => ({ ...prev, [currentQuestionIndex]: option.id }))}
+                    style={{
+                        flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2,
+                        borderColor: isSelected ? '#4848e5' : '#e2e8f0',
+                        backgroundColor: isSelected ? '#e0e7ff' : 'white'
+                    }}
+                    >
+                    <View style={{ 
+                        alignItems: 'center', justifyContent: 'center', height: 24, width: 24, borderRadius: 12, borderWidth: 2, marginRight: 14,
+                        borderColor: isSelected ? '#4848e5' : '#cbd5e1', backgroundColor: isSelected ? '#4848e5' : 'transparent'
+                    }}>
+                        {isSelected && <View style={{ height: 8, width: 8, backgroundColor: 'white', borderRadius: 4 }} />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={{ fontWeight: '800', color: '#0f172a', fontSize: 15 }}>{option.text}</Text>
+                        <Text style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{letter} нұсқасы</Text>
+                    </View>
+                    </TouchableOpacity>
+                );
+                })}
+            </View>
+          )}
+
+        </View>
+
+        {/* Navigation Buttons */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity
+            onPress={() => { if (currentQuestionIndex > 0) setCurrentQuestionIndex(prev => prev - 1); }}
+            disabled={currentQuestionIndex === 0}
+            style={{
+              flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
+              backgroundColor: '#f1f5f9', opacity: currentQuestionIndex === 0 ? 0.5 : 1
+            }}
+          >
+            <ArrowLeft size={18} color="#475569" />
+            <Text style={{ fontWeight: '800', color: '#475569' }}>Артқа</Text>
+          </TouchableOpacity>
+
+          {isLastQuestion ? (
+            <TouchableOpacity 
+              onPress={confirmFinish} 
+              style={{ flex: 1, paddingVertical: 16, backgroundColor: '#059669', borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+            >
+              <Text style={{ fontWeight: '800', color: 'white' }}>Аяқтау</Text>
+              <CheckCircle2 size={18} color="white" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              onPress={() => { if (currentQuestionIndex < test.questions.length - 1) setCurrentQuestionIndex(prev => prev + 1); }} 
+              style={{ flex: 1, paddingVertical: 16, backgroundColor: '#4848e5', borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+            >
+              <Text style={{ fontWeight: '800', color: 'white' }}>Келесі</Text>
+              <ArrowRight size={18} color="white" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={{ marginTop: 24, alignItems: 'center' }}>
+            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', marginBottom: 8, uppercase: true }}>
+              Барлығы {test.questions.length} сұрақтың {currentQuestionIndex + 1}-шісі
+            </Text>
+            <View style={{ height: 6, width: '100%', backgroundColor: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                <View style={{ height: '100%', backgroundColor: '#4848e5', borderRadius: 3, width: `${((currentQuestionIndex + 1) / test.questions.length) * 100}%` }} />
+            </View>
+        </View>
+
+      </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
