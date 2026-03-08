@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookOpen, AlertCircle, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { API as LOCAL_API } from './constants/api';
 
 export default function Register() {
