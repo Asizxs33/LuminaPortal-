@@ -64,7 +64,6 @@ export default function Register() {
   };
 
   return (
-    // Dynamic Gradient Background replacing solid colors
     <View className="flex-1 bg-slate-50 relative overflow-hidden">
       {/* Soft decorative background orbs */}
       <View className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" />
