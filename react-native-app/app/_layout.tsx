@@ -1,9 +1,7 @@
 import '../global.css';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useWindowDimensions } from 'react-native';
 import { AuthProvider } from '../context/AuthContext';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform, View } from 'react-native';
 import WebSidebar from '../components/WebSidebar';
 
@@ -20,28 +18,29 @@ if (isWeb) {
 }
 
 export default function RootLayout() {
-  const { width } = useWindowDimensions();
-  // We constrain mobile Web styling if width > 500 without triggering the full desktop layout
-  const isMobileDesktop = isWeb && width <= 768;
 
   return (
     <AuthProvider>
       {/* On Web, we wrap the whole app in a flex-row View to put Sidebar next to Stack */}
-      <View style={{ flex: 1, height: isWeb ? '100vh' : '100%', flexDirection: isWeb && width > 768 ? 'row' : 'column', backgroundColor: isWeb ? '#eef1f8' : 'white', alignItems: isMobileDesktop ? 'center' : 'stretch' }}>
+      <View 
+        className={isWeb ? "flex-1 h-[100vh] bg-[#eef1f8] flex-col md:flex-row items-center md:items-stretch" : "flex-1 h-full bg-white flex-col items-stretch"}
+      >
         
-        {/* Sidebar conditionally renders via internal Platform check */}
-        {(!isWeb || width > 768) && <WebSidebar />}
+        {/* Sidebar conditionally renders visually on web desktop */}
+        {isWeb ? (
+          <View className="hidden md:flex">
+            <WebSidebar />
+          </View>
+        ) : (
+          <WebSidebar />
+        )}
         
         {/* Main Content Area Wrapper */}
-        <View style={{ flex: 1, height: '100%', alignItems: 'center', backgroundColor: isWeb ? '#eef1f8' : 'white' }}>
+        <View className={isWeb ? "flex-1 h-full items-center bg-[#eef1f8]" : "flex-1 h-full items-center bg-white"}>
           
-          <View style={[
-            { flex: 1, height: '100%', overflow: 'hidden' as any, width: '100%' },
-            // On web desktop, allow full expansion for landing page edge-to-edge
-            isWeb && width > 768 && { flex: 1, backgroundColor: '#eef1f8' },
-            // Mobile constrain (shadow frame)
-            isMobileDesktop && { maxWidth: 500, backgroundColor: 'white', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 40, elevation: 5 }
-          ]}>
+          <View 
+            className={isWeb ? "flex-1 h-full w-full overflow-hidden bg-white md:bg-[#eef1f8] max-w-[500px] md:max-w-none shadow-[0_0_40px_rgba(0,0,0,0.08)] md:shadow-none" : "flex-1 h-full w-full overflow-hidden bg-white"}
+          >
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'white' } }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="login" />

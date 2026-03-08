@@ -145,7 +145,7 @@ export default function LandingPage() {
 
                 <View className="flex-col lg:flex-row w-full lg:w-auto gap-4 items-center">
                   <Link href={isAuthenticated ? (user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard') : '/login'} asChild>
-                    <TouchableOpacity>
+                    <TouchableOpacity className="flex-row items-center justify-center gap-3 bg-indigo-600 px-8 py-4 rounded-2xl shadow-lg shadow-indigo-600/30 w-full lg:w-auto">
                       <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>
                         {isAuthenticated ? 'Панельге өту' : 'Тегін бастау'}
                       </Text>
@@ -154,8 +154,9 @@ export default function LandingPage() {
                   </Link>
 
                   <Link href="/login" asChild>
-                    <TouchableOpacity>
-                      <Text style={{ color: '#475569', fontSize: 16, fontWeight: '800' }}>Демо қарау</Text>
+                    <TouchableOpacity className="flex-row items-center justify-center gap-3 bg-indigo-600 px-8 py-4 rounded-2xl shadow-lg shadow-indigo-600/30 w-full lg:w-auto">
+                      <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>Бастау</Text>
+                      <ArrowRight size={20} color="#ffffff" />
                     </TouchableOpacity>
                   </Link>
                 </View>
