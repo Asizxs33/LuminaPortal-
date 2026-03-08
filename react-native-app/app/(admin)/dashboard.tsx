@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, FileText, CheckCircle, Archive, Sparkles, Trash2, X, Circle, CheckSquare, AlignLeft, Eye, EyeOff, User, LogOut, ArrowRight, ShieldCheck, Settings, Users } from 'lucide-react-native';
+import { Plus, FileText, CheckCircle, Archive, Sparkles, Trash2, X, Circle, CheckSquare, AlignLeft, Eye, EyeOff, User, LogOut, ArrowRight, ShieldCheck, Settings, Users, Layers, Clock } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -190,52 +190,54 @@ export default function AdminDashboard() {
   // -------------------------------------------------------------------------------- //
 
   const CreateTestForm = () => (
-    <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 24, gap: 16 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <Plus size={20} color="#4848e5" />
-        <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f172a' }}>Қолмен жасау</Text>
+    <View className="bg-white/80 backdrop-blur-xl border border-white p-7 rounded-3xl shadow-2xl shadow-indigo-900/5 gap-5">
+      <View className="flex-row items-center gap-3 mb-2">
+        <View className="bg-indigo-50 w-12 h-12 rounded-xl items-center justify-center">
+          <Plus size={24} color="#4848e5" />
+        </View>
+        <Text className="text-2xl font-black text-slate-900 tracking-tight">Қолмен жасау</Text>
       </View>
       <View>
-        <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8, fontSize: 13 }}>Тест атауы *</Text>
+        <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Тест атауы *</Text>
         <TextInput
           value={newTitle}
           onChangeText={setNewTitle}
           placeholder="Мысалы: Жоғары математика"
           placeholderTextColor="#94a3b8"
-          style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: '#0f172a', fontSize: 14, backgroundColor: '#f8fafc' }}
+          className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
         />
       </View>
       <View>
-        <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8, fontSize: 13 }}>Пән *</Text>
+        <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Пән *</Text>
         <TextInput
           value={newSubject}
           onChangeText={setNewSubject}
           placeholder="Мысалы: Математика"
           placeholderTextColor="#94a3b8"
-          style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: '#0f172a', fontSize: 14, backgroundColor: '#f8fafc' }}
+          className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
         />
       </View>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8, fontSize: 13 }}>Уақыт (мин)</Text>
+      <View className="flex-row gap-4">
+        <View className="flex-1">
+          <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Уақыт (мин)</Text>
           <TextInput
             value={newDuration}
             onChangeText={setNewDuration}
             keyboardType="numeric"
             placeholder="30"
             placeholderTextColor="#94a3b8"
-            style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: '#0f172a', fontSize: 14, backgroundColor: '#f8fafc' }}
+            className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
           />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8, fontSize: 13 }}>Өту баллы (%)</Text>
+        <View className="flex-1">
+          <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Өту баллы (%)</Text>
           <TextInput
             value={newPassing}
             onChangeText={setNewPassing}
             keyboardType="numeric"
             placeholder="70"
             placeholderTextColor="#94a3b8"
-            style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: '#0f172a', fontSize: 14, backgroundColor: '#f8fafc' }}
+            className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
           />
         </View>
       </View>
@@ -243,39 +245,41 @@ export default function AdminDashboard() {
       <TouchableOpacity
         onPress={createTest}
         disabled={creating}
-        style={{ backgroundColor: creating ? '#a5a5f0' : '#4848e5', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 8 }}
+        className={`w-full py-4 rounded-2xl flex-row justify-center items-center mt-3 ${creating ? 'bg-indigo-400' : 'bg-indigo-600'} shadow-lg shadow-indigo-600/20`}
       >
-        <Text style={{ color: 'white', fontWeight: '800', fontSize: 15 }}>
-          {creating ? 'Жасалуда...' : '+ Тест жасау'}
+        <Text className="text-white font-black text-lg">
+          {creating ? 'Жасалуда...' : 'Тест жасау'}
         </Text>
       </TouchableOpacity>
     </View>
   );
 
   const AiGeneratorForm = () => (
-    <View style={{ backgroundColor: 'white', padding: 24, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <Sparkles size={20} color="#8b5cf6" />
-        <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f172a' }}>ЖИ Генераторы</Text>
+    <View className="bg-white/80 backdrop-blur-xl border border-white p-7 rounded-3xl shadow-2xl shadow-indigo-900/5">
+      <View className="flex-row items-center gap-3 mb-4">
+        <View className="bg-purple-50 w-12 h-12 rounded-xl items-center justify-center">
+          <Sparkles size={24} color="#8b5cf6" />
+        </View>
+        <Text className="text-2xl font-black text-slate-900 tracking-tight">ЖИ Генераторы</Text>
       </View>
-      <Text style={{ color: '#64748b', fontSize: 13, marginBottom: 20, lineHeight: 20 }}>
+      <Text className="text-slate-500 text-[14px] mb-6 leading-relaxed">
         Жасанды интеллект сізге бірнеше секундта сұрақтар дайындап береді.
       </Text>
-      <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8, fontSize: 13 }}>Тақырып</Text>
+      <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Тақырып</Text>
       <TextInput
         value={aiTopic}
         onChangeText={setAiTopic}
         placeholder="Мысалы: Кванттық физика..."
         placeholderTextColor="#94a3b8"
-        style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: '#0f172a', fontSize: 14, backgroundColor: '#f8fafc', marginBottom: 16 }}
+        className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-purple-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all mb-5"
       />
       <TouchableOpacity
         onPress={handleAiGenerate}
         disabled={aiLoading || !aiTopic.trim()}
-        style={{ backgroundColor: !aiTopic.trim() ? '#e2e8f0' : '#8b5cf6', paddingVertical: 14, borderRadius: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+        className={`w-full py-4 rounded-2xl flex-row justify-center items-center gap-2 ${!aiTopic.trim() ? 'bg-slate-200' : 'bg-purple-600'} shadow-lg ${!aiTopic.trim() ? 'shadow-transparent' : 'shadow-purple-600/20'}`}
       >
-        <Sparkles size={16} color={!aiTopic.trim() ? '#94a3b8' : 'white'} />
-        <Text style={{ color: !aiTopic.trim() ? '#94a3b8' : 'white', fontWeight: '800', fontSize: 14 }}>
+        <Sparkles size={18} color={!aiTopic.trim() ? '#94a3b8' : 'white'} />
+        <Text className={`font-black text-lg ${!aiTopic.trim() ? 'text-slate-400' : 'text-white'}`}>
           {aiLoading ? 'Жасалуда...' : 'Сұрақтар жасау'}
         </Text>
       </TouchableOpacity>
@@ -283,51 +287,54 @@ export default function AdminDashboard() {
   );
 
   const ProfileSection = () => (
-    <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', overflow: 'hidden' }}>
-      <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-        <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#4848e5', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: 'white', fontSize: 18, fontWeight: '900' }}>{user?.email?.charAt(0).toUpperCase() || 'A'}</Text>
+    <View className="bg-white/80 backdrop-blur-xl border border-white rounded-3xl shadow-2xl shadow-indigo-900/5 overflow-hidden">
+      <View className="p-6 border-b border-slate-100 flex-row items-center gap-4">
+        <View className="w-14 h-14 rounded-full bg-indigo-600 items-center justify-center shadow-lg shadow-indigo-600/30">
+          <Text className="text-white text-xl font-black">{user?.email?.charAt(0).toUpperCase() || 'A'}</Text>
         </View>
         <View>
-          <Text style={{ fontSize: 16, fontWeight: '800', color: '#0f172a' }}>Администратор</Text>
-          <Text style={{ color: '#64748b', fontSize: 13 }}>{user?.email}</Text>
+          <Text className="text-lg font-black text-slate-900">Администратор</Text>
+          <Text className="text-slate-500 text-[14px] font-medium">{user?.email}</Text>
         </View>
       </View>
       
-      <TouchableOpacity onPress={() => router.push('/(student)/dashboard')} className="flex-row items-center justify-between p-4 border-b border-slate-200">
+      <TouchableOpacity onPress={() => router.push('/(student)/dashboard')} className="flex-row items-center justify-between p-5 border-b border-slate-100 bg-white/40 active:bg-slate-50">
         <View className="flex-row items-center gap-3">
-          <User size={18} color="#4848e5" />
-          <Text className="font-bold text-slate-700 text-sm">Студент режиміне өту</Text>
+          <User size={20} color="#4848e5" />
+          <Text className="font-bold text-slate-700 text-[15px]">Студент режиміне өту</Text>
         </View>
-        <ArrowRight size={16} color="#cbd5e1" />
+        <ArrowRight size={18} color="#cbd5e1" />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleLogout} className="flex-row items-center justify-between p-4">
+      <TouchableOpacity onPress={handleLogout} className="flex-row items-center justify-between p-5 bg-white/40 active:bg-red-50/50">
         <View className="flex-row items-center gap-3">
-          <LogOut size={18} color="#ef4444" />
-          <Text className="font-bold text-red-500 text-sm">Аккаунттан шығу</Text>
+          <LogOut size={20} color="#ef4444" />
+          <Text className="font-bold text-red-500 text-[15px]">Аккаунттан шығу</Text>
         </View>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      
+    <View className="flex-[1] bg-slate-50 relative overflow-hidden w-full h-full">
+      {/* Soft decorative background orbs for Premium Glassmorphism Look */}
+      <View className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" />
+      <View className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-400/20 blur-3xl opacity-60" />
+
       {/* Mobile Tab Bar Header */}
-      <View className="flex lg:hidden flex-row bg-white border-b border-slate-200">
+      <View className="flex lg:hidden flex-row bg-white/80 backdrop-blur-xl border-b border-white z-10 shadow-sm shadow-slate-200/20">
         {[
           { key: 'tests', label: 'Тесттер' },
           { key: 'create', label: 'Жасау' },
-          { key: 'ai', label: '✨ ЖИ' },
+          { key: 'ai', label: 'ЖИ' },
           { key: 'profile', label: 'Профиль' },
         ].map(tab => (
           <TouchableOpacity
             key={tab.key}
             onPress={() => setActiveTab(tab.key as any)}
-            className={`flex-1 py-3.5 items-center border-b-2 transition-all ${activeTab === tab.key ? 'border-indigo-600' : 'border-transparent'}`}
+            className={`flex-1 py-4 items-center border-b-[3px] transition-all ${activeTab === tab.key ? 'border-indigo-600' : 'border-transparent'}`}
           >
-            <Text className={`font-bold text-[13px] ${activeTab === tab.key ? 'text-indigo-600' : 'text-slate-500'}`}>
+            <Text className={`font-black text-[13px] tracking-wide ${activeTab === tab.key ? 'text-indigo-600' : 'text-slate-400'}`}>
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -337,105 +344,114 @@ export default function AdminDashboard() {
       <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16">
         
         {/* Header Section (Desktop) */}
-        <View className="hidden lg:flex flex-row justify-between items-end mb-8">
+        <View className="hidden lg:flex flex-row justify-between items-end mb-8 pl-1">
            <View>
-            <Text className="text-sm text-slate-500 font-semibold uppercase tracking-wider">Мұғалім кабинеті</Text>
-            <Text className="text-[32px] font-black text-slate-900 mt-1">Басқару тақтасы ⚙️</Text>
+            <Text className="text-sm text-indigo-500 font-bold uppercase tracking-widest mb-1">Мұғалім кабинеті</Text>
+            <Text className="text-[36px] font-black text-slate-900 tracking-tight">Басқару тақтасы</Text>
           </View>
         </View>
 
         <View className="flex-col lg:flex-row gap-8">
           
           {/* LEFT/MAIN COLUMN - Tests Management */}
-          <View className={`flex-1 lg:flex-[2.5] ${activeTab === 'tests' ? 'flex' : 'hidden lg:flex'}`}>
+          <View className={`flex-[1] lg:flex-[2.5] ${activeTab === 'tests' ? 'flex' : 'hidden lg:flex'}`}>
             
             {/* Stat Cards */}
-            <View className="flex-col md:flex-row flex-wrap lg:flex-nowrap gap-4 mb-6">
-              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-                 <View className="bg-indigo-50 p-3 rounded-xl"><FileText size={24} color="#4848e5" /></View>
+            <View className="flex-col md:flex-row flex-wrap lg:flex-nowrap gap-5 mb-8">
+              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-5">
+                 <View className="bg-indigo-50 w-14 h-14 items-center justify-center rounded-2xl"><FileText size={28} color="#4848e5" /></View>
                  <View>
-                  <Text className="text-2xl font-black text-slate-900">{tests.length}</Text>
-                  <Text className="text-[13px] text-slate-500 font-semibold">Барлық тест</Text>
+                  <Text className="text-3xl font-black text-slate-900 tracking-tight">{tests.length}</Text>
+                  <Text className="text-[14px] text-slate-500 font-bold mt-1">Барлық тест</Text>
                  </View>
               </View>
 
-              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-                 <View className="bg-green-50 p-3 rounded-xl"><CheckCircle size={24} color="#15803d" /></View>
+              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-5">
+                 <View className="bg-emerald-50 w-14 h-14 items-center justify-center rounded-2xl"><CheckCircle size={28} color="#10b981" /></View>
                  <View>
-                  <Text className="text-2xl font-black text-slate-900">{published.length}</Text>
-                  <Text className="text-[13px] text-slate-500 font-semibold">Жарияланған</Text>
+                  <Text className="text-3xl font-black text-slate-900 tracking-tight">{published.length}</Text>
+                  <Text className="text-[14px] text-slate-500 font-bold mt-1">Жарияланған</Text>
                  </View>
               </View>
               
-              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-                 <View className="bg-slate-100 p-3 rounded-xl"><Archive size={24} color="#64748b" /></View>
+              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-5">
+                 <View className="bg-slate-100 w-14 h-14 items-center justify-center rounded-2xl"><Archive size={28} color="#64748b" /></View>
                  <View>
-                  <Text className="text-2xl font-black text-slate-900">{unpublished.length}</Text>
-                  <Text className="text-[13px] text-slate-500 font-semibold">Жабық/Черновик</Text>
+                  <Text className="text-3xl font-black text-slate-900 tracking-tight">{unpublished.length}</Text>
+                  <Text className="text-[14px] text-slate-500 font-bold mt-1">Жабық/Черновик</Text>
                  </View>
               </View>
             </View>
 
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-xl font-extrabold text-slate-900">Тесттер тізімі</Text>
+            <View className="flex-row justify-between items-center mb-6 pl-1">
+              <Text className="text-xl font-black text-slate-900 tracking-tight">Тесттер тізімі</Text>
             </View>
 
             {/* TESTS GRID */}
             <View className="flex-row flex-wrap justify-between">
               {tests.length === 0 ? (
-                <View className="w-full bg-white p-16 rounded-2xl items-center border border-slate-200">
-                  <FileText size={48} color="#cbd5e1" />
-                  <Text className="text-slate-400 mt-3 font-bold text-base">Тест жоқ</Text>
-                  <Text className="text-slate-300 mt-1.5 text-[13px]">Дерекқорда әзірге тесттер жоқ</Text>
+                <View className="w-full bg-white/60 backdrop-blur-xl p-16 rounded-[32px] items-center border border-white border-dashed shadow-sm">
+                  <View className="bg-white p-6 rounded-full shadow-sm mb-4">
+                    <FileText size={40} color="#cbd5e1" />
+                  </View>
+                  <Text className="text-slate-500 mt-2 font-black text-lg">Тест жоқ</Text>
+                  <Text className="text-slate-400 mt-1.5 text-[14px] font-medium text-center">Алдымен оң жақтағы панель арқылы жаңа тест жасаңыз</Text>
                 </View>
               ) : (
                 tests.map(test => (
-                  <View key={test.id} className="w-full md:w-[48%] mb-4 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                  <View key={test.id} className="w-full md:w-[48%] mb-5 bg-white/80 backdrop-blur-xl rounded-[28px] border border-white shadow-xl shadow-indigo-900/5 overflow-hidden flex-col">
                     <TouchableOpacity
                       onPress={() => router.push(`/test/${test.id}/edit` as any)}
-                      className="p-5"
+                      className="p-6 flex-1 bg-gradient-to-br from-transparent to-slate-50/50"
                     >
-                      <View className="flex-row items-center gap-2 mb-3">
-                        <View className={`px-2 py-1 rounded-md ${test.is_published ? 'bg-green-100' : 'bg-slate-100'}`}>
-                          <Text className={`text-[11px] font-extrabold uppercase tracking-wide ${test.is_published ? 'text-green-700' : 'text-slate-500'}`}>
-                            {test.is_published ? '● Жарияланған' : '○ Жабық'}
+                      <View className="flex-row items-center justify-between mb-4">
+                        <View className={`px-3 py-1.5 rounded-[10px] border flex-row items-center gap-1.5 ${test.is_published ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-100 border-slate-200'}`}>
+                          <View className={`w-1.5 h-1.5 rounded-full ${test.is_published ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                          <Text className={`text-[11px] font-black uppercase tracking-wider ${test.is_published ? 'text-emerald-700' : 'text-slate-600'}`}>
+                            {test.is_published ? 'Жарияланған' : 'Жабық'}
                           </Text>
                         </View>
-                        <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">{test.subject}</Text>
                       </View>
                       
-                      <Text className="text-lg font-extrabold text-slate-900 leading-normal mb-4" numberOfLines={2}>{test.title}</Text>
+                      <Text className="text-xl font-black text-slate-900 leading-tight mb-3" numberOfLines={2}>{test.title}</Text>
+                      <Text className="text-[14px] font-bold text-indigo-500 mb-6">{test.subject}</Text>
                       
-                      <View className="flex-row gap-4 pt-4 border-t border-slate-100">
-                        <Text className="text-slate-500 text-[13px] font-semibold">📝 {test.question_count} сұрақ</Text>
-                        <Text className="text-slate-500 text-[13px] font-semibold">⏱ {test.duration_minutes} мин</Text>
+                      <View className="flex-row gap-6 mt-auto pt-5 border-t border-slate-200/60">
+                        <View className="flex-row items-center gap-2">
+                          <Layers size={18} color="#94a3b8" />
+                          <Text className="text-slate-600 text-[14px] font-bold">{test.question_count} сұрақ</Text>
+                        </View>
+                        <View className="flex-row items-center gap-2">
+                          <Clock size={18} color="#94a3b8" />
+                          <Text className="text-slate-600 text-[14px] font-bold">{test.duration_minutes} мин</Text>
+                        </View>
                       </View>
                     </TouchableOpacity>
 
-                    <View className="flex-row border-t border-slate-100 bg-slate-50">
+                    <View className="flex-row border-t border-slate-100 bg-white/60">
                       <TouchableOpacity
                         onPress={() => Alert.alert(
                           test.is_published ? 'Тестті жабу' : 'Тестті ашу',
                           `«${test.title}» ${test.is_published ? 'жабылсын ба?' : 'қайта ашылсын ба?'}`,
                           [
                             { text: 'Бас тарту', style: 'cancel' },
-                            { text: test.is_published ? 'Жабу' : 'Ашу', onPress: () => togglePublish(test) }
+                            { text: test.is_published ? 'Жабу' : 'Ашу', style: test.is_published ? 'destructive' : 'default', onPress: () => togglePublish(test) }
                           ]
                         )}
-                        className="flex-1 py-3.5 flex-row items-center justify-center gap-1.5 border-r border-slate-100"
+                        className="flex-1 py-4 flex-row items-center justify-center gap-2 border-r border-slate-100 active:bg-slate-50 transition-colors"
                       >
                         {test.is_published
-                          ? <><EyeOff size={16} color="#64748b" /><Text className="text-slate-500 font-bold text-[13px]">Жабу</Text></>
-                          : <><Eye size={16} color="#4848e5" /><Text className="text-indigo-600 font-bold text-[13px]">Жариялау</Text></>
+                          ? <><EyeOff size={18} color="#64748b" /><Text className="text-slate-600 font-black text-[14px]">Жабу</Text></>
+                          : <><Eye size={18} color="#4848e5" /><Text className="text-indigo-600 font-black text-[14px]">Жариялау</Text></>
                         }
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         onPress={() => deleteTest(test)}
-                        className="flex-1 py-3.5 flex-row items-center justify-center gap-1.5"
+                        className="flex-1 py-4 flex-row items-center justify-center gap-2 active:bg-red-50 transition-colors"
                       >
-                        <Trash2 size={16} color="#ef4444" />
-                        <Text className="text-red-500 font-bold text-[13px]">Өшіру</Text>
+                        <Trash2 size={18} color="#ef4444" />
+                        <Text className="text-red-500 font-black text-[14px]">Өшіру</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -445,7 +461,7 @@ export default function AdminDashboard() {
           </View>
 
           {/* RIGHT/SIDE COLUMN - Actions (Forms, AI, Profile) */}
-          <View className="flex-none lg:flex-1 lg:min-w-[340px] flex-col gap-6">
+          <View className="flex-none lg:flex-1 lg:min-w-[360px] flex-col gap-6">
             <View className={`w-full ${activeTab === 'create' ? 'flex' : 'hidden lg:flex'}`}>
               <CreateTestForm />
             </View>
@@ -460,6 +476,6 @@ export default function AdminDashboard() {
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
