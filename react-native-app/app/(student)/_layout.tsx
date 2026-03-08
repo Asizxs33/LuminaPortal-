@@ -2,6 +2,8 @@ import { Tabs, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { LayoutDashboard, BarChart3, User } from 'lucide-react-native';
+import { View, Platform } from 'react-native';
+import { BottomTabBar } from '@react-navigation/bottom-tabs';
 
 export default function StudentLayout() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -15,7 +17,14 @@ export default function StudentLayout() {
   }, [isAuthenticated, isLoading, user]);
 
   return (
-    <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: '#4848e5' }}>
+    <Tabs 
+      tabBar={(props) => (
+        <View className={Platform.OS === 'web' ? 'flex md:hidden' : 'flex'}>
+          <BottomTabBar {...props} />
+        </View>
+      )}
+      screenOptions={{ headerShown: false, tabBarActiveTintColor: '#4848e5' }}
+    >
       <Tabs.Screen
         name="dashboard"
         options={{
