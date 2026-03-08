@@ -41,7 +41,7 @@ export default function RootLayout() {
         <View className={isWeb ? "flex-[1] flex-col items-center bg-[#eef1f8] w-full" : "flex-[1] items-center bg-white w-full"}>
           
           <View 
-            className={isWeb ? "flex-[1] w-full overflow-hidden bg-white md:bg-transparent max-w-[500px] md:max-w-[1200px] shadow-[0_0_40px_rgba(0,0,0,0.08)] md:shadow-none mx-auto md:p-4 lg:p-8" : "flex-[1] w-full overflow-hidden bg-white"}
+            className={isWeb ? "flex-[1] w-full overflow-hidden bg-white md:bg-transparent max-w-[500px] md:max-w-none shadow-[0_0_40px_rgba(0,0,0,0.08)] md:shadow-none" : "flex-[1] w-full overflow-hidden bg-white"}
           >
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent', flex: 1 } }}>
               <Stack.Screen name="index" />
