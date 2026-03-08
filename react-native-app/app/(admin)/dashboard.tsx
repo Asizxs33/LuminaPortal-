@@ -71,15 +71,39 @@ export default function AdminDashboard() {
   const published = tests.filter(t => t.is_published);
   const unpublished = tests.filter(t => !t.is_published);
 
-  const getCardWidth = () => {
-    if (isDesktop) return '48%';
-    if (isTablet) return '48%';
-    return '100%';
+  const deleteTest = async (test: Test) => {
+    Alert.alert(
+      'Тестті өшіру',
+      `«${test.title}» тестті толықтай өшіргіңіз келе ме?`,
+      [
+        { text: 'Бас тарту', style: 'cancel' },
+        { 
+          text: 'Өшіру', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('lumina_token');
+              const res = await fetch(`${API}/api/tests/${test.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              if (res.ok) {
+                setTests(prev => prev.filter(t => t.id !== test.id));
+              }
+            } catch {
+              Alert.alert('Қате', 'Серверге қосылу сәтсіз болды');
+            }
+          }
+        }
+      ]
+    );
   };
 
   // -------------------------------------------------------------------------------- //
   //  RENDER
   // -------------------------------------------------------------------------------- //
+  return (
+    <View className="flex-1 bg-slate-50 relative overflow-hidden">
       {/* Soft decorative background orbs for Premium Glassmorphism Look */}
       <View className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" />
       <View className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-400/20 blur-3xl opacity-60" />
