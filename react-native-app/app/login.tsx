@@ -39,31 +39,34 @@ export default function Login() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <SafeAreaView className="flex-1 bg-white md:bg-slate-50">
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 24 }}
+          className="flex-1 flex-col md:flex-row"
         >
-          <View style={{ alignItems: 'center', marginBottom: 40 }}>
-            <BookOpen size={64} color="#4848e5" />
-            <Text style={{ fontSize: 28, fontWeight: '800', color: '#0f172a', marginTop: 16 }}>
-              Жүйеге кіру
-            </Text>
-            <Text style={{ color: '#64748b', marginTop: 8 }}>
-              LuminaPortal платформасына қош келдіңіз
-            </Text>
-          </View>
+          {/* Left Side: Form */}
+          <View className="flex-1 justify-center px-6 md:px-20 lg:px-32 xl:px-40 py-10">
+            <View className="items-start mb-10 w-full max-w-[450px] self-center md:self-start">
+              <View className="flex-row items-center gap-3">
+                <View className="bg-indigo-600/10 p-3 rounded-2xl">
+                  <BookOpen size={32} color="#4848e5" />
+                </View>
+                <Text className="text-2xl font-black text-slate-900 tracking-tight">LuminaPortal</Text>
+              </View>
+              <Text className="text-3xl font-extrabold text-slate-900 mt-8 mb-2">
+                Қайта қош келдіңіз
+              </Text>
+              <Text className="text-slate-500 text-base">
+                Деректеріңізді енгізіп, платформаға кіріңіз
+              </Text>
+            </View>
 
-          <View style={{ width: '100%', maxWidth: 450, alignSelf: 'center', backgroundColor: 'white', padding: 24, borderRadius: 24, borderWidth: 1, borderColor: '#f1f5f9' }}>
+            <View className="w-full max-w-[450px] self-center md:self-start bg-white md:bg-transparent rounded-3xl">
             {/* Tabs */}
-            <View style={{ flexDirection: 'row', backgroundColor: '#f1f5f9', padding: 4, borderRadius: 12, marginBottom: 24 }}>
+            <View className="flex-row bg-slate-100 p-1.5 rounded-2xl mb-8">
               <TouchableOpacity
                 onPress={() => { setActiveTab('student'); setError(''); }}
-                style={{
-                  flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                  gap: 8, paddingVertical: 12, borderRadius: 10,
-                  backgroundColor: activeTab === 'student' ? 'white' : 'transparent'
-                }}
+                className={`flex-1 flex-row items-center justify-center gap-2 py-3.5 rounded-xl transition-all ${activeTab === 'student' ? 'bg-white shadow-sm' : 'bg-transparent'}`}
               >
                 <Users size={18} color={activeTab === 'student' ? '#0f172a' : '#64748b'} />
                 <Text style={{ fontWeight: '700', color: activeTab === 'student' ? '#0f172a' : '#64748b' }}>
@@ -73,11 +76,7 @@ export default function Login() {
 
               <TouchableOpacity
                 onPress={() => { setActiveTab('admin'); setError(''); }}
-                style={{
-                  flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                  gap: 8, paddingVertical: 12, borderRadius: 10,
-                  backgroundColor: activeTab === 'admin' ? 'white' : 'transparent'
-                }}
+                className={`flex-1 flex-row items-center justify-center gap-2 py-3.5 rounded-xl transition-all ${activeTab === 'admin' ? 'bg-white shadow-sm' : 'bg-transparent'}`}
               >
                 <ShieldCheck size={18} color={activeTab === 'admin' ? '#4848e5' : '#64748b'} />
                 <Text style={{ fontWeight: '700', color: activeTab === 'admin' ? '#4848e5' : '#64748b' }}>
@@ -95,13 +94,13 @@ export default function Login() {
             ) : null}
 
             {/* Form */}
-            <View style={{ gap: 16 }}>
+            <View className="gap-5">
               <View>
-                <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Электрондық пошта</Text>
+                <Text className="font-bold text-slate-700 mb-2">Электрондық пошта</Text>
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
-                  style={{ paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, backgroundColor: '#f8fafc', color: '#0f172a', fontSize: 16 }}
+                  className="w-full px-4 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:border-indigo-500 text-slate-900 text-base"
                   placeholder="name@example.com"
                   placeholderTextColor="#94a3b8"
                   autoCapitalize="none"
@@ -110,20 +109,20 @@ export default function Login() {
               </View>
 
               <View>
-                <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Құпиясөз</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, backgroundColor: '#f8fafc' }}>
+                <Text className="font-bold text-slate-700 mb-2">Құпиясөз</Text>
+                <View className="flex-row items-center border border-slate-200 rounded-2xl bg-slate-50 focus-within:bg-white focus-within:border-indigo-500">
                   <TextInput
                     value={password}
                     onChangeText={setPassword}
-                    style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 14, color: '#0f172a', fontSize: 16 }}
+                    className="flex-1 px-4 py-4 text-slate-900 text-base outline-none"
                     placeholder="••••••••"
                     placeholderTextColor="#94a3b8"
                     secureTextEntry={!showPassword}
                   />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingHorizontal: 14 }}>
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="px-4">
                     {showPassword
-                      ? <EyeOff size={20} color="#94a3b8" />
-                      : <Eye size={20} color="#94a3b8" />}
+                      ? <EyeOff size={22} color="#94a3b8" />
+                      : <Eye size={22} color="#94a3b8" />}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -131,12 +130,9 @@ export default function Login() {
               <TouchableOpacity
                 onPress={handleLogin}
                 disabled={loading}
-                style={{
-                  paddingVertical: 16, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-                  backgroundColor: loading ? '#8080f0' : '#4848e5', marginTop: 8
-                }}
+                className={`w-full py-4 rounded-2xl flex-row justify-center items-center mt-2 ${loading ? 'bg-indigo-400' : 'bg-indigo-600'} shadow-lg shadow-indigo-600/30`}
               >
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 18 }}>
+                <Text className="text-white font-black text-lg">
                   {loading ? 'Кіру...' : 'Кіру'}
                 </Text>
               </TouchableOpacity>
@@ -151,6 +147,35 @@ export default function Login() {
               )}
             </View>
           </View>
+          </View>
+
+          {/* Right Side: Decorative Desktop Graphic (Hidden on Mobile) */}
+          <View className="hidden md:flex flex-1 relative overflow-hidden bg-indigo-900 rounded-l-[40px] shadow-2xl m-4 p-12 justify-center">
+            {/* Background elements */}
+            <View className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-500/20 blur-3xl opacity-50" />
+            <View className="absolute bottom-[-10%] left-[-20%] w-[600px] h-[600px] rounded-full bg-purple-500/20 blur-3xl opacity-50" />
+            
+            <View className="z-10 bg-white/10 p-10 rounded-[32px] border border-white/20 backdrop-blur-xl shrink-0">
+              <View className="flex-row gap-2 mb-8">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Text key={i} className="text-yellow-400 text-2xl">★</Text>
+                ))}
+              </View>
+              <Text className="text-white text-3xl font-bold leading-tight mb-8">
+                "Дәстүрлі емтихандарды тексеруге кететін уақытымызды 80%-ға қысқарттық. LuminaPortal — бұл жай ғана құрал емес, оқу процесінің болашағы."
+              </Text>
+              <View className="flex-row items-center gap-4">
+                <View className="w-14 h-14 rounded-full bg-indigo-400 flex items-center justify-center">
+                  <Text className="text-indigo-900 font-bold text-xl">АН</Text>
+                </View>
+                <View>
+                  <Text className="text-white font-bold text-lg">Азамат Нұрғалиев</Text>
+                  <Text className="text-indigo-200">Оқу ісі жөніндегі проректор</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+          
         </KeyboardAvoidingView>
       </SafeAreaView>
     </SafeAreaProvider>
