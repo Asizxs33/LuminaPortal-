@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, FileText, CheckCircle, Archive, Sparkles, Trash2, X, Circle, CheckSquare, AlignLeft, Eye, EyeOff, User, LogOut, ArrowRight, ShieldCheck, Settings, Users, Layers, Clock } from 'lucide-react-native';
+import { FileText, CheckCircle, Archive, Trash2, Eye, EyeOff, Layers, Clock } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -24,22 +24,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const { user, logout } = useAuth();
   
-  // Mobile Tab State
-  const [activeTab, setActiveTab] = useState<'tests' | 'create' | 'ai' | 'profile'>('tests');
-
-  // New test form
-  const [newTitle, setNewTitle] = useState('');
-  const [newSubject, setNewSubject] = useState('');
-  const [newDesc, setNewDesc] = useState('');
-  const [newDuration, setNewDuration] = useState('30');
-  const [newPassing, setNewPassing] = useState('70');
-  const [creating, setCreating] = useState(false);
-
-  // AI generator
-  const [aiTopic, setAiTopic] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-
- 
   useEffect(() => {
     fetchTests();
   }, []);
@@ -75,98 +59,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const createTest = async () => {
-    if (!newTitle.trim() || !newSubject.trim()) {
-      Alert.alert('Қате', 'Атауы мен пәнін толтырыңыз');
-      return;
-    }
-    setCreating(true);
-    try {
-      const token = await AsyncStorage.getItem('lumina_token');
-      const id = newTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now();
-      const res = await fetch(`${API}/api/tests`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          id, title: newTitle, subject: newSubject, description: newDesc,
-          duration_minutes: parseInt(newDuration) || 30,
-          passing_score: parseInt(newPassing) || 70,
-        }),
-      });
-      if (res.ok) {
-        setNewTitle(''); setNewSubject(''); setNewDesc(''); setNewDuration('30'); setNewPassing('70');
-        setActiveTab('tests'); // Switch back on mobile
-        await fetchTests();
-        Alert.alert('✅', 'Тест жасалды!');
-      } else {
-        Alert.alert('Қате', 'Тест жасалмады');
-      }
-    } catch {
-      Alert.alert('Қате', 'Серверге қосылу сәтсіз болды');
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const deleteTest = async (testInfo: Test) => {
-    Alert.alert(
-      'Тестті өшіру',
-      `Сіз шынымен «${testInfo.title}» тестін өшіргіңіз келе ме? Бұл әрекетті қайтара алмайсыз.`,
-      [
-        { text: 'Бас тарту', style: 'cancel' },
-        { 
-          text: 'Өшіру', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await AsyncStorage.getItem('lumina_token');
-              const res = await fetch(`${API}/api/tests/${testInfo.id}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              if (res.ok) {
-                setTests(prev => prev.filter(t => t.id !== testInfo.id));
-                Alert.alert('✅', 'Тест сәтті өшірілді');
-              } else {
-                Alert.alert('Қате', 'Серверден қате шықты');
-              }
-            } catch (e) {
-              Alert.alert('Қате', 'Серверге қосылу мүмкін емес');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  const handleAiGenerate = () => {
-    if (!aiTopic.trim()) return;
-    setAiLoading(true);
-    setTimeout(() => {
-      setAiLoading(false);
-      setAiTopic('');
-      Alert.alert('ЖИ', 'Бұл мүмкіндік кейінірек қосылады. Тест редакторын пайдаланыңыз.');
-    }, 1000);
-  };
-
-  const handleLogout = async () => {
-    Alert.alert(
-      "Шығу",
-      "Аккаунттан шыққыңыз келе ме?",
-      [
-        { text: "Бас тарту", style: "cancel" },
-        { 
-          text: "Шығу", 
-          style: "destructive",
-          onPress: async () => {
-            await logout();
-            router.replace('/login');
-          }
-        }
-      ]
-    );
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', justifyContent: 'center', alignItems: 'center' }}>
@@ -186,160 +78,11 @@ export default function AdminDashboard() {
   };
 
   // -------------------------------------------------------------------------------- //
-  //  REUSABLE COMPONENTS
+  //  RENDER
   // -------------------------------------------------------------------------------- //
-
-  const CreateTestForm = () => (
-    <View className="bg-white/80 backdrop-blur-xl border border-white p-7 rounded-3xl shadow-2xl shadow-indigo-900/5 gap-5">
-      <View className="flex-row items-center gap-3 mb-2">
-        <View className="bg-indigo-50 w-12 h-12 rounded-xl items-center justify-center">
-          <Plus size={24} color="#4848e5" />
-        </View>
-        <Text className="text-2xl font-black text-slate-900 tracking-tight">Қолмен жасау</Text>
-      </View>
-      <View>
-        <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Тест атауы *</Text>
-        <TextInput
-          value={newTitle}
-          onChangeText={setNewTitle}
-          placeholder="Мысалы: Жоғары математика"
-          placeholderTextColor="#94a3b8"
-          className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
-        />
-      </View>
-      <View>
-        <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Пән *</Text>
-        <TextInput
-          value={newSubject}
-          onChangeText={setNewSubject}
-          placeholder="Мысалы: Математика"
-          placeholderTextColor="#94a3b8"
-          className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
-        />
-      </View>
-      <View className="flex-row gap-4">
-        <View className="flex-1">
-          <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Уақыт (мин)</Text>
-          <TextInput
-            value={newDuration}
-            onChangeText={setNewDuration}
-            keyboardType="numeric"
-            placeholder="30"
-            placeholderTextColor="#94a3b8"
-            className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
-          />
-        </View>
-        <View className="flex-1">
-          <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Өту баллы (%)</Text>
-          <TextInput
-            value={newPassing}
-            onChangeText={setNewPassing}
-            keyboardType="numeric"
-            placeholder="70"
-            placeholderTextColor="#94a3b8"
-            className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
-          />
-        </View>
-      </View>
-
-      <TouchableOpacity
-        onPress={createTest}
-        disabled={creating}
-        className={`w-full py-4 rounded-2xl flex-row justify-center items-center mt-3 ${creating ? 'bg-indigo-400' : 'bg-indigo-600'} shadow-lg shadow-indigo-600/20`}
-      >
-        <Text className="text-white font-black text-lg">
-          {creating ? 'Жасалуда...' : 'Тест жасау'}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const AiGeneratorForm = () => (
-    <View className="bg-white/80 backdrop-blur-xl border border-white p-7 rounded-3xl shadow-2xl shadow-indigo-900/5">
-      <View className="flex-row items-center gap-3 mb-4">
-        <View className="bg-purple-50 w-12 h-12 rounded-xl items-center justify-center">
-          <Sparkles size={24} color="#8b5cf6" />
-        </View>
-        <Text className="text-2xl font-black text-slate-900 tracking-tight">ЖИ Генераторы</Text>
-      </View>
-      <Text className="text-slate-500 text-[14px] mb-6 leading-relaxed">
-        Жасанды интеллект сізге бірнеше секундта сұрақтар дайындап береді.
-      </Text>
-      <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Тақырып</Text>
-      <TextInput
-        value={aiTopic}
-        onChangeText={setAiTopic}
-        placeholder="Мысалы: Кванттық физика..."
-        placeholderTextColor="#94a3b8"
-        className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-purple-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all mb-5"
-      />
-      <TouchableOpacity
-        onPress={handleAiGenerate}
-        disabled={aiLoading || !aiTopic.trim()}
-        className={`w-full py-4 rounded-2xl flex-row justify-center items-center gap-2 ${!aiTopic.trim() ? 'bg-slate-200' : 'bg-purple-600'} shadow-lg ${!aiTopic.trim() ? 'shadow-transparent' : 'shadow-purple-600/20'}`}
-      >
-        <Sparkles size={18} color={!aiTopic.trim() ? '#94a3b8' : 'white'} />
-        <Text className={`font-black text-lg ${!aiTopic.trim() ? 'text-slate-400' : 'text-white'}`}>
-          {aiLoading ? 'Жасалуда...' : 'Сұрақтар жасау'}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const ProfileSection = () => (
-    <View className="bg-white/80 backdrop-blur-xl border border-white rounded-3xl shadow-2xl shadow-indigo-900/5 overflow-hidden">
-      <View className="p-6 border-b border-slate-100 flex-row items-center gap-4">
-        <View className="w-14 h-14 rounded-full bg-indigo-600 items-center justify-center shadow-lg shadow-indigo-600/30">
-          <Text className="text-white text-xl font-black">{user?.email?.charAt(0).toUpperCase() || 'A'}</Text>
-        </View>
-        <View>
-          <Text className="text-lg font-black text-slate-900">Администратор</Text>
-          <Text className="text-slate-500 text-[14px] font-medium">{user?.email}</Text>
-        </View>
-      </View>
-      
-      <TouchableOpacity onPress={() => router.push('/(student)/dashboard')} className="flex-row items-center justify-between p-5 border-b border-slate-100 bg-white/40 active:bg-slate-50">
-        <View className="flex-row items-center gap-3">
-          <User size={20} color="#4848e5" />
-          <Text className="font-bold text-slate-700 text-[15px]">Студент режиміне өту</Text>
-        </View>
-        <ArrowRight size={18} color="#cbd5e1" />
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={handleLogout} className="flex-row items-center justify-between p-5 bg-white/40 active:bg-red-50/50">
-        <View className="flex-row items-center gap-3">
-          <LogOut size={20} color="#ef4444" />
-          <Text className="font-bold text-red-500 text-[15px]">Аккаунттан шығу</Text>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
-
-  return (
-    <View className="flex-[1] bg-slate-50 relative overflow-hidden w-full h-full">
       {/* Soft decorative background orbs for Premium Glassmorphism Look */}
       <View className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" />
       <View className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-400/20 blur-3xl opacity-60" />
-
-      {/* Mobile Tab Bar Header */}
-      <View className="flex lg:hidden flex-row bg-white/80 backdrop-blur-xl border-b border-white z-10 shadow-sm shadow-slate-200/20">
-        {[
-          { key: 'tests', label: 'Тесттер' },
-          { key: 'create', label: 'Жасау' },
-          { key: 'ai', label: 'ЖИ' },
-          { key: 'profile', label: 'Профиль' },
-        ].map(tab => (
-          <TouchableOpacity
-            key={tab.key}
-            onPress={() => setActiveTab(tab.key as any)}
-            className={`flex-1 py-4 items-center border-b-[3px] transition-all ${activeTab === tab.key ? 'border-indigo-600' : 'border-transparent'}`}
-          >
-            <Text className={`font-black text-[13px] tracking-wide ${activeTab === tab.key ? 'text-indigo-600' : 'text-slate-400'}`}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
 
       <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16">
         
@@ -354,7 +97,7 @@ export default function AdminDashboard() {
         <View className="flex-col lg:flex-row gap-8">
           
           {/* LEFT/MAIN COLUMN - Tests Management */}
-          <View className={`flex-[1] lg:flex-[2.5] ${activeTab === 'tests' ? 'flex' : 'hidden lg:flex'}`}>
+          <View className="flex-[1] lg:flex-[2.5] flex">
             
             {/* Stat Cards */}
             <View className="flex-col md:flex-row flex-wrap lg:flex-nowrap gap-5 mb-8">
@@ -459,22 +202,7 @@ export default function AdminDashboard() {
               )}
             </View>
           </View>
-
-          {/* RIGHT/SIDE COLUMN - Actions (Forms, AI, Profile) */}
-          <View className="flex-none lg:flex-1 lg:min-w-[360px] flex-col gap-6">
-            <View className={`w-full ${activeTab === 'create' ? 'flex' : 'hidden lg:flex'}`}>
-              <CreateTestForm />
-            </View>
-            <View className={`w-full ${activeTab === 'ai' ? 'flex' : 'hidden lg:flex'}`}>
-              <AiGeneratorForm />
-            </View>
-            <View className={`w-full ${activeTab === 'profile' ? 'flex' : 'hidden lg:flex'}`}>
-              <ProfileSection />
-            </View>
-          </View>
-          
         </View>
-
       </ScrollView>
     </View>
   );

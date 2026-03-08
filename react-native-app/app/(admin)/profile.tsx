@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
-import { LogOut, User, Mail, Shield, BookOpen, ChevronRight, Settings } from 'lucide-react-native';
+import { LogOut, User, Mail, Shield, BookOpen, ChevronRight, Settings, ArrowLeft } from 'lucide-react-native';
 
 export default function AdminProfile() {
   const { user, logout } = useAuth();
@@ -33,104 +33,97 @@ export default function AdminProfile() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
-      <ScrollView contentContainerStyle={{ paddingTop: 24, paddingHorizontal: 16, paddingBottom: 40 }}>
+    <SafeAreaView className="flex-1 bg-slate-50 relative overflow-hidden">
+      {/* Soft decorative background orbs */}
+      <View className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-blue-400/20 blur-3xl opacity-60" />
+      <View className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" />
 
-        {/* Header */}
-        <Text style={{ fontSize: 24, fontWeight: '800', color: '#0f172a', marginBottom: 24 }}>Профиль</Text>
+      <ScrollView className="flex-1" contentContainerClassName="p-6 md:p-10 pb-20">
 
-        {/* Avatar Card */}
-        <View style={{
-          backgroundColor: 'white', borderRadius: 20, padding: 24,
-          alignItems: 'center', borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 16
-        }}>
-          {/* Avatar */}
-          <View style={{
-            width: 80, height: 80, borderRadius: 40,
-            backgroundColor: '#4848e5', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 12, shadowColor: '#4848e5', shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3, shadowRadius: 8, elevation: 6
-          }}>
-            <Text style={{ color: 'white', fontSize: 28, fontWeight: '900' }}>
-              {getInitials(user?.name || '')}
-            </Text>
-          </View>
-
-          <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a' }}>{user?.name || 'Пайдаланушы'}</Text>
-          <Text style={{ color: '#64748b', marginTop: 4, fontSize: 14 }}>{user?.email}</Text>
-
-          {/* Role badge */}
-          <View style={{
-            flexDirection: 'row', alignItems: 'center', gap: 6,
-            backgroundColor: '#ede9fe', paddingHorizontal: 12, paddingVertical: 5,
-            borderRadius: 20, marginTop: 10
-          }}>
-            <Shield size={14} color="#7c3aed" />
-            <Text style={{ color: '#7c3aed', fontWeight: '700', fontSize: 13 }}>Әкімші</Text>
-          </View>
-        </View>
-
-        {/* Info */}
-        <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 16, overflow: 'hidden' }}>
-          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#f8fafc', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#dbeafe', alignItems: 'center', justifyContent: 'center' }}>
-              <User size={18} color="#2563eb" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, color: '#94a3b8', fontWeight: '600' }}>АТЫ-ЖӨНІ</Text>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: '#0f172a', marginTop: 2 }}>{user?.name}</Text>
-            </View>
-          </View>
-
-          <View style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center' }}>
-              <Mail size={18} color="#15803d" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, color: '#94a3b8', fontWeight: '600' }}>ЭЛЕКТРОНДЫҚ ПОШТА</Text>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: '#0f172a', marginTop: 2 }}>{user?.email}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Quick Links */}
-        <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', marginBottom: 24, overflow: 'hidden' }}>
-          <TouchableOpacity
-            style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: '#f8fafc' }}
-            onPress={() => Alert.alert('Жақында', 'Бұл мүмкіндік дайындалуда')}
-          >
-            <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#fef9c3', alignItems: 'center', justifyContent: 'center' }}>
-              <Settings size={18} color="#a16207" />
-            </View>
-            <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#0f172a' }}>Баптаулар</Text>
-            <ChevronRight size={18} color="#cbd5e1" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}
-            onPress={() => Alert.alert('LuminaPortal', 'Нұсқа: 1.0.0')}
-          >
-            <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#ede9fe', alignItems: 'center', justifyContent: 'center' }}>
-              <BookOpen size={18} color="#7c3aed" />
-            </View>
-            <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#0f172a' }}>LuminaPortal туралы</Text>
-            <ChevronRight size={18} color="#cbd5e1" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={{
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-            backgroundColor: '#fee2e2', paddingVertical: 16, borderRadius: 14,
-            borderWidth: 1, borderColor: '#fecaca'
-          }}
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="flex-row items-center gap-2 mb-8"
         >
-          <LogOut size={20} color="#dc2626" />
-          <Text style={{ color: '#dc2626', fontWeight: '800', fontSize: 16 }}>Жүйеден шығу</Text>
+          <ArrowLeft size={20} color="#64748b" />
+          <Text className="text-slate-500 font-bold">Артқа</Text>
         </TouchableOpacity>
 
+        <View className="max-w-[700px] w-full mx-auto">
+          {/* Header */}
+          <Text className="text-3xl font-black text-slate-900 tracking-tight mb-8">Профиль</Text>
+
+          {/* Avatar Card */}
+          <View className="bg-white/80 backdrop-blur-xl rounded-[32px] p-8 items-center border border-white shadow-2xl shadow-indigo-900/5 mb-6">
+            <View className="w-24 h-24 rounded-full bg-indigo-600 items-center justify-center mb-4 shadow-xl shadow-indigo-600/30">
+              <Text className="text-white text-3xl font-black">{getInitials(user?.name || '')}</Text>
+            </View>
+
+            <Text className="text-2xl font-black text-slate-900">{user?.name || 'Пайдаланушы'}</Text>
+            <Text className="text-slate-500 mt-1 text-base font-medium">{user?.email}</Text>
+
+            <View className="flex-row items-center gap-1.5 bg-indigo-50 px-4 py-2 rounded-full mt-4 border border-indigo-100">
+               <Shield size={16} color="#4848e5" />
+               <Text className="text-indigo-600 font-bold text-[14px]">Әкімші</Text>
+            </View>
+          </View>
+
+          {/* Info blocks */}
+          <View className="bg-white/80 backdrop-blur-xl rounded-[28px] border border-white shadow-xl shadow-slate-200/50 mb-6 overflow-hidden">
+            <View className="p-6 border-b border-slate-100/60 flex-row items-center gap-4">
+              <View className="w-12 h-12 rounded-xl bg-blue-50 items-center justify-center">
+                <User size={22} color="#3b82f6" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-[12px] text-slate-400 font-bold tracking-wider mb-1">АТЫ-ЖӨНІ</Text>
+                <Text className="text-base font-black text-slate-900">{user?.name}</Text>
+              </View>
+            </View>
+
+            <View className="p-6 flex-row items-center gap-4">
+              <View className="w-12 h-12 rounded-xl bg-emerald-50 items-center justify-center">
+                <Mail size={22} color="#10b981" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-[12px] text-slate-400 font-bold tracking-wider mb-1">ЭЛЕКТРОНДЫҚ ПОШТА</Text>
+                <Text className="text-base font-black text-slate-900">{user?.email}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Quick Links */}
+          <View className="bg-white/80 backdrop-blur-xl rounded-[28px] border border-white shadow-xl shadow-slate-200/50 mb-8 overflow-hidden">
+            <TouchableOpacity
+               className="p-6 flex-row items-center gap-4 border-b border-slate-100/60 active:bg-slate-50/50 transition-colors"
+               onPress={() => Alert.alert('Жақында', 'Бұл мүмкіндік дайындалуда')}
+             >
+               <View className="w-12 h-12 rounded-xl bg-orange-50 items-center justify-center">
+                 <Settings size={22} color="#f97316" />
+               </View>
+               <Text className="flex-1 text-base font-black text-slate-900">Баптаулар</Text>
+               <ChevronRight size={20} color="#cbd5e1" />
+             </TouchableOpacity>
+
+             <TouchableOpacity
+               className="p-6 flex-row items-center gap-4 active:bg-slate-50/50 transition-colors"
+               onPress={() => Alert.alert('LuminaPortal', 'Нұсқа: 1.0.0')}
+             >
+               <View className="w-12 h-12 rounded-xl bg-purple-50 items-center justify-center">
+                 <BookOpen size={22} color="#a855f7" />
+               </View>
+               <Text className="flex-1 text-base font-black text-slate-900">LuminaPortal туралы</Text>
+               <ChevronRight size={20} color="#cbd5e1" />
+             </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            onPress={handleLogout}
+            className="flex-row items-center justify-center gap-3 bg-red-50 py-5 rounded-2xl border border-red-100 active:bg-red-100 transition-colors"
+          >
+            <LogOut size={22} color="#dc2626" />
+            <Text className="text-red-600 font-black text-lg">Жүйеден шығу</Text>
+          </TouchableOpacity>
+
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
