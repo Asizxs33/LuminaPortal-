@@ -24,7 +24,13 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "display": "standalone",
+      "themeColor": "#4848e5",
+      "backgroundColor": "#f6f6f8",
+      "shortName": "Lumina",
+      "name": "LuminaPortal Exam App",
+      "description": "LuminaPortal exam testing app"
     },
     "plugins": [
       "expo-router",
