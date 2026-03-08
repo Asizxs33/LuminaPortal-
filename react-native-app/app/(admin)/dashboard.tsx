@@ -438,16 +438,23 @@ export default function AdminDashboard() {
                         <Text className="text-red-500 font-bold text-[13px]">Өшіру</Text>
                       </TouchableOpacity>
                     </View>
-                )}
-              </View>
+                  </View>
+                ))
+              )}
             </View>
-          )}
+          </View>
 
           {/* RIGHT/SIDE COLUMN - Actions (Forms, AI, Profile) */}
-          <View style={{ flex: isDesktop ? 1 : undefined, minWidth: isDesktop ? 340 : 'auto', gap: 24 }}>
-            {(!isDesktop ? activeTab === 'create' : true) && <CreateTestForm />}
-            {(!isDesktop ? activeTab === 'ai' : true) && <AiGeneratorForm />}
-            {(!isDesktop ? activeTab === 'profile' : isDesktop) && <ProfileSection />}
+          <View className="flex-none lg:flex-1 lg:min-w-[340px] flex-col gap-6">
+            <View className={`w-full ${activeTab === 'create' ? 'flex' : 'hidden lg:flex'}`}>
+              <CreateTestForm />
+            </View>
+            <View className={`w-full ${activeTab === 'ai' ? 'flex' : 'hidden lg:flex'}`}>
+              <AiGeneratorForm />
+            </View>
+            <View className={`w-full ${activeTab === 'profile' ? 'flex' : 'hidden lg:flex'}`}>
+              <ProfileSection />
+            </View>
           </View>
           
         </View>
