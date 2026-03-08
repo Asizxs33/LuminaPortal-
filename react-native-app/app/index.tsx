@@ -126,52 +126,26 @@ export default function LandingPage() {
           <View style={{ flex: 1, width: '100%', maxWidth: 1400, alignSelf: 'center' }}>
             
             {/* HERO SECTION */}
-            <View style={{ 
-              alignItems: 'center', 
-              paddingHorizontal: '5%', 
-              paddingTop: 80,
-              paddingBottom: 60,
-              gap: 40,
-            }}>
+            <View className="flex-col lg:flex-row items-center px-4 lg:px-16 pt-10 lg:pt-20 pb-10 lg:pb-16 gap-10">
+              
               {/* Text Side */}
-              <View style={{ alignItems: 'center', width: '100%', maxWidth: 800 }}>
+              <View className="items-center lg:items-start w-full lg:flex-1">
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#eef2ff', marginBottom: 24 }}>
                   <Zap size={16} color="#4848e5" />
                   <Text style={{ color: '#4848e5', fontSize: 14, fontWeight: '800' }}>Жаңа буынды платформа</Text>
                 </View>
 
-                <Text style={{ 
-                  fontSize: 40, 
-                  textAlign: 'center', 
-                  fontWeight: '900', 
-                  color: '#0f172a', 
-                  marginBottom: 24, 
-                  lineHeight: 48,
-                  letterSpacing: -1.5
-                }}>
+                <Text className="text-[40px] lg:text-[56px] text-center lg:text-left font-black text-slate-900 mb-6 leading-[48px] lg:leading-[64px] tracking-tight">
                   Оқу процесін <Text style={{ color: '#4848e5' }}>сандық</Text> деңгейге көтеріңіз
                 </Text>
 
-                <Text style={{ 
-                  fontSize: 18, 
-                  textAlign: 'center', 
-                  color: '#64748b', 
-                  marginBottom: 40, 
-                  lineHeight: 28,
-                  maxWidth: '90%'
-                }}>
+                <Text className="text-lg text-center lg:text-left text-slate-500 mb-10 leading-7 lg:max-w-[90%]">
                   LuminaPortal — сіздің оқу орныңызға немесе бизнесіңізге арналған қауіпсіз, ЖИ қамтылған және ең озық онлайн бағалау жүйесі. 
                 </Text>
 
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', width: '100%', gap: 16 }}>
+                <View className="flex-col lg:flex-row w-full lg:w-auto gap-4 items-center">
                   <Link href={isAuthenticated ? (user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard') : '/login'} asChild>
                     <TouchableOpacity
-                      style={{ 
-                        backgroundColor: '#4848e5', paddingVertical: 18, paddingHorizontal: 32, borderRadius: 16, 
-                        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-                        shadowColor: '#4848e5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8
-                      }}
-                    >
                       <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>
                         {isAuthenticated ? 'Панельге өту' : 'Тегін бастау'}
                       </Text>
@@ -181,19 +155,13 @@ export default function LandingPage() {
 
                   <Link href="/login" asChild>
                     <TouchableOpacity
-                      style={{ 
-                        backgroundColor: 'white', borderWidth: 2, borderColor: '#e2e8f0', paddingVertical: 16, paddingHorizontal: 32, borderRadius: 16, 
-                        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
-                      }}
-                    >
-                      <Play size={20} color="#64748b" />
                       <Text style={{ color: '#475569', fontSize: 16, fontWeight: '800' }}>Демо қарау</Text>
                     </TouchableOpacity>
                   </Link>
                 </View>
 
                 {/* Trust badges */}
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 20, marginTop: 40 }}>
+                <View className="flex-row flex-wrap justify-center lg:justify-start gap-5 mt-10">
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <CheckCircle2 size={20} color="#10b981" />
                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748b' }}>ЖИ генератор</Text>
@@ -207,6 +175,11 @@ export default function LandingPage() {
                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748b' }}>Нақты уақыт</Text>
                   </View>
                 </View>
+              </View>
+
+              {/* Graphic Side (Desktop Only) */}
+              <View className="hidden lg:flex lg:flex-1 items-center justify-center">
+                <AbstractHeroGraphic />
               </View>
 
             </View>
