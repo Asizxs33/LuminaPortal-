@@ -4,10 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base */
+/* ===== Base ===== */
 html, body, #root {
   height: 100%;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
@@ -17,9 +17,10 @@ body {
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  margin: 0;
 }
 
-/* Mobile: constrained phone frame */
+/* ===== Mobile: constrained phone frame ===== */
 #root {
   max-width: 500px;
   margin: 0 auto;
@@ -30,10 +31,17 @@ body {
   height: 100%;
 }
 
-/* Desktop: full width, sidebar handled by React */
+/* ===== Hide sidebar on mobile ===== */
+.web-sidebar {
+  display: none;
+}
+
+/* ===== Desktop (768px+) ===== */
 @media (min-width: 768px) {
   body {
     background-color: #eef1f8;
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   #root {
@@ -44,7 +52,35 @@ body {
     overflow-x: visible;
   }
 
-  /* Nicer scrollbar on desktop */
+  /* Fixed sidebar on the left */
+  .web-sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 240px;
+    background: white;
+    border-right: 1px solid #f1f5f9;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  /* Push main content to the right of the sidebar */
+  #main-content {
+    margin-left: 240px;
+    min-height: 100vh;
+    background: #eef1f8;
+  }
+
+  /* Constrain page content width inside main area */
+  #main-content > div {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* Nice scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -58,11 +94,5 @@ body {
   }
   ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
-  }
-
-  /* Allow text selection on desktop */
-  body {
-    user-select: text;
-    -webkit-user-select: text;
   }
 }

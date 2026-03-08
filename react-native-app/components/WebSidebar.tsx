@@ -1,42 +1,40 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
-import {
-  LayoutDashboard, FileText, PlusCircle, Sparkles, User, LogOut,
-  BookOpen, BarChart3, Settings, GraduationCap, ShieldCheck, Users
-} from 'lucide-react-native';
 
-const BRAND_COLOR = '#4848e5';
-
-interface NavItem {
-  label: string;
-  path: string;
-  icon: React.ReactNode;
+if (Platform.OS !== 'web') {
+  // Export nothing on native
+  module.exports = { default: () => null };
 }
+
+const BRAND = '#4848e5';
 
 export default function WebSidebar() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  if (Platform.OS !== 'web') return null;
+  // Hide sidebar on login/register/landing pages or if not logged in
+  const authRoutes = ['/', '/login', '/register'];
+  if (!user || authRoutes.includes(pathname || '/')) {
+    return null;
+  }
 
   const isActive = (path: string) => pathname?.startsWith(path);
 
-  const studentNav: NavItem[] = [
-    { label: 'Дашборд', path: '/(student)/dashboard', icon: <LayoutDashboard size={18} color={isActive('/(student)/dashboard') ? BRAND_COLOR : '#94a3b8'} /> },
-    { label: 'Нәтижелер', path: '/(student)/results', icon: <BarChart3 size={18} color={isActive('/(student)/results') ? BRAND_COLOR : '#94a3b8'} /> },
-  ];
+  const navItems = user.role === 'admin'
+    ? [
+        { label: 'Тесттер', path: '/(admin)/dashboard', emoji: '📝' },
+        { label: 'Студенттер', path: '/(admin)/students', emoji: '👥' },
+        { label: 'Нәтижелер', path: '/(admin)/results', emoji: '📊' },
+      ]
+    : [
+        { label: 'Дашборд', path: '/(student)/dashboard', emoji: '📋' },
+        { label: 'Нәтижелер', path: '/(student)/results', emoji: '📊' },
+      ];
 
-  const adminNav: NavItem[] = [
-    { label: 'Тесттер', path: '/(admin)/dashboard', icon: <FileText size={18} color={isActive('/(admin)/dashboard') ? BRAND_COLOR : '#94a3b8'} /> },
-    { label: 'Студенттер', path: '/(admin)/students', icon: <Users size={18} color={isActive('/(admin)/students') ? BRAND_COLOR : '#94a3b8'} /> },
-    { label: 'Нәтижелер', path: '/(admin)/results', icon: <BarChart3 size={18} color={isActive('/(admin)/results') ? BRAND_COLOR : '#94a3b8'} /> },
-  ];
-
-  const navItems = user?.role === 'admin' ? adminNav : studentNav;
-  const getInitials = (name: string) => name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const initials = (user.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   const handleLogout = async () => {
     await logout();
@@ -44,103 +42,83 @@ export default function WebSidebar() {
   };
 
   return (
-    <View style={{
-      width: 240,
-      minHeight: '100vh' as any,
-      backgroundColor: 'white',
-      borderRightWidth: 1,
-      borderRightColor: '#f1f5f9',
-      flexDirection: 'column',
-      paddingTop: 24,
-      paddingBottom: 24,
-    }}>
+    <div className="web-sidebar">
       {/* Brand */}
-      <View style={{ paddingHorizontal: 20, marginBottom: 32, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ backgroundColor: BRAND_COLOR, width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
-          <BookOpen size={18} color="white" />
-        </View>
-        <View>
-          <Text style={{ fontSize: 16, fontWeight: '900', color: '#0f172a' }}>LuminaPortal</Text>
-          <Text style={{ fontSize: 10, color: '#94a3b8', fontWeight: '600' }}>
-            {user?.role === 'admin' ? 'Мұғалім панелі' : 'Студент порталы'}
-          </Text>
-        </View>
-      </View>
+      <div style={{ padding: '28px 20px 24px', borderBottom: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: 10,
+            background: `linear-gradient(135deg, ${BRAND}, #6366f1)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 18, color: 'white', fontWeight: 900,
+          }}>L</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>LuminaPortal</div>
+            <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>
+              {user.role === 'admin' ? '🛡️ Мұғалім' : '🎓 Студент'}
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Role badge */}
-      {user?.role === 'admin' && (
-        <View style={{ marginHorizontal: 16, marginBottom: 20, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ede9fe', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 }}>
-          <ShieldCheck size={14} color="#7c3aed" />
-          <Text style={{ color: '#7c3aed', fontWeight: '700', fontSize: 12 }}>Администратор</Text>
-        </View>
-      )}
-
-      {/* Navigation */}
-      <View style={{ flex: 1, paddingHorizontal: 12, gap: 2 }}>
-        <Text style={{ fontSize: 10, fontWeight: '800', color: '#94a3b8', paddingHorizontal: 8, marginBottom: 6, letterSpacing: 1 }}>
-          НАВИГАЦИЯ
-        </Text>
-        {navItems.map((item) => {
+      {/* Nav */}
+      <div style={{ flex: 1, padding: '16px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', padding: '0 10px 8px', letterSpacing: 1.2, textTransform: 'uppercase' as any }}>
+          Навигация
+        </div>
+        {navItems.map(item => {
           const active = isActive(item.path);
           return (
-            <TouchableOpacity
+            <button
               key={item.path}
-              onPress={() => router.push(item.path as any)}
+              onClick={() => router.push(item.path as any)}
               style={{
-                flexDirection: 'row', alignItems: 'center', gap: 12,
-                paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10,
-                backgroundColor: active ? '#eef2ff' : 'transparent',
-                marginBottom: 2,
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', borderRadius: 10, border: 'none',
+                background: active ? '#eef2ff' : 'transparent',
+                cursor: 'pointer', textAlign: 'left', width: '100%',
+                transition: 'all 0.15s ease',
               }}
+              onMouseEnter={e => { if (!active) (e.target as any).style.background = '#f8fafc'; }}
+              onMouseLeave={e => { if (!active) (e.target as any).style.background = 'transparent'; }}
             >
-              {item.icon}
-              <Text style={{ fontWeight: active ? '700' : '600', fontSize: 14, color: active ? BRAND_COLOR : '#475569' }}>
-                {item.label}
-              </Text>
-              {active && <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: BRAND_COLOR }} />
-              </View>}
-            </TouchableOpacity>
+              <span style={{ fontSize: 16 }}>{item.emoji}</span>
+              <span style={{
+                fontSize: 13, fontWeight: active ? 700 : 500,
+                color: active ? BRAND : '#475569',
+              }}>{item.label}</span>
+              {active && <span style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: 3, background: BRAND }} />}
+            </button>
           );
         })}
+      </div>
 
-        {/* Admin: switch to student view */}
-        {user?.role === 'admin' && (
-          <>
-            <View style={{ height: 1, backgroundColor: '#f1f5f9', marginVertical: 12, marginHorizontal: 8 }} />
-            <Text style={{ fontSize: 10, fontWeight: '800', color: '#94a3b8', paddingHorizontal: 8, marginBottom: 6, letterSpacing: 1 }}>
-              СТУДЕНТ РЕЖИМІ
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push('/(student)/dashboard' as any)}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, backgroundColor: 'transparent' }}
-            >
-              <GraduationCap size={18} color="#94a3b8" />
-              <Text style={{ fontWeight: '600', fontSize: 14, color: '#475569' }}>Студент ретінде кіру</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-
-      {/* Bottom: User profile */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#f1f5f9', gap: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: BRAND_COLOR, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: 'white', fontWeight: '900', fontSize: 13 }}>{getInitials(user?.name || '')}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '700', color: '#0f172a', fontSize: 13 }} numberOfLines={1}>{user?.name}</Text>
-            <Text style={{ color: '#94a3b8', fontSize: 11 }} numberOfLines={1}>{user?.email}</Text>
-          </View>
-        </View>
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 8, backgroundColor: '#fef2f2' }}
+      {/* User */}
+      <div style={{ padding: '16px', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 18,
+            background: `linear-gradient(135deg, ${BRAND}, #6366f1)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'white', fontWeight: 900, fontSize: 13,
+          }}>{initials}</div>
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
+            <div style={{ color: '#94a3b8', fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</div>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+            padding: '8px 10px', borderRadius: 8, border: 'none',
+            background: '#fef2f2', cursor: 'pointer', color: '#ef4444',
+            fontWeight: 700, fontSize: 13,
+          }}
         >
-          <LogOut size={15} color="#ef4444" />
-          <Text style={{ color: '#ef4444', fontWeight: '700', fontSize: 13 }}>Шығу</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          🚪 Шығу
+        </button>
+      </div>
+    </div>
   );
 }
