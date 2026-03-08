@@ -20,8 +20,10 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="apple-mobile-web-app-title" content="LuminaPortal" />
 
         {/* ===== App Icon (shown on Home Screen) ===== */}
-        <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/icon.png" />
-        <link rel="icon" type="image/png" href="/assets/images/favicon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.json" />
 
         {/* ===== Theme color (browser toolbar color on Android Chrome) ===== */}
         <meta name="theme-color" content="#4848e5" />
