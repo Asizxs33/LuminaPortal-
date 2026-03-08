@@ -16,11 +16,25 @@ function AppShell({ children }: { children: React.ReactNode }) {
     typeof window !== 'undefined' && window.innerWidth >= 768;
   const isAuthRoute = !pathname || AUTH_ROUTES.includes(pathname) || pathname === '';
 
+  // Desktop + logged in: sidebar on left, constrained content on right
   if (isDesktopWeb && user && !isAuthRoute) {
     return (
-      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#f6f6f8' }}>
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#eef1f8' }}>
         <WebSidebar />
-        <View style={{ flex: 1, overflow: 'hidden' as any }}>
+        <View style={{ flex: 1, overflow: 'auto' as any, backgroundColor: '#eef1f8' }}>
+          <View style={{ maxWidth: 960, width: '100%', alignSelf: 'center', flex: 1 }}>
+            {children}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Desktop + auth route: centered card layout
+  if (isDesktopWeb && isAuthRoute) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#eef1f8', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: '100%', maxWidth: 480, backgroundColor: 'white', borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 32 } as any}>
           {children}
         </View>
       </View>
