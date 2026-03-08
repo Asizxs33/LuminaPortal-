@@ -2,29 +2,37 @@
 
 import { ScrollViewStyleReset } from 'expo-router/html';
 
-// This file is web-only and used to configure the root HTML for every
-// web page during static rendering.
-// The contents of this function only run in Node.js environments and
-// do not have access to the DOM or browser APIs.
 export default function Root({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="kk">
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+        {/* Viewport: viewport-fit=cover removes safe area white bars */}
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
-        
-        {/* PWA iOS Native App Settings */}
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        {/* 
-          Disable body scrolling on web. This makes ScrollView components work closer to how they do on native. 
-          However, body scrolling is often nice to have for mobile web. If you want to enable it, remove this line.
-        */}
-        <ScrollViewStyleReset />
 
-        {/* Add any additional <head> elements that you want globally available on web... */}
+        {/* ===== PWA / iOS Standalone Mode ===== */}
+        {/* These two tags hide Safari URL bar + toolbar when opened from Home Screen */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        {/* black-translucent = status bar blends with app. Use 'default' for white bar */}
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="LuminaPortal" />
+
+        {/* ===== App Icon (shown on Home Screen) ===== */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/icon.png" />
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png" />
+
+        {/* ===== Theme color (browser toolbar color on Android Chrome) ===== */}
+        <meta name="theme-color" content="#4848e5" />
+        <meta name="msapplication-TileColor" content="#4848e5" />
+        <meta name="msapplication-TileImage" content="/assets/images/icon.png" />
+
+        {/* ===== App metadata ===== */}
+        <title>LuminaPortal</title>
+        <meta name="description" content="Студенттерге арналған онлайн тестілеу платформасы" />
+
+        <ScrollViewStyleReset />
       </head>
       <body>{children}</body>
     </html>
