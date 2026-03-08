@@ -5,7 +5,7 @@ import { ShieldCheck, HelpCircle, Timer, AlertTriangle, CheckCircle2, Info, Arro
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API = 'http://172.20.10.2:3001';
+import { API } from '../../constants/api';
 
 interface TestDetail {
   id: string;

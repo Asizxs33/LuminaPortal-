@@ -4,8 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookOpen, AlertCircle, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'expo-router';
-
-const LOCAL_API = 'http://172.20.10.2:3001';
+import { API as LOCAL_API } from '../constants/api';
 
 export default function Register() {
   const router = useRouter();

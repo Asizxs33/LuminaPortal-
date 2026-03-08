@@ -22,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const USER_KEY = 'lumina_user';
 const TOKEN_KEY = 'lumina_token';
-const API_URL = 'http://172.20.10.2:3001'; // Mac WiFi IP
+import { API as API_URL } from '../constants/api';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return { success: true, role: loggedUser.role };
         } catch (err) {
             console.error('Login error:', err);
-            return { success: false, error: 'Network error. Make sure the server is running and your phone is on the same WiFi.' };
+            return { success: false, error: 'Желі қатесі. Интернет байланысын тексеріңіз.' };
         }
     };
 

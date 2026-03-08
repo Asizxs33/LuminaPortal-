@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Plus, ArrowLeft, Trash2, Edit2, Code2, List, Save, X, Terminal } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API = 'http://172.20.10.2:3001';
+import { API } from '../../../constants/api';
 
 interface Option {
   text: string;
