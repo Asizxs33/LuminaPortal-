@@ -124,28 +124,28 @@ export default function AdminDashboard() {
           <View className="flex-[1] lg:flex-[2.5] flex">
             
             {/* Stat Cards */}
-            <View className="flex-col md:flex-row gap-4 mb-8">
-              <View className="flex-1 bg-white/80 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-4 md:gap-5">
-                 <View className="bg-indigo-50 w-12 h-12 md:w-14 md:h-14 items-center justify-center rounded-2xl"><FileText size={24} color="#4848e5" /></View>
-                 <View className="flex-1">
-                  <Text className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{tests.length}</Text>
-                  <Text className="text-[13px] md:text-[14px] text-slate-500 font-bold mt-0.5">Барлық тест</Text>
+            <View className="flex-row gap-2 md:gap-4 mb-8">
+              <View className="flex-[1] bg-white/80 backdrop-blur-xl p-3 md:p-6 rounded-[20px] md:rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-col lg:flex-row items-center justify-center lg:justify-start gap-2 md:gap-5">
+                 <View className="bg-indigo-50 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><FileText size={20} color="#4848e5" /></View>
+                 <View className="items-center lg:items-start">
+                  <Text className="text-lg md:text-3xl font-black text-slate-900 tracking-tight">{tests.length}</Text>
+                  <Text className="text-[10px] md:text-[14px] text-slate-500 font-bold mt-0.5 text-center lg:text-left" numberOfLines={1}>Барлық тест</Text>
                  </View>
               </View>
 
-              <View className="flex-1 bg-white/80 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-4 md:gap-5">
-                 <View className="bg-emerald-50 w-12 h-12 md:w-14 md:h-14 items-center justify-center rounded-2xl"><CheckCircle size={24} color="#10b981" /></View>
-                 <View className="flex-1">
-                  <Text className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{published.length}</Text>
-                  <Text className="text-[13px] md:text-[14px] text-slate-500 font-bold mt-0.5">Жарияланған</Text>
+              <View className="flex-[1] bg-white/80 backdrop-blur-xl p-3 md:p-6 rounded-[20px] md:rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-col lg:flex-row items-center justify-center lg:justify-start gap-2 md:gap-5">
+                 <View className="bg-emerald-50 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><CheckCircle size={20} color="#10b981" /></View>
+                 <View className="items-center lg:items-start">
+                  <Text className="text-lg md:text-3xl font-black text-slate-900 tracking-tight">{published.length}</Text>
+                  <Text className="text-[10px] md:text-[14px] text-slate-500 font-bold mt-0.5 text-center lg:text-left" numberOfLines={1}>Жарияланған</Text>
                  </View>
               </View>
               
-              <View className="flex-1 bg-white/80 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-4 md:gap-5">
-                 <View className="bg-slate-100 w-12 h-12 md:w-14 md:h-14 items-center justify-center rounded-2xl"><Archive size={24} color="#64748b" /></View>
-                 <View className="flex-1">
-                  <Text className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{unpublished.length}</Text>
-                  <Text className="text-[13px] md:text-[14px] text-slate-500 font-bold mt-0.5">Жабық/Черновик</Text>
+              <View className="flex-[1] bg-white/80 backdrop-blur-xl p-3 md:p-6 rounded-[20px] md:rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-col lg:flex-row items-center justify-center lg:justify-start gap-2 md:gap-5">
+                 <View className="bg-slate-100 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><Archive size={20} color="#64748b" /></View>
+                 <View className="items-center lg:items-start">
+                  <Text className="text-lg md:text-3xl font-black text-slate-900 tracking-tight">{unpublished.length}</Text>
+                  <Text className="text-[10px] md:text-[14px] text-slate-500 font-bold mt-0.5 text-center lg:text-left" numberOfLines={1}>Жабық</Text>
                  </View>
               </View>
             </View>
