@@ -37,9 +37,18 @@ export default function WebSidebar() {
   const initials = (user.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   const handleLogout = async () => {
-    await logout();
-    router.replace('/login');
+    try {
+      await logout();
+      if (typeof window !== 'undefined') {
+        window.location.replace('/login');
+      } else {
+        router.replace('/login');
+      }
+    } catch (e) {
+      console.error('Logout failed:', e);
+    }
   };
+
 
   return (
     <div className="web-sidebar">
