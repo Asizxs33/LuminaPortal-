@@ -42,6 +42,8 @@ body {
     background-color: #eef1f8;
     user-select: text;
     -webkit-user-select: text;
+    height: 100vh;
+    overflow-y: hidden; /* App deals with scrolling internally */
   }
 
   #root {
@@ -50,34 +52,7 @@ body {
     box-shadow: none;
     background-color: transparent;
     overflow-x: visible;
-  }
-
-  /* Fixed sidebar on the left */
-  .web-sidebar {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 240px;
-    background: white;
-    border-right: 1px solid #f1f5f9;
-    z-index: 100;
-    overflow-y: auto;
-  }
-
-  /* Push main content to the right of the sidebar */
-  .layout-main-content {
-    margin-left: 240px !important;
-    min-height: 100vh;
-    background: #eef1f8;
-  }
-
-  /* Constrain page content width inside main area */
-  .layout-main-content > div {
-    max-width: 960px;
-    margin: 0 auto;
+    height: 100vh;
   }
 
   /* Nice scrollbar */

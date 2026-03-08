@@ -12,25 +12,31 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        {/* Sidebar conditionally renders via internal Platform check */}
-        <WebSidebar />
-        
-        {/* Wrap Stack in a standard View. Native HTML divs break RN Gesture Responder */}
-        <View 
-          style={isWeb ? ({ marginLeft: 'var(--sidebar-width, 0px)', flex: 1 } as any) : { flex: 1 }}
-          className={isWeb ? 'layout-main-content' : undefined}
-        >
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="register" />
-            <Stack.Screen name="(student)" />
-            <Stack.Screen name="(admin)" />
-            <Stack.Screen name="test/[id]/start" />
-            <Stack.Screen name="test/[id]/take" />
-            <Stack.Screen name="test/[id]/result" />
-          </Stack>
+        {/* On Web, we wrap the whole app in a flex-row View to put Sidebar next to Stack */}
+        <View style={{ flex: 1, flexDirection: isWeb ? 'row' : 'column', backgroundColor: isWeb ? '#eef1f8' : 'white' }}>
+          
+          {/* Sidebar conditionally renders via internal Platform check */}
+          <WebSidebar />
+          
+          {/* Main Content Area */}
+          <View style={[
+            { flex: 1, overflow: 'hidden' as any },
+            // On web, add a max-width and center it to prevent stretching
+            isWeb && { maxWidth: 960, width: '100%', alignSelf: 'center', backgroundColor: '#eef1f8' }
+          ]}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="register" />
+              <Stack.Screen name="(student)" />
+              <Stack.Screen name="(admin)" />
+              <Stack.Screen name="test/[id]/start" />
+              <Stack.Screen name="test/[id]/take" />
+              <Stack.Screen name="test/[id]/result" />
+            </Stack>
+          </View>
         </View>
+
         <StatusBar style="auto" />
       </AuthProvider>
     </SafeAreaProvider>
