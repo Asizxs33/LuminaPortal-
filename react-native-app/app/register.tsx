@@ -153,9 +153,11 @@ export default function Register() {
 
                   <View className="flex-row justify-center mt-2">
                     <Text className="text-slate-600 font-medium">Аккаунтыңыз бар ма? </Text>
-                    <TouchableOpacity onPress={() => router.push('/login')}>
-                      <Text className="text-[#4848e5] font-bold">Жүйеге кіру</Text>
-                    </TouchableOpacity>
+                    <Link href="/login" asChild>
+                      <TouchableOpacity>
+                        <Text className="text-[#4848e5] font-bold">Жүйеге кіру</Text>
+                      </TouchableOpacity>
+                    </Link>
                   </View>
                 </View>
               )}
