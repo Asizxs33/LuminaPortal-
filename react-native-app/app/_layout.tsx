@@ -27,8 +27,8 @@ export default function RootLayout() {
           
           <View style={[
             { flex: 1, overflow: 'hidden' as any, width: '100%' },
-            // On web desktop, constrain width and set side padding
-            isWeb && width > 768 && { maxWidth: 960, backgroundColor: '#eef1f8', paddingHorizontal: 32 },
+            // On web desktop, allow full expansion for landing page edge-to-edge
+            isWeb && width > 768 && { flex: 1, backgroundColor: '#eef1f8' },
             // Mobile constrain (shadow frame)
             isMobileDesktop && { maxWidth: 500, backgroundColor: 'white', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 40, elevation: 5 }
           ]}>
