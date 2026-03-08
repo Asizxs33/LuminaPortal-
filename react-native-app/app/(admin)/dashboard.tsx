@@ -103,12 +103,12 @@ export default function AdminDashboard() {
   //  RENDER
   // -------------------------------------------------------------------------------- //
   return (
-    <View className="flex-1 bg-slate-50 relative overflow-hidden">
+    <View className="flex-1 bg-slate-50 relative">
       {/* Soft decorative background orbs for Premium Glassmorphism Look */}
-      <View className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" />
-      <View className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-400/20 blur-3xl opacity-60" />
+      <View className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" pointerEvents="none" />
+      <View className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-400/20 blur-3xl opacity-60" pointerEvents="none" />
 
-      <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-8 px-4 lg:px-8 pb-8">
+      <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-8 px-4 lg:px-8 pb-8" showsVerticalScrollIndicator={false}>
         
         {/* Header Section (Desktop) */}
         <View className="hidden lg:flex flex-row justify-between items-end mb-8 pl-1">
@@ -124,28 +124,28 @@ export default function AdminDashboard() {
           <View className="flex-[1] lg:flex-[2.5] flex">
             
             {/* Stat Cards */}
-            <View className="flex-col md:flex-row flex-wrap lg:flex-nowrap gap-5 mb-8">
-              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-5">
-                 <View className="bg-indigo-50 w-14 h-14 items-center justify-center rounded-2xl"><FileText size={28} color="#4848e5" /></View>
-                 <View>
-                  <Text className="text-3xl font-black text-slate-900 tracking-tight">{tests.length}</Text>
-                  <Text className="text-[14px] text-slate-500 font-bold mt-1">Барлық тест</Text>
+            <View className="flex-col md:flex-row gap-4 mb-8">
+              <View className="flex-1 bg-white/80 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-4 md:gap-5">
+                 <View className="bg-indigo-50 w-12 h-12 md:w-14 md:h-14 items-center justify-center rounded-2xl"><FileText size={24} color="#4848e5" /></View>
+                 <View className="flex-1">
+                  <Text className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{tests.length}</Text>
+                  <Text className="text-[13px] md:text-[14px] text-slate-500 font-bold mt-0.5">Барлық тест</Text>
                  </View>
               </View>
 
-              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-5">
-                 <View className="bg-emerald-50 w-14 h-14 items-center justify-center rounded-2xl"><CheckCircle size={28} color="#10b981" /></View>
-                 <View>
-                  <Text className="text-3xl font-black text-slate-900 tracking-tight">{published.length}</Text>
-                  <Text className="text-[14px] text-slate-500 font-bold mt-1">Жарияланған</Text>
+              <View className="flex-1 bg-white/80 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-4 md:gap-5">
+                 <View className="bg-emerald-50 w-12 h-12 md:w-14 md:h-14 items-center justify-center rounded-2xl"><CheckCircle size={24} color="#10b981" /></View>
+                 <View className="flex-1">
+                  <Text className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{published.length}</Text>
+                  <Text className="text-[13px] md:text-[14px] text-slate-500 font-bold mt-0.5">Жарияланған</Text>
                  </View>
               </View>
               
-              <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-5">
-                 <View className="bg-slate-100 w-14 h-14 items-center justify-center rounded-2xl"><Archive size={28} color="#64748b" /></View>
-                 <View>
-                  <Text className="text-3xl font-black text-slate-900 tracking-tight">{unpublished.length}</Text>
-                  <Text className="text-[14px] text-slate-500 font-bold mt-1">Жабық/Черновик</Text>
+              <View className="flex-1 bg-white/80 backdrop-blur-xl p-5 md:p-6 rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-row items-center gap-4 md:gap-5">
+                 <View className="bg-slate-100 w-12 h-12 md:w-14 md:h-14 items-center justify-center rounded-2xl"><Archive size={24} color="#64748b" /></View>
+                 <View className="flex-1">
+                  <Text className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{unpublished.length}</Text>
+                  <Text className="text-[13px] md:text-[14px] text-slate-500 font-bold mt-0.5">Жабық/Черновик</Text>
                  </View>
               </View>
             </View>
