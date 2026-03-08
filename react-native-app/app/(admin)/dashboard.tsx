@@ -5,7 +5,7 @@ import { Plus, FileText, CheckCircle, Archive, Sparkles, Trash2, X, Circle, Chec
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
-import { API } from '../../constants/api';
+import { API } from '../constants/api';
 
 interface Test {
   id: string;

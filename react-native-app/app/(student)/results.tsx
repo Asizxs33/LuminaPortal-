@@ -5,7 +5,7 @@ import { Trophy, CheckCircle2, Target, Award, BookOpen, Clock, ArrowRight } from
 import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { API } from '../../constants/api';
+import { API } from '../constants/api';
 
 interface Result {
   id: number;

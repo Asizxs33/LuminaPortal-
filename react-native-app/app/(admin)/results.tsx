@@ -5,7 +5,7 @@ import { Users, CheckCircle2, Clock, Search, BarChart3, ArrowUpRight, ArrowDownR
 import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { API } from '../../constants/api';
+import { API } from '../constants/api';
 
 interface Result {
   id: number;

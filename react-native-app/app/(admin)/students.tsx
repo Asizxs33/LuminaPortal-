@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Users, Search, ShieldCheck, GraduationCap, BarChart3, FileText, CheckCircle2, Mail } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { API } from '../../constants/api';
+import { API } from '../constants/api';
 
 interface Student {
   id: number;

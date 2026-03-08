@@ -6,7 +6,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { API } from '../../../constants/api';
+import { API } from '../../constants/api';
 
 interface Option {
   id: number;

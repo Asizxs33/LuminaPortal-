@@ -22,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const USER_KEY = 'lumina_user';
 const TOKEN_KEY = 'lumina_token';
-import { API as API_URL } from '../constants/api';
+import { API as API_URL } from '../app/constants/api';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
