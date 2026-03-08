@@ -22,24 +22,27 @@ export default function RootLayout() {
         {/* Sidebar conditionally renders via internal Platform check */}
         {(!isWeb || width > 768) && <WebSidebar />}
         
-        {/* Main Content Area */}
-        <View style={[
-          { flex: 1, overflow: 'hidden' as any, width: '100%' },
-          // On web, add a max-width and center it to prevent stretching
-          isWeb && width > 768 && { maxWidth: 960, alignSelf: 'center', backgroundColor: '#eef1f8' },
-          // Mobile constrain
-          isMobileDesktop && { maxWidth: 500, backgroundColor: 'white', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 40, elevation: 5 }
-        ]}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="register" />
-            <Stack.Screen name="(student)" />
-            <Stack.Screen name="(admin)" />
-            <Stack.Screen name="test/[id]/start" />
-            <Stack.Screen name="test/[id]/take" />
-            <Stack.Screen name="test/[id]/result" />
-          </Stack>
+        {/* Main Content Area Wrapper */}
+        <View style={{ flex: 1, alignItems: 'center', backgroundColor: isWeb ? '#eef1f8' : 'white' }}>
+          
+          <View style={[
+            { flex: 1, overflow: 'hidden' as any, width: '100%' },
+            // On web desktop, constrain width and set side padding
+            isWeb && width > 768 && { maxWidth: 960, backgroundColor: '#eef1f8', paddingHorizontal: 32 },
+            // Mobile constrain (shadow frame)
+            isMobileDesktop && { maxWidth: 500, backgroundColor: 'white', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 40, elevation: 5 }
+          ]}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="register" />
+              <Stack.Screen name="(student)" />
+              <Stack.Screen name="(admin)" />
+              <Stack.Screen name="test/[id]/start" />
+              <Stack.Screen name="test/[id]/take" />
+              <Stack.Screen name="test/[id]/result" />
+            </Stack>
+          </View>
         </View>
       </View>
 
