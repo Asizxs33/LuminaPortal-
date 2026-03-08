@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, Image } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { BookOpen, ArrowRight, ShieldCheck, CheckCircle2, Zap, BarChart3, Users, Lock, ChevronRight, Play, Sparkles } from 'lucide-react-native';
@@ -68,6 +68,12 @@ export default function LandingPage() {
   const { isAuthenticated, user, logout } = useAuth();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const isDesktop = width >= 1024;
   const isTablet = width >= 768 && width < 1024;
 
@@ -80,6 +86,8 @@ export default function LandingPage() {
     }
   };
 
+
+  if (!isMounted) return null;
 
   return (
     <SafeAreaProvider>
