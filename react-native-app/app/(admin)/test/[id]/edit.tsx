@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Plus, ArrowLeft, Trash2, Edit2, Code2, List, Save, X, Terminal } from 'lucide-react-native';
+import { Plus, ArrowLeft, Trash2, Edit2, Code2, List, Save, X, Terminal, Upload, Download } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { API } from '../../constants/api';
@@ -44,6 +44,9 @@ export default function TestEditor() {
   const [showMCModal, setShowMCModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ ok: number; fail: number } | null>(null);
+  const fileInputRef = useRef<any>(null);
 
   // MC Form State
   const [mcText, setMcText] = useState('');
@@ -198,6 +201,82 @@ export default function TestEditor() {
     setCodeTestCases([{ input: '', expected_output: '' }]);
   };
 
+  // --- EXCEL / CSV IMPORT (web only) ---
+  const downloadTemplate = () => {
+    const csv = [
+      'question,option_a,option_b,option_c,option_d,correct',
+      '2+2 нешеге тең?,3,4,5,6,B',
+      'Қазақстанның астанасы?,Алматы,Астана,Шымкент,Тараз,B',
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'questions_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const parseCSV = (text: string): { text: string; options: { text: string; is_correct: boolean }[] }[] => {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const questions: { text: string; options: { text: string; is_correct: boolean }[] }[] = [];
+    // Skip header row
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.trim());
+      if (cols.length < 6) continue;
+      const [qText, a, b, c, d, correct] = cols;
+      const correctLetter = correct.toUpperCase();
+      questions.push({
+        text: qText,
+        options: [
+          { text: a, is_correct: correctLetter === 'A' },
+          { text: b, is_correct: correctLetter === 'B' },
+          { text: c, is_correct: correctLetter === 'C' },
+          { text: d, is_correct: correctLetter === 'D' },
+        ],
+      });
+    }
+    return questions;
+  };
+
+  const handleFileImport = async (event: any) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+
+    const text = await file.text();
+    let questions = parseCSV(text);
+
+    if (questions.length === 0) {
+      Alert.alert('Қате', 'Файлда сұрақтар табылмады немесе формат дұрыс емес. Шаблонды жүктеп алыңыз.');
+      setImporting(false);
+      return;
+    }
+
+    let ok = 0;
+    let fail = 0;
+    const token = await AsyncStorage.getItem('lumina_token');
+
+    for (const q of questions) {
+      try {
+        const res = await fetch(`${API}/api/questions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ type: 'MULTIPLE_CHOICE', text: q.text, options: q.options, test_id: id }),
+        });
+        if (res.ok) ok++; else fail++;
+      } catch { fail++; }
+    }
+
+    setImportResult({ ok, fail });
+    setImporting(false);
+    fetchTest();
+    // Reset the file input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+
   if (loading || !test) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', justifyContent: 'center', alignItems: 'center' }}>
@@ -222,7 +301,7 @@ export default function TestEditor() {
       <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 100 }}>
         
         {/* ADD BUTTONS */}
-        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
           <TouchableOpacity 
             onPress={() => setShowMCModal(true)}
             style={{ flex: 1, backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe', padding: 16, borderRadius: 16, alignItems: 'center' }}
@@ -243,6 +322,60 @@ export default function TestEditor() {
             <Text style={{ color: '#78350f', fontWeight: '800', fontSize: 13, textAlign: 'center' }}>+ Код сұрағы</Text>
           </TouchableOpacity>
         </View>
+
+        {/* DESKTOP-ONLY: Excel/CSV Import */}
+        {Platform.OS === 'web' && (
+          <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 16, padding: 16, marginBottom: 24, gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Upload size={20} color="#16a34a" />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '800', color: '#14532d', fontSize: 14 }}>Excel / CSV импорт (Десктоп)</Text>
+                <Text style={{ color: '#16a34a', fontSize: 12, marginTop: 2 }}>Барлық сұрақтарды бір файлдан жүктеңіз</Text>
+              </View>
+            </View>
+
+            {importResult && (
+              <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#bbf7d0' }}>
+                <Text style={{ fontWeight: '800', color: '#14532d', fontSize: 13 }}>
+                  ✅ {importResult.ok} сұрақ қосылды {importResult.fail > 0 ? `· ❌ ${importResult.fail} қате` : ''}
+                </Text>
+              </View>
+            )}
+
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                onPress={downloadTemplate}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: '#16a34a', backgroundColor: 'white', paddingVertical: 10, borderRadius: 10 }}
+              >
+                <Download size={16} color="#16a34a" />
+                <Text style={{ color: '#16a34a', fontWeight: '700', fontSize: 13 }}>Шаблон жүктеу</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                disabled={importing}
+                onPress={() => fileInputRef.current?.click()}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: importing ? '#86efac' : '#16a34a', paddingVertical: 10, borderRadius: 10 }}
+              >
+                <Upload size={16} color="white" />
+                <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>
+                  {importing ? 'Импортталуда...' : 'CSV файл таңдау'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Hidden web file input */}
+            {Platform.OS === 'web' && (
+              // @ts-ignore
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.txt"
+                style={{ display: 'none' }}
+                onChange={handleFileImport}
+              />
+            )}
+          </View>
+        )}
 
         {/* QUESTIONS LIST */}
         <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f172a', marginBottom: 16 }}>
