@@ -165,10 +165,8 @@ export default function Register() {
 
                   <View className="flex-row justify-center mt-2">
                     <Text style={{ color: '#64748b', fontSize: 15 }}>Аккаунтыңыз бар ма? </Text>
-                    <Link href="/login" asChild>
-                      <TouchableOpacity>
-                        <Text style={{ color: '#4848e5', fontWeight: '800', fontSize: 15 }}>Жүйеге кіру</Text>
-                      </TouchableOpacity>
+                    <Link href="/login" style={{ color: '#4848e5', fontWeight: '800', fontSize: 15 }}>
+                      Жүйеге кіру
                     </Link>
                   </View>
                 </View>
