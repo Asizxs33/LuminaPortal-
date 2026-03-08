@@ -75,7 +75,7 @@ export default function Register() {
               <Text className="text-slate-600 mt-1">LuminaPortal студент порталына қош келдіңіз</Text>
             </View>
 
-            <View className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <View className="w-full max-w-[450px] self-center bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
               {success ? (
                 <View className="items-center py-8 gap-4">
                   <View className="h-20 w-20 rounded-full bg-emerald-100 items-center justify-center">

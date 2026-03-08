@@ -54,7 +54,7 @@ export default function Login() {
             </Text>
           </View>
 
-          <View style={{ backgroundColor: 'white', padding: 24, borderRadius: 24, borderWidth: 1, borderColor: '#f1f5f9' }}>
+          <View style={{ width: '100%', maxWidth: 450, alignSelf: 'center', backgroundColor: 'white', padding: 24, borderRadius: 24, borderWidth: 1, borderColor: '#f1f5f9' }}>
             {/* Tabs */}
             <View style={{ flexDirection: 'row', backgroundColor: '#f1f5f9', padding: 4, borderRadius: 12, marginBottom: 24 }}>
               <TouchableOpacity
