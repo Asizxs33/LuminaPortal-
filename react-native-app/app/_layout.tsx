@@ -9,6 +9,16 @@ import WebSidebar from '../components/WebSidebar';
 
 const isWeb = Platform.OS === 'web';
 
+if (isWeb) {
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    if (typeof args[0] === 'string' && args[0].includes('Cannot record touch end without a touch start')) {
+      return;
+    }
+    originalConsoleError(...args);
+  };
+}
+
 export default function RootLayout() {
   const { width } = useWindowDimensions();
   // We constrain mobile Web styling if width > 500 without triggering the full desktop layout
