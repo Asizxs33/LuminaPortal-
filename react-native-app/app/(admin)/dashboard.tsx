@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FileText, CheckCircle, Archive, Trash2, Eye, EyeOff, Layers, Clock } from 'lucide-react-native';
+import { Plus, Edit2, Trash2, Eye, EyeOff, FileText, CheckCircle, Archive, Clock, Layers, Filter, Search, MoreVertical, BarChart3 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -198,6 +198,15 @@ export default function AdminDashboard() {
                     </TouchableOpacity>
 
                     <View className="flex-row border-t border-slate-100 bg-white/60">
+                      
+                      <TouchableOpacity
+                        onPress={() => router.push(`/test/${test.id}/results` as any)}
+                        className="flex-[0.8] py-4 flex-row items-center justify-center gap-2 border-r border-slate-100 active:bg-slate-50 transition-colors"
+                      >
+                        <BarChart3 size={18} color="#0284c7" />
+                        <Text className="text-sky-600 font-black text-[12px] md:text-[14px]">Аналитика</Text>
+                      </TouchableOpacity>
+
                       <TouchableOpacity
                         onPress={() => {
                           const actionMsg = test.is_published ? 'жабылсын ба?' : 'қайта ашылсын ба?';
@@ -217,17 +226,17 @@ export default function AdminDashboard() {
                         className="flex-1 py-4 flex-row items-center justify-center gap-2 border-r border-slate-100 active:bg-slate-50 transition-colors"
                       >
                         {test.is_published
-                          ? <><EyeOff size={18} color="#64748b" /><Text className="text-slate-600 font-black text-[14px]">Жабу</Text></>
-                          : <><Eye size={18} color="#4848e5" /><Text className="text-indigo-600 font-black text-[14px]">Жариялау</Text></>
+                          ? <><EyeOff size={18} color="#64748b" /><Text className="text-slate-600 font-black text-[12px] md:text-[14px]">Жабу</Text></>
+                          : <><Eye size={18} color="#4848e5" /><Text className="text-indigo-600 font-black text-[12px] md:text-[14px]">Жариялау</Text></>
                         }
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         onPress={() => deleteTest(test)}
-                        className="flex-1 py-4 flex-row items-center justify-center gap-2 active:bg-red-50 transition-colors"
+                        className="flex-[0.8] py-4 flex-row items-center justify-center gap-2 active:bg-red-50 transition-colors"
                       >
                         <Trash2 size={18} color="#ef4444" />
-                        <Text className="text-red-500 font-black text-[14px]">Өшіру</Text>
+                        <Text className="text-red-500 font-black text-[12px] md:text-[14px]">Өшіру</Text>
                       </TouchableOpacity>
                     </View>
                   </View>

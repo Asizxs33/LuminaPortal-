@@ -33,6 +33,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
+    } else if (req.method === 'DELETE') {
+        try {
+            const { rows } = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+            if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+            return res.json({ success: true, deleted_id: rows[0].id });
+        } catch (err: any) {
+            console.error('Delete User Error:', err.message);
+            res.status(500).json({ error: err.message });
+        }
     } else {
         res.status(405).json({ error: 'Method not allowed' });
     }
