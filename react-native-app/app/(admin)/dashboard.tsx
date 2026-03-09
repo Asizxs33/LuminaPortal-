@@ -45,10 +45,10 @@ export default function AdminDashboard() {
   const togglePublish = async (test: Test) => {
     try {
       const token = await AsyncStorage.getItem('lumina_token');
-      const res = await fetch(`${API}/api/tests/${test.id}/publish`, {
+      const res = await fetch(`${API}/api/tests/${test.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ is_published: !test.is_published }),
+        body: JSON.stringify({ published: !test.is_published }),
       });
       if (res.ok) {
         setTests(prev => prev.map(t => t.id === test.id ? { ...t, is_published: !t.is_published } : t));

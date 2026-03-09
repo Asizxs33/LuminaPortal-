@@ -21,7 +21,7 @@ export default function AdminLayout() {
   return (
     <Tabs 
       tabBar={(props) => (
-        <View className={Platform.OS === 'web' ? 'flex md:hidden' : 'flex'}>
+        <View style={{ display: 'none' }}>
           <BottomTabBar {...props} />
         </View>
       )}
@@ -39,7 +39,7 @@ export default function AdminLayout() {
         options={{
           title: 'ЖИ',
           tabBarIcon: ({ color, size }) => <Sparkles size={size} color={color} />,
-          href: Platform.OS === 'web' ? null : undefined, // Hide entirely from mobile tab bar?
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -47,7 +47,7 @@ export default function AdminLayout() {
         options={{
           title: 'Жасау',
           tabBarIcon: ({ color, size }) => <Plus size={size} color={color} />,
-          href: Platform.OS === 'web' ? null : undefined,
+          href: null,
         }}
       />
       <Tabs.Screen
