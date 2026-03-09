@@ -45,36 +45,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let finalStatus = 'PASSED';
         let consoleOutput = '';
 
-        // Run against Piston API for Vercel Serverless environment compatibility
-        // Use python version 3.10.0
+        // Run against Wandbox API for Vercel Serverless environment compatibility (Free, no keys needed)
+        // Use python version cpython-3.10.15
         for (let i = 0; i < testCases.length; i++) {
             const tc = testCases[i];
             const fullCode = `${code}\n\n${tc.input}`;
 
-            const pistonRes = await fetch('https://emkc.org/api/v2/piston/execute', {
+            const wandboxRes = await fetch('https://wandbox.org/api/compile.json', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    language: 'python',
-                    version: '3.10.0',
-                    files: [{ content: fullCode }]
+                    compiler: 'cpython-3.10.15',
+                    code: fullCode
                 })
             });
 
-            const pistonData = await pistonRes.json();
+            const wandboxData = await wandboxRes.json();
             
-            let stdout = '';
-            let stderr = '';
+            let stdout = (wandboxData.program_output || wandboxData.program_message || '').trim();
+            let stderr = (wandboxData.program_error || wandboxData.compiler_error || '').trim();
 
-            if (pistonData.run) {
-                stdout = pistonData.run.stdout ? pistonData.run.stdout.trim() : '';
-                stderr = pistonData.run.stderr ? pistonData.run.stderr.trim() : '';
-
-                if (pistonData.run.code !== 0 && !stderr) {
-                    stderr = pistonData.run.output.trim();
-                }
-            } else {
-                stderr = pistonData.message || 'Execution failed';
+            if (wandboxData.status !== "0" && !stderr) {
+                stderr = 'Execution failed with status ' + wandboxData.status;
             }
 
             if (stderr) {
