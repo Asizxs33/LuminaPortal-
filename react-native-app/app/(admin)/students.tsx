@@ -53,9 +53,12 @@ export default function AdminStudents() {
       if (res.ok) {
         setStudents(prev => prev.map(s => s.id === id ? { ...s, role } : s));
         Alert.alert('✅', `Рөл өзгерті: ${role === 'admin' ? 'Әкімші' : 'Студент'}`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        Alert.alert('Қате', errData.error || 'Рөл өзгерту сәтсіз болды (Сервер қатесі)');
       }
     } catch {
-      Alert.alert('Қате', 'Рөл өзгерту сәтсіз болды');
+      Alert.alert('Қате', 'Сервермен байланыс үзілді немесе желіде ақау бар');
     }
   };
 

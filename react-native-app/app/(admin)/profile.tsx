@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
-import { LogOut, User, Mail, Shield, BookOpen, ChevronRight, Settings, ArrowLeft } from 'lucide-react-native';
+import { LogOut, User, Mail, Shield, BookOpen, ChevronRight, Settings, ArrowLeft, GraduationCap } from 'lucide-react-native';
 
 export default function AdminProfile() {
   const { user, logout } = useAuth();
@@ -92,7 +92,20 @@ export default function AdminProfile() {
 
           {/* Quick Links */}
           <View className="bg-white/80 backdrop-blur-xl rounded-[28px] border border-white shadow-xl shadow-slate-200/50 mb-8 overflow-hidden">
-            <TouchableOpacity
+             
+             {/* Go to Student View */}
+             <TouchableOpacity
+               className="p-6 flex-row items-center gap-4 border-b border-slate-100/60 active:bg-slate-50/50 transition-colors"
+               onPress={() => router.push('/(student)/dashboard')}
+             >
+               <View className="w-12 h-12 rounded-xl bg-teal-50 items-center justify-center">
+                 <GraduationCap size={22} color="#0d9488" />
+               </View>
+               <Text className="flex-1 text-base font-black text-slate-900">Студент порталына өту</Text>
+               <ChevronRight size={20} color="#cbd5e1" />
+             </TouchableOpacity>
+
+             <TouchableOpacity
                className="p-6 flex-row items-center gap-4 border-b border-slate-100/60 active:bg-slate-50/50 transition-colors"
                onPress={() => Alert.alert('Жақында', 'Бұл мүмкіндік дайындалуда')}
              >
