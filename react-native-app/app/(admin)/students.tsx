@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Users, Search, ShieldCheck, GraduationCap, BarChart3, FileText, CheckCircle2, Mail } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -162,17 +162,26 @@ export default function AdminStudents() {
                 </View>
                 {/* Role toggle */}
                 <TouchableOpacity
-                  onPress={() => Alert.alert(
-                    'Рөлді өзгерту',
-                    `${s.name} — рөлін өзгерту`,
-                    [
-                      { text: 'Бас тарту', style: 'cancel' },
-                      {
-                        text: s.role === 'admin' ? 'Студент ету' : 'Әкімші ету',
-                        onPress: () => changeRole(s.id, s.role === 'admin' ? 'student' : 'admin')
+                  onPress={() => {
+                    const nextRole = s.role === 'admin' ? 'student' : 'admin';
+                    if (Platform.OS === 'web') {
+                      if (window.confirm(`${s.name} — ${s.role === 'admin' ? 'студент етуді' : 'әкімші етуді'} растайсыз ба?`)) {
+                        changeRole(s.id, nextRole);
                       }
-                    ]
-                  )}
+                    } else {
+                      Alert.alert(
+                        'Рөлді өзгерту',
+                        `${s.name} — рөлін өзгерту`,
+                        [
+                          { text: 'Бас тарту', style: 'cancel' },
+                          {
+                            text: s.role === 'admin' ? 'Студент ету' : 'Әкімші ету',
+                            onPress: () => changeRole(s.id, nextRole)
+                          }
+                        ]
+                      );
+                    }
+                  }}
                   style={{ padding: 8, backgroundColor: '#f1f5f9', borderRadius: 10 }}
                 >
                   {s.role === 'admin'

@@ -72,31 +72,33 @@ export default function AdminDashboard() {
   const unpublished = tests.filter(t => !t.is_published);
 
   const deleteTest = async (test: Test) => {
-    Alert.alert(
-      'Тестті өшіру',
-      `«${test.title}» тестті толықтай өшіргіңіз келе ме?`,
-      [
-        { text: 'Бас тарту', style: 'cancel' },
-        { 
-          text: 'Өшіру', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await AsyncStorage.getItem('lumina_token');
-              const res = await fetch(`${API}/api/tests/${test.id}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              if (res.ok) {
-                setTests(prev => prev.filter(t => t.id !== test.id));
-              }
-            } catch {
-              Alert.alert('Қате', 'Серверге қосылу сәтсіз болды');
-            }
-          }
+    const handleConfirm = async () => {
+      try {
+        const token = await AsyncStorage.getItem('lumina_token');
+        const res = await fetch(`${API}/api/tests/${test.id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setTests(prev => prev.filter(t => t.id !== test.id));
         }
-      ]
-    );
+      } catch {
+        Alert.alert('Қате', 'Серверге қосылу сәтсіз болды');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`«${test.title}» тестті толықтай өшіргіңіз келе ме?`)) handleConfirm();
+    } else {
+      Alert.alert(
+        'Тестті өшіру',
+        `«${test.title}» тестті толықтай өшіргіңіз келе ме?`,
+        [
+          { text: 'Бас тарту', style: 'cancel' },
+          { text: 'Өшіру', style: 'destructive', onPress: handleConfirm }
+        ]
+      );
+    }
   };
 
   // -------------------------------------------------------------------------------- //
@@ -197,14 +199,21 @@ export default function AdminDashboard() {
 
                     <View className="flex-row border-t border-slate-100 bg-white/60">
                       <TouchableOpacity
-                        onPress={() => Alert.alert(
-                          test.is_published ? 'Тестті жабу' : 'Тестті ашу',
-                          `«${test.title}» ${test.is_published ? 'жабылсын ба?' : 'қайта ашылсын ба?'}`,
-                          [
-                            { text: 'Бас тарту', style: 'cancel' },
-                            { text: test.is_published ? 'Жабу' : 'Ашу', style: test.is_published ? 'destructive' : 'default', onPress: () => togglePublish(test) }
-                          ]
-                        )}
+                        onPress={() => {
+                          const actionMsg = test.is_published ? 'жабылсын ба?' : 'қайта ашылсын ба?';
+                          if (Platform.OS === 'web') {
+                            if (window.confirm(`«${test.title}» ${actionMsg}`)) togglePublish(test);
+                          } else {
+                            Alert.alert(
+                              test.is_published ? 'Тестті жабу' : 'Тестті ашу',
+                              `«${test.title}» ${actionMsg}`,
+                              [
+                                { text: 'Бас тарту', style: 'cancel' },
+                                { text: test.is_published ? 'Жабу' : 'Ашу', style: test.is_published ? 'destructive' : 'default', onPress: () => togglePublish(test) }
+                              ]
+                            );
+                          }
+                        }}
                         className="flex-1 py-4 flex-row items-center justify-center gap-2 border-r border-slate-100 active:bg-slate-50 transition-colors"
                       >
                         {test.is_published

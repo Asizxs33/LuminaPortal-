@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -10,21 +10,27 @@ export default function AdminProfile() {
   const router = useRouter();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Шығу',
-      'Жүйеден шығуды растаңыз',
-      [
-        { text: 'Бас тарту', style: 'cancel' },
-        {
-          text: 'Шығу',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/login');
+    const performLogout = async () => {
+      await logout();
+      router.replace('/login');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Жүйеден шығуды растаңыз')) performLogout();
+    } else {
+      Alert.alert(
+        'Шығу',
+        'Жүйеден шығуды растаңыз',
+        [
+          { text: 'Бас тарту', style: 'cancel' },
+          {
+            text: 'Шығу',
+            style: 'destructive',
+            onPress: performLogout
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const getInitials = (name: string) => {
