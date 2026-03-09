@@ -82,7 +82,11 @@ export default function TestTake() {
         if (prev <= 1) {
           clearInterval(timer);
           setTimeout(() => {
-            Alert.alert('Уақыт бітті!', 'Тестке бөлінген уақыт аяқталды. Нәтижелер сақталуда...');
+            if (Platform.OS === 'web') {
+              window.alert('Уақыт бітті! Тестке бөлінген уақыт аяқталды. Нәтижелер сақталуда...');
+            } else {
+              Alert.alert('Уақыт бітті!', 'Тестке бөлінген уақыт аяқталды. Нәтижелер сақталуда...');
+            }
             handleFinish();
           }, 0);
           return 0;
@@ -214,14 +218,20 @@ export default function TestTake() {
   };
 
   const confirmFinish = () => {
-    Alert.alert(
-      "Аяқтау", 
-      "Тестті ерте аяқтағыңыз келе ме?",
-      [
-        { text: "Жоқ", style: "cancel" },
-        { text: "Иә, аяқтау", onPress: () => handleFinish(false), style: "destructive" }
-      ]
-    );
+    if (Platform.OS === 'web') {
+      if (window.confirm("Тестті ерте аяқтағыңыз келе ме?")) {
+        handleFinish(false);
+      }
+    } else {
+      Alert.alert(
+        "Аяқтау", 
+        "Тестті ерте аяқтағыңыз келе ме?",
+        [
+          { text: "Жоқ", style: "cancel" },
+          { text: "Иә, аяқтау", onPress: () => handleFinish(false), style: "destructive" }
+        ]
+      );
+    }
   };
 
   const formatTime = (seconds: number) => {
