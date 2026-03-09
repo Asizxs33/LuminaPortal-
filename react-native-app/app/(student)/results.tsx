@@ -12,11 +12,11 @@ interface Result {
   test_id: string;
   score: number;
   total: number;
-  passed: boolean;
   completed_at: string;
   test_title: string;
   subject: string;
   percentage: number;
+  passing_score: number;
 }
 
 export default function StudentResults() {
@@ -49,7 +49,10 @@ export default function StudentResults() {
   const avgScore = validResults.length
     ? Math.round(validResults.reduce((a, r) => a + (r.percentage ?? Math.round(r.score / r.total * 100)), 0) / validResults.length)
     : 0;
-  const passCount = validResults.filter(r => r?.passed).length;
+  const passCount = validResults.filter(r => {
+    const pct = r.percentage ?? Math.round(r.score / r.total * 100);
+    return pct >= (r.passing_score || 50);
+  }).length;
 
   const getScoreStyle = (pct: number) => {
     if (pct >= 75) return { color: '#15803d', bg: '#dcfce7' };
@@ -124,6 +127,7 @@ export default function StudentResults() {
           ) : (
             validResults.map((r, i) => {
               const pct = r.percentage ?? Math.round(r.score / r.total * 100);
+              const isPassed = pct >= (r.passing_score || 50);
               const s = getScoreStyle(pct);
               return (
                 <View key={r.id} style={{
@@ -143,7 +147,7 @@ export default function StudentResults() {
                   </View>
                   <View style={{ backgroundColor: s.bg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, alignItems: 'center' }}>
                     <Text style={{ color: s.color, fontWeight: '900', fontSize: 15 }}>{pct}%</Text>
-                    <Text style={{ color: s.color, fontSize: 10, fontWeight: '700' }}>{r.passed ? 'ӨТТІ' : 'ӨТПЕДІ'}</Text>
+                    <Text style={{ color: s.color, fontSize: 10, fontWeight: '700' }}>{isPassed ? 'ӨТТІ' : 'ӨТПЕДІ'}</Text>
                   </View>
                 </View>
               );

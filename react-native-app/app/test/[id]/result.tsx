@@ -76,13 +76,6 @@ export default function TestResult() {
                 <Text style={{ fontWeight: '800', color: '#475569', fontSize: 15 }}>Тақтаға оралу</Text>
               </TouchableOpacity>
               
-              {!passed && (
-                <TouchableOpacity onPress={() => router.replace(`/test/${id}/start` as any)} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, backgroundColor: '#4848e5', borderRadius: 16, shadowColor: '#4848e5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 }}>
-                  <RotateCcw size={20} color="#ffffff" />
-                  <Text style={{ fontWeight: '800', color: 'white', fontSize: 15 }}>Қайта тапсыру</Text>
-                </TouchableOpacity>
-              )}
-              
               <TouchableOpacity onPress={() => router.replace('/(student)/results')} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderWidth: 2, borderColor: '#e2e8f0', borderRadius: 16 }}>
                 <Text style={{ fontWeight: '800', color: '#334155', fontSize: 15 }}>Барлық нәтижелер</Text>
               </TouchableOpacity>
