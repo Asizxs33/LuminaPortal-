@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const { title, subject, description, duration_minutes, passing_score, is_published = false } = req.body || {};
             if (!title) return res.status(400).json({ error: 'Title required' });
 
-            const testId = uuidv4();
+            const testId = crypto.randomUUID();
             const { rows } = await pool.query(
                 'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
                 [testId, title, subject || 'General', description || '', duration_minutes || 30, passing_score || 70, is_published]

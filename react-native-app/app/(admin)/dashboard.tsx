@@ -105,12 +105,12 @@ export default function AdminDashboard() {
   //  RENDER
   // -------------------------------------------------------------------------------- //
   return (
-    <View className="flex-grow bg-slate-50 relative">
+    <View className="flex-1 bg-slate-50 relative">
       {/* Soft decorative background orbs for Premium Glassmorphism Look */}
       <View className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" pointerEvents="none" />
       <View className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-400/20 blur-3xl opacity-60" pointerEvents="none" />
 
-      <ScrollView className="flex-grow" contentContainerClassName="pt-6 lg:pt-8 px-4 lg:px-8 pb-8" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-8 px-4 lg:px-8 pb-8" showsVerticalScrollIndicator={false}>
 
         {/* Header Section (Desktop) */}
         <View className="hidden lg:flex flex-row justify-between items-end mb-8 pl-1">

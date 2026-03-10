@@ -80,8 +80,8 @@ export default function StudentDashboard() {
   }
 
   return (
-    <SafeAreaView className="flex-grow bg-[#f6f6f8]">
-      <ScrollView contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16" showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-[#f6f6f8]">
+      <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16" showsVerticalScrollIndicator={false}>
 
         {/* Header Section */}
         <View className="flex-col lg:flex-row justify-between items-stretch lg:items-end mb-6 gap-4">
