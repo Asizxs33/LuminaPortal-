@@ -28,13 +28,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.json(rows);
         }
         if (req.method === 'POST') {
-            const { title, subject, description, duration_minutes, is_published = false } = req.body || {};
+            const { title, subject, description, duration_minutes, passing_score, is_published = false } = req.body || {};
             if (!title) return res.status(400).json({ error: 'Title required' });
 
             const testId = uuidv4();
             const { rows } = await pool.query(
-                'INSERT INTO tests (id, title, subject, description, duration_minutes, is_published) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',
-                [testId, title, subject || 'General', description || '', duration_minutes || 30, is_published]
+                'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
+                [testId, title, subject || 'General', description || '', duration_minutes || 30, passing_score || 70, is_published]
             );
             return res.status(201).json(rows[0]);
         }
