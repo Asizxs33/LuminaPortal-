@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
+import { v4 as uuidv4 } from 'uuid';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -11,8 +12,6 @@ function setCors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
-
-import { v4 as uuidv4 } from 'uuid';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     setCors(res);
