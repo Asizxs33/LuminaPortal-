@@ -12,6 +12,8 @@ function setCors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
+import { v4 as uuidv4 } from 'uuid';
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -21,17 +23,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const { rows } = await pool.query(`
                 SELECT t.*, COUNT(q.id)::int AS question_count
                 FROM tests t LEFT JOIN questions q ON q.test_id = t.id
-                WHERE t.published = true
+                WHERE t.is_published = true
                 GROUP BY t.id ORDER BY t.created_at DESC
             `);
             return res.json(rows);
         }
         if (req.method === 'POST') {
-            const { title, description, duration_minutes, published = false } = req.body || {};
+            const { title, subject, description, duration_minutes, is_published = false } = req.body || {};
             if (!title) return res.status(400).json({ error: 'Title required' });
+
+            const testId = uuidv4();
             const { rows } = await pool.query(
-                'INSERT INTO tests (title, description, duration_minutes, published) VALUES ($1,$2,$3,$4) RETURNING *',
-                [title, description, duration_minutes || 30, published]
+                'INSERT INTO tests (id, title, subject, description, duration_minutes, is_published) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',
+                [testId, title, subject || 'General', description || '', duration_minutes || 30, is_published]
             );
             return res.status(201).json(rows[0]);
         }

@@ -39,7 +39,6 @@ export default function AdminLayout() {
         options={{
           title: 'ЖИ',
           tabBarIcon: ({ color, size }) => <Sparkles size={size} color={color} />,
-          href: Platform.OS === 'web' ? null : undefined,
         }}
       />
       <Tabs.Screen
@@ -47,7 +46,6 @@ export default function AdminLayout() {
         options={{
           title: 'Жасау',
           tabBarIcon: ({ color, size }) => <Plus size={size} color={color} />,
-          href: Platform.OS === 'web' ? null : undefined,
         }}
       />
       <Tabs.Screen
