@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(400).json({ error: 'published boolean is required' });
             }
             const { rows } = await pool.query(
-                'UPDATE tests SET published = $1 WHERE id = $2 RETURNING *',
+                'UPDATE tests SET is_published = $1 WHERE id = $2 RETURNING *',
                 [published, id]
             );
             if (!rows[0]) return res.status(404).json({ error: 'Test not found' });
