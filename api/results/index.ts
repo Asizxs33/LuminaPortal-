@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         if (req.method === 'GET') {
             const { rows } = await pool.query(`
-                SELECT r.*, u.name as user_name, u.email, t.title as test_title
+                SELECT r.*, u.name as student_name, u.email, t.title as test_title
                 FROM results r
                 JOIN users u ON r.user_id = u.id
                 JOIN tests t ON r.test_id = t.id
