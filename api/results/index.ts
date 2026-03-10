@@ -36,6 +36,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             `);
             return res.json(rows);
         }
+        if (req.method === 'DELETE') {
+            const { ids } = req.body || {};
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res.status(400).json({ error: 'Array of result IDs required' });
+            }
+            // Use ANY to delete multiple rows by an array of IDs
+            const { rows } = await pool.query(
+                'DELETE FROM results WHERE id = ANY($1::int[]) RETURNING id',
+                [ids]
+            );
+            return res.json({ success: true, deleted_count: rows.length, deleted_ids: rows.map(r => r.id) });
+        }
         res.status(405).json({ error: 'Method not allowed' });
     } catch (err: any) {
         console.error('Results error:', err.message);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Users, CheckCircle2, Clock, Search, BarChart3, ArrowUpRight, ArrowDownRight, FileText } from 'lucide-react-native';
+import { Users, CheckCircle2, Clock, Search, BarChart3, ArrowUpRight, ArrowDownRight, FileText, Trash2 } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -23,6 +23,7 @@ export default function ResultsDashboard() {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchResults();
@@ -42,6 +43,56 @@ export default function ResultsDashboard() {
       console.error('Results fetch error:', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleSelection = (id: number) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setSelectedIds(newSet);
+  };
+
+  const deleteSelected = async () => {
+    const idsToDelete = Array.from(selectedIds);
+    if (idsToDelete.length === 0) return;
+
+    const performDelete = async () => {
+      try {
+        const token = await AsyncStorage.getItem('lumina_token');
+        const res = await fetch(`${API}/api/results`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ ids: idsToDelete })
+        });
+
+        if (res.ok) {
+          setResults(prev => prev.filter(r => !selectedIds.has(r.id)));
+          setSelectedIds(new Set());
+        } else {
+          Alert.alert('Қате', 'Өшіру сәтсіз аяқталды');
+        }
+      } catch (e) {
+        Alert.alert('Қате', 'Серверге қосылу мүмкін емес');
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Таңдалған ${idsToDelete.length} нәтижені өшіргіңіз келе ме?`)) {
+        performDelete();
+      }
+    } else {
+      Alert.alert(
+        'Нәтижелерді өшіру',
+        `Таңдалған ${idsToDelete.length} нәтижені өшіргіңіз келе ме?`,
+        [
+          { text: 'Бас тарту', style: 'cancel' },
+          { text: 'Өшіру', style: 'destructive', onPress: performDelete }
+        ]
+      );
     }
   };
 
@@ -144,8 +195,23 @@ export default function ResultsDashboard() {
 
         {/* Results List */}
         <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', overflow: 'hidden' }}>
-          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
-            <Text style={{ fontSize: 17, fontWeight: '800', color: '#0f172a', marginBottom: 12 }}>Соңғы тапсырулар</Text>
+          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: '#0f172a' }}>Соңғы тапсырулар</Text>
+
+            {selectedIds.size > 0 && (
+              <TouchableOpacity
+                onPress={deleteSelected}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fee2e2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+              >
+                <Trash2 size={14} color="#dc2626" />
+                <Text style={{ color: '#dc2626', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>
+                  {selectedIds.size} өшіру
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, paddingHorizontal: 12 }}>
               <Search size={16} color="#94a3b8" />
               <TextInput
@@ -168,14 +234,29 @@ export default function ResultsDashboard() {
               const pct = Math.round((r.score / r.total) * 100);
               const colors = getScoreColor(r.score, r.total);
               const avatarColor = avatarColors[r.user_id % avatarColors.length];
+              const isSelected = selectedIds.has(r.id);
+
               return (
-                <View
+                <TouchableOpacity
                   key={r.id}
+                  onPress={() => toggleSelection(r.id)}
+                  activeOpacity={0.7}
                   style={{
                     padding: 14, flexDirection: 'row', alignItems: 'center',
-                    borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#f1f5f9'
+                    borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#f1f5f9',
+                    backgroundColor: isSelected ? '#eff6ff' : 'transparent'
                   }}
                 >
+                  {/* Custom Checkbox */}
+                  <View style={{
+                    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
+                    borderColor: isSelected ? '#3b82f6' : '#cbd5e1',
+                    backgroundColor: isSelected ? '#3b82f6' : 'white',
+                    alignItems: 'center', justifyContent: 'center', marginRight: 12
+                  }}>
+                    {isSelected && <CheckCircle2 size={14} color="white" />}
+                  </View>
+
                   <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: avatarColor, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                     <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>
                       {getInitials(r.student_name || '?')}
@@ -188,7 +269,7 @@ export default function ResultsDashboard() {
                   <View style={{ backgroundColor: colors.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
                     <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{pct}%</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               );
             })
           )}
