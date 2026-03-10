@@ -21,14 +21,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { code, language, test_id, question_index } = req.body;
 
         if (!code || !language || !test_id || question_index === undefined) {
-             return res.status(400).json({ status: 'FAILED', output: 'Missing required parameters' });
+            return res.status(400).json({ status: 'FAILED', output: 'Missing required parameters' });
         }
 
         const result = await pool.query(
             'SELECT * FROM questions WHERE test_id = $1 ORDER BY order_index ASC, id ASC',
             [test_id]
         );
-        
+
         if (result.rows.length === 0) {
             return res.status(404).json({ status: 'FAILED', output: 'Test or questions not found' });
         }
@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const testCases = targetQuestion.test_cases;
-        
+
         let passedCount = 0;
         let finalStatus = 'PASSED';
         let consoleOutput = '';
@@ -49,6 +49,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Use python version cpython-3.10.15
         for (let i = 0; i < testCases.length; i++) {
             const tc = testCases[i];
+
+            // We pass the raw code as-is. We also append tc.input at the end as fallback 
+            // for older questions where tc.input was executable python code like "print(solve(2,5))".
             const fullCode = `${code}\n\n${tc.input}`;
 
             const wandboxRes = await fetch('https://wandbox.org/api/compile.json', {
@@ -56,12 +59,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     compiler: 'cpython-3.10.15',
-                    code: fullCode
+                    code: fullCode,
+                    stdin: tc.input // Added for competitive programming style input()
                 })
             });
 
             const wandboxData = await wandboxRes.json();
-            
+
             let stdout = (wandboxData.program_output || wandboxData.program_message || '').trim();
             let stderr = (wandboxData.program_error || wandboxData.compiler_error || '').trim();
 
