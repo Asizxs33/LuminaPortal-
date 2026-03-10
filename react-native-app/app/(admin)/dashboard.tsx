@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   const fetchTests = async () => {
     try {
       const token = await AsyncStorage.getItem('lumina_token');
-      const res = await fetch(`${API}/api/tests/all`, {
+      const res = await fetch(`${API}/api/tests?all=true`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setTests(await res.json());

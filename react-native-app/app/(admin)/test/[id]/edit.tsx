@@ -98,7 +98,7 @@ export default function TestEditor() {
           onPress: async () => {
             try {
               const token = await AsyncStorage.getItem('lumina_token');
-              const res = await fetch(`${API}/api/questions/${questionId}`, {
+              const res = await fetch(`${API}/api/questions?id=${questionId}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
               });

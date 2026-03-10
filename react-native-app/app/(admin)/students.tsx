@@ -45,7 +45,7 @@ export default function AdminStudents() {
   const changeRole = async (id: number, role: 'student' | 'admin') => {
     try {
       const token = await AsyncStorage.getItem('lumina_token');
-      const res = await fetch(`${API}/api/students/${id}/role`, {
+      const res = await fetch(`${API}/api/students/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ role }),

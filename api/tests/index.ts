@@ -19,12 +19,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         if (req.method === 'GET') {
-            const { rows } = await pool.query(`
+            const { all } = req.query;
+            let queryStr = `
                 SELECT t.*, COUNT(q.id)::int AS question_count
                 FROM tests t LEFT JOIN questions q ON q.test_id = t.id
                 WHERE t.is_published = true
                 GROUP BY t.id ORDER BY t.created_at DESC
-            `);
+            `;
+
+            if (all === 'true') {
+                queryStr = `
+                    SELECT t.*, COUNT(q.id)::int AS question_count
+                    FROM tests t LEFT JOIN questions q ON q.test_id = t.id
+                    GROUP BY t.id ORDER BY t.created_at DESC
+                `;
+            }
+            const { rows } = await pool.query(queryStr);
             return res.json(rows);
         }
         if (req.method === 'POST') {
