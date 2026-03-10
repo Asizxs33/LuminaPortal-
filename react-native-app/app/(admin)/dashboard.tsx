@@ -23,7 +23,7 @@ export default function AdminDashboard() {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, logout } = useAuth();
-  
+
   useEffect(() => {
     fetchTests();
   }, []);
@@ -105,50 +105,50 @@ export default function AdminDashboard() {
   //  RENDER
   // -------------------------------------------------------------------------------- //
   return (
-    <View className="flex-1 bg-slate-50 relative">
+    <View className="flex-grow bg-slate-50 relative">
       {/* Soft decorative background orbs for Premium Glassmorphism Look */}
       <View className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" pointerEvents="none" />
       <View className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-400/20 blur-3xl opacity-60" pointerEvents="none" />
 
-      <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-8 px-4 lg:px-8 pb-8" showsVerticalScrollIndicator={false}>
-        
+      <ScrollView className="flex-grow" contentContainerClassName="pt-6 lg:pt-8 px-4 lg:px-8 pb-8" showsVerticalScrollIndicator={false}>
+
         {/* Header Section (Desktop) */}
         <View className="hidden lg:flex flex-row justify-between items-end mb-8 pl-1">
-           <View>
+          <View>
             <Text className="text-sm text-indigo-500 font-bold uppercase tracking-widest mb-1">Мұғалім кабинеті</Text>
             <Text className="text-[36px] font-black text-slate-900 tracking-tight">Басқару тақтасы</Text>
           </View>
         </View>
 
         <View className="flex-col lg:flex-row gap-8">
-          
+
           {/* LEFT/MAIN COLUMN - Tests Management */}
-          <View className="flex-[1] lg:flex-[2.5] flex">
-            
+          <View className="w-full lg:flex-[2.5]">
+
             {/* Stat Cards */}
             <View className="flex-row gap-2 md:gap-4 mb-8">
               <View className="flex-[1] bg-white/80 backdrop-blur-xl p-3 md:p-6 rounded-[20px] md:rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-col lg:flex-row items-center justify-center lg:justify-start gap-2 md:gap-5">
-                 <View className="bg-indigo-50 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><FileText size={20} color="#4848e5" /></View>
-                 <View className="items-center lg:items-start">
+                <View className="bg-indigo-50 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><FileText size={20} color="#4848e5" /></View>
+                <View className="items-center lg:items-start">
                   <Text className="text-lg md:text-3xl font-black text-slate-900 tracking-tight">{tests.length}</Text>
                   <Text className="text-[10px] md:text-[14px] text-slate-500 font-bold mt-0.5 text-center lg:text-left" numberOfLines={1}>Барлық тест</Text>
-                 </View>
+                </View>
               </View>
 
               <View className="flex-[1] bg-white/80 backdrop-blur-xl p-3 md:p-6 rounded-[20px] md:rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-col lg:flex-row items-center justify-center lg:justify-start gap-2 md:gap-5">
-                 <View className="bg-emerald-50 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><CheckCircle size={20} color="#10b981" /></View>
-                 <View className="items-center lg:items-start">
+                <View className="bg-emerald-50 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><CheckCircle size={20} color="#10b981" /></View>
+                <View className="items-center lg:items-start">
                   <Text className="text-lg md:text-3xl font-black text-slate-900 tracking-tight">{published.length}</Text>
                   <Text className="text-[10px] md:text-[14px] text-slate-500 font-bold mt-0.5 text-center lg:text-left" numberOfLines={1}>Жарияланған</Text>
-                 </View>
+                </View>
               </View>
-              
+
               <View className="flex-[1] bg-white/80 backdrop-blur-xl p-3 md:p-6 rounded-[20px] md:rounded-3xl border border-white shadow-xl shadow-indigo-900/5 flex-col lg:flex-row items-center justify-center lg:justify-start gap-2 md:gap-5">
-                 <View className="bg-slate-100 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><Archive size={20} color="#64748b" /></View>
-                 <View className="items-center lg:items-start">
+                <View className="bg-slate-100 w-10 h-10 md:w-14 md:h-14 items-center justify-center rounded-xl md:rounded-2xl"><Archive size={20} color="#64748b" /></View>
+                <View className="items-center lg:items-start">
                   <Text className="text-lg md:text-3xl font-black text-slate-900 tracking-tight">{unpublished.length}</Text>
                   <Text className="text-[10px] md:text-[14px] text-slate-500 font-bold mt-0.5 text-center lg:text-left" numberOfLines={1}>Жабық</Text>
-                 </View>
+                </View>
               </View>
             </View>
 
@@ -181,10 +181,10 @@ export default function AdminDashboard() {
                           </Text>
                         </View>
                       </View>
-                      
+
                       <Text className="text-xl font-black text-slate-900 leading-tight mb-3" numberOfLines={2}>{test.title}</Text>
                       <Text className="text-[14px] font-bold text-indigo-500 mb-6">{test.subject}</Text>
-                      
+
                       <View className="flex-row gap-6 mt-auto pt-5 border-t border-slate-200/60">
                         <View className="flex-row items-center gap-2">
                           <Layers size={18} color="#94a3b8" />
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
                     </TouchableOpacity>
 
                     <View className="flex-row border-t border-slate-100 bg-white/60">
-                      
+
                       <TouchableOpacity
                         onPress={() => router.push(`/test/${test.id}/results` as any)}
                         className="flex-[0.8] py-4 flex-row items-center justify-center gap-2 border-r border-slate-100 active:bg-slate-50 transition-colors"

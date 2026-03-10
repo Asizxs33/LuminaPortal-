@@ -10,11 +10,11 @@ import { API } from '../constants/api';
 
 const SUBJECT_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
   'Математика': { bg: '#ede9fe', text: '#7c3aed', accent: '#4848e5' },
-  'Физика':     { bg: '#dcfce7', text: '#15803d', accent: '#059669' },
-  'Химия':      { bg: '#fef9c3', text: '#a16207', accent: '#d97706' },
-  'Биология':   { bg: '#dcfce7', text: '#15803d', accent: '#059669' },
-  'Тарих':      { bg: '#fce7f3', text: '#9d174d', accent: '#ec4899' },
-  'default':    { bg: '#dbeafe', text: '#1d4ed8', accent: '#2563eb' },
+  'Физика': { bg: '#dcfce7', text: '#15803d', accent: '#059669' },
+  'Химия': { bg: '#fef9c3', text: '#a16207', accent: '#d97706' },
+  'Биология': { bg: '#dcfce7', text: '#15803d', accent: '#059669' },
+  'Тарих': { bg: '#fce7f3', text: '#9d174d', accent: '#ec4899' },
+  'default': { bg: '#dbeafe', text: '#1d4ed8', accent: '#2563eb' },
 };
 
 interface Test {
@@ -36,8 +36,8 @@ export default function StudentDashboard() {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
-  
- 
+
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -80,8 +80,8 @@ export default function StudentDashboard() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#f6f6f8]">
-      <ScrollView contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16">
+    <SafeAreaView className="flex-grow bg-[#f6f6f8]">
+      <ScrollView contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16" showsVerticalScrollIndicator={false}>
 
         {/* Header Section */}
         <View className="flex-col lg:flex-row justify-between items-stretch lg:items-end mb-6 gap-4">
@@ -98,9 +98,9 @@ export default function StudentDashboard() {
           {/* Admin Back Button / Profile Header Right Side */}
           <View className="flex-row items-center gap-4">
             {user?.role === 'admin' && (
-              <TouchableOpacity 
-                 onPress={() => router.push('/(admin)/dashboard')}
-                 className="flex-row items-center bg-indigo-100 px-4 py-3 rounded-xl gap-2.5"
+              <TouchableOpacity
+                onPress={() => router.push('/(admin)/dashboard')}
+                className="flex-row items-center bg-indigo-100 px-4 py-3 rounded-xl gap-2.5"
               >
                 <ShieldAlert size={18} color="#4848e5" />
                 <View>
@@ -108,7 +108,7 @@ export default function StudentDashboard() {
                 </View>
               </TouchableOpacity>
             )}
-            
+
             <View className="hidden lg:flex flex-row items-center gap-3 bg-white p-2 pr-4 rounded-[30px] border border-slate-200">
               <View className="w-9 h-9 rounded-full bg-indigo-600 items-center justify-center">
                 <Text className="text-white font-black text-sm">{getInitials(user?.name || '')}</Text>
@@ -121,45 +121,45 @@ export default function StudentDashboard() {
         {/* Global Stats - Horizontal Row */}
         <View className="flex-col md:flex-row flex-wrap lg:flex-nowrap gap-4 mb-6">
           <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-             <View className="bg-indigo-50 p-3 rounded-xl">
-               <BookOpen size={24} color="#4848e5" />
-             </View>
-             <View>
+            <View className="bg-indigo-50 p-3 rounded-xl">
+              <BookOpen size={24} color="#4848e5" />
+            </View>
+            <View>
               <Text className="text-2xl font-black text-slate-900">{tests.length}</Text>
               <Text className="text-[13px] text-slate-500 font-semibold">Бос тестер</Text>
-             </View>
+            </View>
           </View>
 
           <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-             <View className="bg-green-50 p-3 rounded-xl">
-               <CheckCircle size={24} color="#15803d" />
-             </View>
-             <View>
+            <View className="bg-green-50 p-3 rounded-xl">
+              <CheckCircle size={24} color="#15803d" />
+            </View>
+            <View>
               <Text className="text-2xl font-black text-slate-900">{completedIds.size}</Text>
               <Text className="text-[13px] text-slate-500 font-semibold">Аяқталғандар</Text>
-             </View>
+            </View>
           </View>
-          
+
           <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-             <View className="bg-amber-50 p-3 rounded-xl">
-               <Clock size={24} color="#b45309" />
-             </View>
-             <View>
+            <View className="bg-amber-50 p-3 rounded-xl">
+              <Clock size={24} color="#b45309" />
+            </View>
+            <View>
               <Text className="text-2xl font-black text-slate-900">{tests.length - completedIds.size}</Text>
               <Text className="text-[13px] text-slate-500 font-semibold">Кезектегілер</Text>
-             </View>
+            </View>
           </View>
         </View>
 
         {/* Layout Split for Desktop vs Mobile */}
         <View className="flex-col lg:flex-row gap-6">
-          
+
           {/* LEFT/MAIN COLUMN - Tests Grid */}
-          <View className="flex-1 lg:flex-[3]">
-            
+          <View className="w-full lg:flex-[3]">
+
             {/* Toolbar: Search and Filter */}
             <View className="flex-col md:flex-row justify-between gap-4 mb-5">
-              
+
               <View className="flex-row items-center bg-white border border-slate-200 rounded-xl px-3.5 flex-1">
                 <Search size={18} color="#94a3b8" />
                 <TextInput
@@ -205,7 +205,7 @@ export default function StudentDashboard() {
                   return (
                     <View key={test.id} className="w-full md:w-[48%] mb-4 bg-white rounded-2xl border border-slate-200 overflow-hidden">
                       <View style={{ height: 4, backgroundColor: colors.accent }} />
-                      
+
                       <View className="p-5">
                         <View className="flex-row justify-between items-start mb-4">
                           <View style={{ backgroundColor: colors.bg }} className="px-3 py-1.5 rounded-lg">
@@ -222,7 +222,7 @@ export default function StudentDashboard() {
                         <Text className="text-lg font-extrabold text-slate-900 mb-2 leading-relaxed" numberOfLines={2}>
                           {test.title}
                         </Text>
-                        
+
                         {test.description ? (
                           <Text className="text-slate-500 text-sm mb-4 leading-relaxed" numberOfLines={2}>
                             {test.description}
@@ -251,9 +251,9 @@ export default function StudentDashboard() {
                           {isDone
                             ? <Text className="text-slate-500 font-extrabold text-sm">Нәтижелерді көру</Text>
                             : <>
-                                <Text className="text-white font-extrabold text-[15px]">Тестті бастау</Text>
-                                <ArrowRight size={18} color="white" />
-                              </>
+                              <Text className="text-white font-extrabold text-[15px]">Тестті бастау</Text>
+                              <ArrowRight size={18} color="white" />
+                            </>
                           }
                         </TouchableOpacity>
                       </View>
@@ -263,7 +263,7 @@ export default function StudentDashboard() {
               )}
             </View>
           </View>
-          
+
           {/* RIGHT/SIDE COLUMN - Practice Banner (Desktop) */}
           <View className="flex-none lg:flex-1 lg:min-w-[300px]">
             {/* Practice Banner */}
@@ -286,7 +286,7 @@ export default function StudentDashboard() {
             {/* Quick Tips (Desktop Only) */}
             <View className="hidden lg:flex bg-white rounded-3xl p-6 mt-4 border border-slate-200">
               <Text className="text-base font-extrabold text-slate-900 mb-4">Кеңестер</Text>
-              
+
               <View className="flex-row gap-3 mb-4">
                 <View className="w-8 h-8 rounded-lg bg-slate-100 items-center justify-center">
                   <Clock size={16} color="#64748b" />
@@ -308,7 +308,7 @@ export default function StudentDashboard() {
               </View>
             </View>
           </View>
-          
+
         </View>
 
       </ScrollView>
