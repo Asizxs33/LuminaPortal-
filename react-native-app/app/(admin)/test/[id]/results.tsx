@@ -15,7 +15,7 @@ interface Result {
   total: number;
   passed: boolean;
   completed_at: string;
-  user_name?: string;
+  student_name?: string;
 }
 
 export default function TestGroupResults() {
@@ -61,7 +61,7 @@ export default function TestGroupResults() {
   };
 
   const filtered = results.filter(r =>
-    (r.user_name || '').toLowerCase().includes(search.toLowerCase())
+    (r.student_name || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const avgScore = results.length
@@ -186,12 +186,12 @@ export default function TestGroupResults() {
                 >
                   <View className="flex-row items-center flex-1">
                     <View className="w-10 h-10 md:w-12 md:h-12 rounded-full items-center justify-center mr-3 md:mr-4" style={{ backgroundColor: avatarColors[r.user_id % avatarColors.length] }}>
-                       <Text className="text-white font-black text-sm">{getInitials(r.user_name || '?')}</Text>
+                       <Text className="text-white font-black text-sm">{getInitials(r.student_name || '?')}</Text>
                     </View>
                     
                     <View className="flex-1 pr-4">
                       <View className="flex-row items-center gap-2">
-                         <Text className="font-black text-slate-900 text-[14px] md:text-base leading-tight" numberOfLines={2}>{r.user_name || 'Белгісіз студент'}</Text>
+                         <Text className="font-black text-slate-900 text-[14px] md:text-base leading-tight" numberOfLines={2}>{r.student_name || 'Белгісіз'}</Text>
                          {pct >= 90 && <Crown size={14} color="#eab308" />}
                       </View>
                       <Text className="text-slate-500 text-[11px] md:text-[13px] font-bold mt-1">
