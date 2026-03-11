@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, AppState, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle2, Code2, Terminal, Play } from 'lucide-react-native';
+import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle2, Code2, Terminal, Play, Copy } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Clipboard from 'expo-clipboard';
 
 import { API } from '../../constants/api';
 
@@ -49,6 +50,15 @@ export default function TestTake() {
 
   const appState = useRef(AppState.currentState);
   const hasFinished = useRef(false);
+
+  const copyToClipboard = async (text: string) => {
+    await Clipboard.setStringAsync(text);
+    if (Platform.OS === 'web') {
+      window.alert('Көшірілді!');
+    } else {
+      Alert.alert('Дайын', 'Мәтін алмасу буферіне көшірілді!');
+    }
+  };
 
   useEffect(() => {
     fetchTest();
@@ -319,6 +329,36 @@ export default function TestTake() {
           {isCodeQuestion ? (
               // CODE IDE UI
               <View style={{ gap: 16 }}>
+                 {/* ACMP STYLE INPUT/OUTPUT TABLE */}
+                 {currentQuestion.test_cases && currentQuestion.test_cases.length > 0 && (
+                     <View style={{ borderWidth: 1, borderColor: '#16a34a', overflow: 'hidden', backgroundColor: 'white', marginBottom: 8 }}>
+                         <View style={{ flexDirection: 'row', backgroundColor: '#dcfce7', borderBottomWidth: 1, borderBottomColor: '#16a34a' }}>
+                             <Text style={{ width: 40, padding: 8, fontWeight: '800', color: '#166534', fontSize: 12, borderRightWidth: 1, borderRightColor: '#16a34a', textAlign: 'center' }}>№</Text>
+                             <Text style={{ flex: 1, padding: 8, fontWeight: '800', color: '#166534', fontSize: 12, borderRightWidth: 1, borderRightColor: '#16a34a' }}>INPUT.TXT</Text>
+                             <Text style={{ flex: 1, padding: 8, fontWeight: '800', color: '#166534', fontSize: 12 }}>OUTPUT.TXT</Text>
+                         </View>
+                         {currentQuestion.test_cases.slice(0, 3).map((tc, idx, arr) => (
+                             <View key={idx} style={{ flexDirection: 'row', borderBottomWidth: idx === arr.length - 1 ? 0 : 1, borderBottomColor: '#16a34a' }}>
+                                 <View style={{ width: 40, padding: 8, justifyContent: 'center', alignItems: 'center', borderRightWidth: 1, borderRightColor: '#16a34a' }}>
+                                     <Text style={{ color: '#166534', fontSize: 13, fontWeight: '600' }}>{idx + 1}</Text>
+                                 </View>
+                                 <View style={{ flex: 1, padding: 8, borderRightWidth: 1, borderRightColor: '#16a34a', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                     <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 13, color: '#0f172a' }}>{tc.input}</Text>
+                                     <TouchableOpacity onPress={() => copyToClipboard(tc.input)} style={{ padding: 4 }}>
+                                         <Copy size={14} color="#166534" />
+                                     </TouchableOpacity>
+                                 </View>
+                                 <View style={{ flex: 1, padding: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                     <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 13, color: '#0f172a' }}>{tc.expected_output}</Text>
+                                     <TouchableOpacity onPress={() => copyToClipboard(tc.expected_output)} style={{ padding: 4 }}>
+                                         <Copy size={14} color="#166534" />
+                                     </TouchableOpacity>
+                                 </View>
+                             </View>
+                         ))}
+                     </View>
+                 )}
+
                  <View style={{ backgroundColor: '#1e293b', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#334155' }}>
                     <View style={{ backgroundColor: '#0f172a', paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                        <Code2 size={16} color="#94a3b8" />
