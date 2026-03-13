@@ -19,6 +19,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Сұрақ мәтіні берілмеді' });
         }
 
+        // Fix for Node 18+ undici fetch IPv6 issue on Windows causing "fetch failed" to Gemini
+        if (typeof globalThis !== 'undefined' && typeof require !== 'undefined') {
+            try {
+                const { setGlobalDispatcher, Agent } = require('undici');
+                setGlobalDispatcher(new Agent({ connect: { timeout: 60000 } })); 
+            } catch (err) {}
+        }
+
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return res.status(500).json({ error: 'Сервер конфигурациясында қате (API Key жоқ)' });
