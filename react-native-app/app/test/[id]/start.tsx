@@ -140,19 +140,19 @@ export default function TestStart() {
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 24 }}>
           <View style={{ width: '47%', marginBottom: 16, backgroundColor: 'white', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' }}>
-            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', uppercase: true, marginBottom: 4 }}>Сұрақтар</Text>
+            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Сұрақтар</Text>
             <Text style={{ fontSize: 20, fontWeight: '900', color: '#0f172a' }}>{test.questions.length}</Text>
           </View>
           <View style={{ width: '47%', marginBottom: 16, backgroundColor: 'white', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' }}>
-            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', uppercase: true, marginBottom: 4 }}>Өту ұпайы</Text>
+            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Өту ұпайы</Text>
             <Text style={{ fontSize: 20, fontWeight: '900', color: '#0f172a' }}>{test.passing_score}%</Text>
           </View>
           <View style={{ width: '47%', backgroundColor: 'white', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' }}>
-            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', uppercase: true, marginBottom: 4 }}>Мүмкіндік</Text>
+            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Мүмкіндік</Text>
             <Text style={{ fontSize: 20, fontWeight: '900', color: '#0f172a' }}>1 / 1</Text>
           </View>
           <View style={{ width: '47%', backgroundColor: 'white', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' }}>
-            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', uppercase: true, marginBottom: 4 }}>Формат</Text>
+            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Формат</Text>
             <Text style={{ fontSize: 14, fontWeight: '900', color: '#0f172a', textAlign: 'center', marginTop: 4 }}>Бірнеше таңдау</Text>
           </View>
         </View>

@@ -49,21 +49,21 @@ export default function TestResult() {
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%', marginBottom: 32 }}>
               <View style={{ width: '31%', backgroundColor: '#f8fafc', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', uppercase: true, marginBottom: 4 }}>Ұпай</Text>
+                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Ұпай</Text>
                 <Text style={{ fontSize: 22, fontWeight: '900', color: passed ? '#059669' : '#dc2626' }}>
                   {score} <Text style={{ fontSize: 12, color: '#94a3b8' }}>/ {total}</Text>
                 </Text>
               </View>
 
               <View style={{ width: '31%', backgroundColor: '#f8fafc', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', uppercase: true, marginBottom: 4 }}>Пайыз</Text>
+                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Пайыз</Text>
                 <Text style={{ fontSize: 22, fontWeight: '900', color: passed ? '#059669' : '#dc2626' }}>
                   {percentage}%
                 </Text>
               </View>
 
               <View style={{ width: '31%', backgroundColor: '#f8fafc', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', uppercase: true, marginBottom: 4 }}>Өту шегі</Text>
+                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Өту шегі</Text>
                 <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a' }}>
                   {passScorePercentage}%
                 </Text>
