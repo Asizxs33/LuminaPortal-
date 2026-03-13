@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Users, Search, ShieldCheck, GraduationCap, BarChart3, FileText, CheckCircle2, Mail, Trash2 } from 'lucide-react-native';
+import { Users, Search, ShieldCheck, GraduationCap, BarChart3, FileText, CheckCircle2, Mail, Trash2, Coins } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { API } from '../constants/api';
@@ -56,6 +56,25 @@ export default function AdminStudents() {
       } else {
         const errData = await res.json().catch(() => ({}));
         Alert.alert('Қате', errData.error || 'Рөл өзгерту сәтсіз болды (Сервер қатесі)');
+      }
+    } catch {
+      Alert.alert('Қате', 'Сервермен байланыс үзілді немесе желіде ақау бар');
+    }
+  };
+
+  const grantCoins = async (student: Student, amount: number) => {
+    try {
+      const token = await AsyncStorage.getItem('lumina_token');
+      const res = await fetch(`${API}/api/admin/users/grant-coins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ userId: student.id, amount }),
+      });
+      if (res.ok) {
+        Alert.alert('✅', `${student.name} қолданушысына ${amount} ₿ қосылды!`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        Alert.alert('Қате', errData.error || 'Биткоин жіберу сәтсіз болды');
       }
     } catch {
       Alert.alert('Қате', 'Сервермен байланыс үзілді немесе желіде ақау бар');
@@ -193,7 +212,6 @@ export default function AdminStudents() {
                   )}
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {/* Role toggle */}
                   <TouchableOpacity
                     onPress={() => {
                       const nextRole = s.role === 'admin' ? 'student' : 'admin';
@@ -220,6 +238,45 @@ export default function AdminStudents() {
                     {s.role === 'admin'
                       ? <ShieldCheck size={18} color="#4848e5" />
                       : <GraduationCap size={18} color="#64748b" />}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                        if (Platform.OS === 'web') {
+                            const amountStr = window.prompt(`${s.name} қолданушысына қанша Биткоин бергіңіз келеді?`, '100');
+                            if (amountStr) {
+                                const amount = parseInt(amountStr, 10);
+                                if (!isNaN(amount) && amount > 0) {
+                                    grantCoins(s, amount);
+                                } else {
+                                    window.alert('Қате сан енгізілді!');
+                                }
+                            }
+                        } else {
+                            // Basic prompt for mobile (Alert.prompt is iOS only, handling gracefully)
+                            Alert.prompt(
+                                'Биткоин жіберу',
+                                `${s.name} қолданушысына қанша Биткоин бергіңіз келеді?`,
+                                [
+                                    { text: 'Бас тарту', style: 'cancel' },
+                                    { text: 'Жіберу', onPress: (amountStr?: string) => {
+                                        const amount = parseInt(amountStr || '0', 10);
+                                        if (!isNaN(amount) && amount > 0) {
+                                            grantCoins(s, amount);
+                                        } else {
+                                            Alert.alert('Қате', 'Қате сан енгізілді!');
+                                        }
+                                    }}
+                                ],
+                                'plain-text',
+                                '100',
+                                'number-pad'
+                            );
+                        }
+                    }}
+                    style={{ padding: 8, backgroundColor: '#fef3c7', borderRadius: 10, borderWidth: 1, borderColor: '#fde68a' }}
+                  >
+                    <Coins size={18} color="#d97706" />
                   </TouchableOpacity>
 
                   {/* Delete button */}
