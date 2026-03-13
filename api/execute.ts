@@ -79,7 +79,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 break;
             }
 
-            if (stdout !== tc.expected_output.trim()) {
+            const expected = tc.expected_output.trim();
+            const actual = stdout;
+            let isPassed = false;
+            
+            if (actual === expected) {
+                isPassed = true;
+            } else {
+                // Try comparing as numbers
+                const numExpected = Number(expected);
+                const numActual = Number(actual);
+                if (!isNaN(numExpected) && !isNaN(numActual) && Math.abs(numExpected - numActual) < 1e-6) {
+                    isPassed = true;
+                }
+            }
+
+            if (!isPassed) {
                 finalStatus = 'FAILED';
                 consoleOutput = `Test Case ${i + 1} Failed.\nExpected:\n${tc.expected_output}\n\nGot:\n${stdout}`;
                 break;
