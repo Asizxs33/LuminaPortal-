@@ -58,6 +58,7 @@ export default function TestTake() {
   const appState = useRef(AppState.currentState);
   const hasFinished = useRef(false);
   const lastAlertedWarning = useRef(0);
+  const lastWarningTime = useRef(0);
 
   const copyToClipboard = async (text: string) => {
     await Clipboard.setStringAsync(text);
@@ -81,7 +82,11 @@ export default function TestTake() {
   useEffect(() => {
     const handleBlur = () => {
        if (!hasFinished.current && !loading && !submitting) {
-          setAntiCheatWarnings(w => w + 1);
+          const now = Date.now();
+          if (now - lastWarningTime.current > 2000) {
+              lastWarningTime.current = now;
+              setAntiCheatWarnings(w => w + 1);
+          }
        }
     };
 
@@ -92,7 +97,11 @@ export default function TestTake() {
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (!hasFinished.current && !loading && !submitting) {
         if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
-          setAntiCheatWarnings(w => w + 1);
+          const now = Date.now();
+          if (now - lastWarningTime.current > 2000) {
+              lastWarningTime.current = now;
+              setAntiCheatWarnings(w => w + 1);
+          }
         }
       }
       appState.current = nextAppState;
