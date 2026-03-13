@@ -18,41 +18,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Сұрақ мәтіні берілмеді' });
         }
 
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) {
-            return res.status(500).json({ error: 'Сервер конфигурациясында қате (API Key жоқ)' });
+            return res.status(500).json({ error: 'Сервер конфигурациясында қате (OPENAI_API_KEY жоқ)' });
         }
 
-        const prompt = `
-Акт: Сен тәжірибелі, мейірімді бағдарламалау менторысың (ұстаз).
-Тапсырма: Студентке код жазу тапсырмасында көмектесу. Оларға тікелей жауапты (дайын кодты немесе формуланы) БЕРМЕУ КЕРЕК. Тек қана бағыт-бағдар сілтеп, қателерін түсінуге көмектесу керек. Қысқаша, 1-3 сөйлеммен ой салатын сұрақ немесе кеңес бер. Тіл: Қазақша.
+        const systemPrompt = `Сен тәжірибелі, мейірімді бағдарламалау менторысың (ұстаз). Студентке код жазу тапсырмасында көмектесу керек. Оларға тікелей жауапты (дайын кодты немесе формуланы) БЕРМЕУ КЕРЕК. Тек қана бағыт-бағдар сілтеп, қателерін түсінуге көмектесу керек. Қысқаша, 1-3 сөйлеммен ой салатын сұрақ немесе кеңес бер. Тіл: Қазақша.`;
 
-Студенттің сұрағы/есебі:
-${questionText}
+        const userMessage = `Студенттің сұрағы/есебі:\n${questionText}\n\nСтуденттің жазған коды:\n${userCode ? userCode : '(код әлі жазылмаған)'}`;
 
-Студенттің жазған коды:
-${userCode ? userCode : '(код әлі жазылмаған)'}
-`.trim();
-
-        // Direct REST API call to Gemini — bypasses old SDK version issues
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-        const geminiRes = await fetch(geminiUrl, {
+        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userMessage }
+                ],
+                max_tokens: 300,
+                temperature: 0.7
             })
         });
 
-        const data = await geminiRes.json();
+        const data = await openaiRes.json();
 
-        if (!geminiRes.ok) {
-            console.error('Gemini API error:', JSON.stringify(data));
-            return res.status(500).json({ error: data?.error?.message || 'Gemini API қатесі' });
+        if (!openaiRes.ok) {
+            console.error('OpenAI API error:', JSON.stringify(data));
+            return res.status(500).json({ error: data?.error?.message || 'OpenAI API қатесі' });
         }
 
-        const hint = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Кеңес алу мүмкін болмады.';
+        const hint = data?.choices?.[0]?.message?.content || 'Кеңес алу мүмкін болмады.';
 
         return res.status(200).json({ hint });
     } catch (error: any) {

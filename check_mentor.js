@@ -1,31 +1,35 @@
 require('dotenv').config();
 
 async function check() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    console.log("API Key:", apiKey ? "Present" : "Missing");
-
-    const prompt = "Сәлем! Мен Python тілінде массивтегі максимум элементті табу функциясын жазу керекпін. Қалай бастау керек?";
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const apiKey = process.env.OPENAI_API_KEY;
+    console.log("OpenAI API Key:", apiKey ? "Present" : "Missing");
 
     try {
-        const res = await fetch(url, {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: 'Сен бағдарламалау менторысың. Қазақша жауап бер.' },
+                    { role: 'user', content: 'Python тілінде массивтегі максимум элементті қалай табамын?' }
+                ],
+                max_tokens: 200,
+                temperature: 0.7
             })
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-            console.error("Gemini Error:", JSON.stringify(data, null, 2));
+            console.error("OpenAI Error:", JSON.stringify(data, null, 2));
             return;
         }
 
-        const hint = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        console.log("SUCCESS! Hint:", hint);
+        console.log("SUCCESS! Response:", data.choices[0].message.content);
     } catch (e) {
         console.error("Fetch Error:", e);
     }
