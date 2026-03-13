@@ -7,6 +7,7 @@ import testsRoutes from './routes/tests.js';
 import resultsRoutes from './routes/results.js';
 import executeRoutes from './routes/execute.js'; 
 import questionsRoutes from './routes/questions.js'; // <-- Added questions route
+import mentorRoutes from './routes/mentor.js';
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use('/api/tests', testsRoutes);
 app.use('/api/results', resultsRoutes);
 app.use('/api/execute', executeRoutes); 
 app.use('/api/questions', questionsRoutes); // <-- Added questions route
+app.use('/api/mentor', mentorRoutes);
 
 app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`✅ API server running on http://0.0.0.0:${PORT} (accessible from phone at http://172.20.10.2:${PORT})`);

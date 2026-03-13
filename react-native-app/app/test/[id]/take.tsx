@@ -47,6 +47,9 @@ export default function TestTake() {
   const [codeStatuses, setCodeStatuses] = useState<Record<number, { status: string, output: string, passed: number, total: number }>>({});
   const [runningCode, setRunningCode] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  
+  const [mentorHint, setMentorHint] = useState<string | null>(null);
+  const [mentorLoading, setMentorLoading] = useState(false);
 
   const appState = useRef(AppState.currentState);
   const hasFinished = useRef(false);
@@ -166,6 +169,32 @@ export default function TestTake() {
           Alert.alert('Қате', 'Кодты тексеру мүмкін болмады. Интернетті тексеріңіз.');
       } finally {
           setRunningCode(false);
+      }
+  };
+
+  const handleAskMentor = async () => {
+      if (!test) return;
+      const q = test.questions[currentQuestionIndex];
+      const code = codeAnswers[currentQuestionIndex] || q.initial_code || '';
+
+      setMentorLoading(true);
+      setMentorHint(null);
+      try {
+          const res = await fetch(`${API}/api/mentor/hint`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ questionText: q.text, userCode: code })
+          });
+          const data = await res.json();
+          if (data.hint) {
+              setMentorHint(data.hint);
+          } else if (data.error) {
+              Alert.alert('Қате', data.error);
+          }
+      } catch (err) {
+          Alert.alert('Қате', 'ИИ-менторға қосылу мүмкін болмады. Интернетті тексеріңіз.');
+      } finally {
+          setMentorLoading(false);
       }
   };
 
@@ -385,14 +414,40 @@ export default function TestTake() {
                     />
                  </View>
 
-                 <TouchableOpacity 
-                    onPress={handleRunCode}
-                    disabled={runningCode}
-                    style={{ backgroundColor: runningCode ? '#94a3b8' : '#0ea5e9', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
-                 >
-                    {runningCode ? <ActivityIndicator size="small" color="white" /> : <Play size={18} color="white" />}
-                    <Text style={{ color: 'white', fontWeight: '800', fontSize: 15 }}>{runningCode ? 'Орындалуда...' : 'Кодты тексеру'}</Text>
-                 </TouchableOpacity>
+                 <View style={{ gap: 12, flexDirection: 'row' }}>
+                     <TouchableOpacity 
+                        onPress={handleRunCode}
+                        disabled={runningCode}
+                        style={{ flex: 1, backgroundColor: runningCode ? '#94a3b8' : '#0ea5e9', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                     >
+                        {runningCode ? <ActivityIndicator size="small" color="white" /> : <Play size={18} color="white" />}
+                        <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>{runningCode ? 'Орындалуда...' : 'Кодты тексеру'}</Text>
+                     </TouchableOpacity>
+
+                     <TouchableOpacity 
+                        onPress={handleAskMentor}
+                        disabled={mentorLoading}
+                        style={{ flex: 1, backgroundColor: mentorLoading ? '#c4b5fd' : '#8b5cf6', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                     >
+                        {mentorLoading ? <ActivityIndicator size="small" color="white" /> : <BookOpen size={18} color="white" />}
+                        <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>{mentorLoading ? 'Ойлануда...' : 'Кеңес сұрау'}</Text>
+                     </TouchableOpacity>
+                 </View>
+
+                 {/* Mentor Hint Output */}
+                 {mentorHint && (
+                     <View style={{ backgroundColor: '#f5f3ff', borderRadius: 16, borderWidth: 1, borderColor: '#ddd6fe', overflow: 'hidden', marginTop: 8 }}>
+                         <View style={{ backgroundColor: '#ede9fe', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#ddd6fe', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Code2 size={14} color="#8b5cf6" />
+                            <Text style={{ color: '#8b5cf6', fontSize: 12, fontWeight: '800' }}>AI МЕНТОР</Text>
+                         </View>
+                         <View style={{ padding: 16 }}>
+                             <Text style={{ fontSize: 14, color: '#4c1d95', lineHeight: 22 }}>
+                                 {mentorHint}
+                             </Text>
+                         </View>
+                     </View>
+                 )}
 
                  {/* Console Output */}
                  {codeStatuses[currentQuestionIndex] && (
@@ -454,7 +509,12 @@ export default function TestTake() {
         {/* Navigation Buttons */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <TouchableOpacity
-            onPress={() => { if (currentQuestionIndex > 0) setCurrentQuestionIndex(prev => prev - 1); }}
+            onPress={() => { 
+                if (currentQuestionIndex > 0) {
+                    setCurrentQuestionIndex(prev => prev - 1);
+                    setMentorHint(null);
+                }
+            }}
             disabled={currentQuestionIndex === 0}
             style={{
               flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
@@ -475,7 +535,12 @@ export default function TestTake() {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity 
-              onPress={() => { if (currentQuestionIndex < test.questions.length - 1) setCurrentQuestionIndex(prev => prev + 1); }} 
+              onPress={() => { 
+                  if (currentQuestionIndex < test.questions.length - 1) {
+                      setCurrentQuestionIndex(prev => prev + 1);
+                      setMentorHint(null);
+                  }
+              }} 
               style={{ flex: 1, paddingVertical: 16, backgroundColor: '#4848e5', borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
             >
               <Text style={{ fontWeight: '800', color: 'white' }}>Келесі</Text>
