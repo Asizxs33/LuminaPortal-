@@ -344,7 +344,7 @@ export default function TestTake() {
         <View style={{ backgroundColor: 'white', borderRadius: 20, borderWidth: 1, borderColor: '#e2e8f0', padding: 24, marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <View style={{ backgroundColor: isCodeQuestion ? '#fef3c7' : '#e0e7ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
-              <Text style={{ color: isCodeQuestion ? '#d97706' : '#4848e5', fontSize: 11, fontWeight: '800', uppercase: true }}>{currentQuestionIndex + 1}-СҰРАҚ</Text>
+              <Text style={{ color: isCodeQuestion ? '#d97706' : '#4848e5', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' }}>{currentQuestionIndex + 1}-СҰРАҚ</Text>
             </View>
             <Text style={{ color: '#94a3b8', fontSize: 12, fontWeight: '700' }}>
               {isCodeQuestion ? 'Код жазу (Олимпиада)' : 'Бірнеше таңдау'}
@@ -403,6 +403,7 @@ export default function TestTake() {
                             fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
                             fontSize: 14,
                             minHeight: 180,
+                            maxHeight: 500,
                             padding: 16,
                             textAlignVertical: 'top',
                             lineHeight: 22
@@ -550,7 +551,7 @@ export default function TestTake() {
         </View>
 
         <View style={{ marginTop: 24, alignItems: 'center' }}>
-            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', marginBottom: 8, uppercase: true }}>
+            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase' }}>
               Барлығы {test.questions.length} сұрақтың {currentQuestionIndex + 1}-шісі
             </Text>
             <View style={{ height: 6, width: '100%', backgroundColor: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
