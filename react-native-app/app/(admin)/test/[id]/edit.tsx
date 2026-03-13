@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Plus, ArrowLeft, Trash2, Edit2, Code2, List, Save, X, Terminal, Upload, Download } from 'lucide-react-native';
@@ -48,6 +48,8 @@ export default function TestEditor() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ ok: number; fail: number } | null>(null);
   const fileInputRef = useRef<any>(null);
+  const mcImageInputRef = useRef<any>(null);
+  const codeImageInputRef = useRef<any>(null);
 
   // MC Form State
   const [mcText, setMcText] = useState('');
@@ -458,14 +460,40 @@ export default function TestEditor() {
                 onChangeText={setMcText}
               />
               
-              <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Сурет сілтемесі (міндетті емес)</Text>
-              <TextInput
-                style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, color: '#0f172a', fontSize: 13, marginBottom: 24 }}
-                placeholder="https://mysite.com/image.jpg"
-                value={mcImageUrl}
-                onChangeText={setMcImageUrl}
-                autoCapitalize="none"
-              />
+              <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Сурет қосу (міндетті емес)</Text>
+              {Platform.OS === 'web' && (
+                  <View style={{ marginBottom: 24, gap: 8 }}>
+                      <TouchableOpacity
+                          onPress={() => mcImageInputRef.current?.click()}
+                          style={{ backgroundColor: '#f0f9ff', borderWidth: 1, borderColor: '#bae6fd', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                      >
+                          <Upload size={18} color="#0ea5e9" />
+                          <Text style={{ color: '#0369a1', fontWeight: '700', fontSize: 13 }}>{mcImageUrl ? 'Суретті ауыстыру' : 'Сурет таңдау'}</Text>
+                      </TouchableOpacity>
+                      {/* @ts-ignore */}
+                      <input
+                          ref={mcImageInputRef}
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e: any) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = () => setMcImageUrl(reader.result as string);
+                              reader.readAsDataURL(file);
+                          }}
+                      />
+                      {mcImageUrl ? (
+                          <View style={{ alignItems: 'center', gap: 6 }}>
+                              <Image source={{ uri: mcImageUrl }} style={{ width: '100%', height: 150, borderRadius: 10 }} resizeMode="contain" />
+                              <TouchableOpacity onPress={() => setMcImageUrl('')}>
+                                  <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '700' }}>✕ Суретті өшіру</Text>
+                              </TouchableOpacity>
+                          </View>
+                      ) : null}
+                  </View>
+              )}
 
               <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 12 }}>Жауап нұсқалары (Дұрыс жауапты таңдаңыз)</Text>
               <View style={{ gap: 12 }}>
@@ -531,14 +559,40 @@ export default function TestEditor() {
                 onChangeText={setCodeText}
               />
               
-              <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Сурет сілтемесі (міндетті емес)</Text>
-              <TextInput
-                style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, color: '#0f172a', fontSize: 13, marginBottom: 20 }}
-                placeholder="https://mysite.com/image.jpg"
-                value={codeImageUrl}
-                onChangeText={setCodeImageUrl}
-                autoCapitalize="none"
-              />
+              <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Сурет қосу (міндетті емес)</Text>
+              {Platform.OS === 'web' && (
+                  <View style={{ marginBottom: 20, gap: 8 }}>
+                      <TouchableOpacity
+                          onPress={() => codeImageInputRef.current?.click()}
+                          style={{ backgroundColor: '#f0f9ff', borderWidth: 1, borderColor: '#bae6fd', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                      >
+                          <Upload size={18} color="#0ea5e9" />
+                          <Text style={{ color: '#0369a1', fontWeight: '700', fontSize: 13 }}>{codeImageUrl ? 'Суретті ауыстыру' : 'Сурет таңдау'}</Text>
+                      </TouchableOpacity>
+                      {/* @ts-ignore */}
+                      <input
+                          ref={codeImageInputRef}
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e: any) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = () => setCodeImageUrl(reader.result as string);
+                              reader.readAsDataURL(file);
+                          }}
+                      />
+                      {codeImageUrl ? (
+                          <View style={{ alignItems: 'center', gap: 6 }}>
+                              <Image source={{ uri: codeImageUrl }} style={{ width: '100%', height: 150, borderRadius: 10 }} resizeMode="contain" />
+                              <TouchableOpacity onPress={() => setCodeImageUrl('')}>
+                                  <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '700' }}>✕ Суретті өшіру</Text>
+                              </TouchableOpacity>
+                          </View>
+                      ) : null}
+                  </View>
+              )}
 
               <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Бастапқы код (шаблон)</Text>
               <View style={{ backgroundColor: '#1e293b', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
