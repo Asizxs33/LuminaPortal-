@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 function setCors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,21 +18,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Сұрақ мәтіні берілмеді' });
         }
 
-        // Fix for Node 18+ undici fetch IPv6 issue on Windows causing "fetch failed" to Gemini
-        if (typeof globalThis !== 'undefined' && typeof require !== 'undefined') {
-            try {
-                const { setGlobalDispatcher, Agent } = require('undici');
-                setGlobalDispatcher(new Agent({ connect: { timeout: 60000 } })); 
-            } catch (err) {}
-        }
-
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return res.status(500).json({ error: 'Сервер конфигурациясында қате (API Key жоқ)' });
         }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         const prompt = `
 Акт: Сен тәжірибелі, мейірімді бағдарламалау менторысың (ұстаз).
@@ -46,9 +34,25 @@ ${questionText}
 ${userCode ? userCode : '(код әлі жазылмаған)'}
 `.trim();
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const hint = response.text();
+        // Direct REST API call to Gemini — bypasses old SDK version issues
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        const geminiRes = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+
+        const data = await geminiRes.json();
+
+        if (!geminiRes.ok) {
+            console.error('Gemini API error:', JSON.stringify(data));
+            return res.status(500).json({ error: data?.error?.message || 'Gemini API қатесі' });
+        }
+
+        const hint = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Кеңес алу мүмкін болмады.';
 
         return res.status(200).json({ hint });
     } catch (error: any) {

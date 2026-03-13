@@ -1,21 +1,34 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 async function check() {
-    console.log("Checking API Key...", process.env.GEMINI_API_KEY ? "Present" : "Missing");
+    const apiKey = process.env.GEMINI_API_KEY;
+    console.log("API Key:", apiKey ? "Present" : "Missing");
+
+    const prompt = "Сәлем! Мен Python тілінде массивтегі максимум элементті табу функциясын жазу керекпін. Қалай бастау керек?";
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
     try {
-        if (typeof globalThis !== 'undefined' && typeof require !== 'undefined') {
-            const { setGlobalDispatcher, Agent } = require('undici');
-            setGlobalDispatcher(new Agent({ connect: { timeout: 60000 } })); // Remove strict DNS lookup to let Node fetch normally via IPv4 fallback
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.error("Gemini Error:", JSON.stringify(data, null, 2));
+            return;
         }
-        
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        
-        const result = await model.generateContent("Сәлем, бұл тест.");
-        console.log("API Result:", result.response.text());
-    } catch(e) {
-        console.error("API Error:", e);
+
+        const hint = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        console.log("SUCCESS! Hint:", hint);
+    } catch (e) {
+        console.error("Fetch Error:", e);
     }
 }
+
 check();
