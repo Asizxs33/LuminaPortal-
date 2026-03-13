@@ -53,9 +53,11 @@ export default function TestTake() {
   const [mentorLoading, setMentorLoading] = useState(false);
   const [coins, setCoins] = useState<number | null>(null);
   const [testAttempts, setTestAttempts] = useState(1);
+  const [antiCheatWarnings, setAntiCheatWarnings] = useState(0);
 
   const appState = useRef(AppState.currentState);
   const hasFinished = useRef(false);
+  const lastAlertedWarning = useRef(0);
 
   const copyToClipboard = async (text: string) => {
     await Clipboard.setStringAsync(text);
@@ -77,31 +79,20 @@ export default function TestTake() {
   }, [id, user]);
 
   useEffect(() => {
-    // Anti-Cheat: Listen for background state & window resize/blur on web
     const handleBlur = () => {
-       if (!hasFinished.current && test && !loading && !submitting) {
-          if (Platform.OS === 'web') {
-              window.alert('Ереже бұзылды! Басқа терезеге өтуге немесе экранды кішірейтуге болмайды.');
-          }
-          handleFinish(true);
+       if (!hasFinished.current && !loading && !submitting) {
+          setAntiCheatWarnings(w => w + 1);
        }
     };
 
     if (Platform.OS === 'web') {
         window.addEventListener('blur', handleBlur);
-        window.addEventListener('resize', handleBlur);
     }
 
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (!hasFinished.current && test && !loading && !submitting) {
+      if (!hasFinished.current && !loading && !submitting) {
         if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
-          if (Platform.OS !== 'web') {
-            Alert.alert(
-              'Ереже бұзылды!',
-              'Анти-читерлік саясатқа сәйкес, тест кезінде қолданбадан шығуға болмайды. Тест автоматты түрде аяқталды.'
-            );
-          }
-          handleFinish(true); // Forced finish
+          setAntiCheatWarnings(w => w + 1);
         }
       }
       appState.current = nextAppState;
@@ -111,10 +102,36 @@ export default function TestTake() {
       subscription.remove();
       if (Platform.OS === 'web') {
           window.removeEventListener('blur', handleBlur);
-          window.removeEventListener('resize', handleBlur);
       }
     };
-  }, [test, loading, submitting]);
+  }, [loading, submitting]);
+
+  useEffect(() => {
+      if (antiCheatWarnings > lastAlertedWarning.current) {
+          lastAlertedWarning.current = antiCheatWarnings;
+          
+          if (antiCheatWarnings === 1) {
+              if (Platform.OS === 'web') {
+                  window.alert(`Ескерту! Басқа терезеге өтуге болмайды.\n\nСізде тағы 2 мүмкіндік қалды.`);
+              } else {
+                  Alert.alert('Ескерту!', 'Тест кезінде қолданбадан шығуға немесе жабуға болмайды.\n\nСізде тағы 2 мүмкіндік қалды.');
+              }
+          } else if (antiCheatWarnings === 2) {
+              if (Platform.OS === 'web') {
+                  window.alert(`Ескерту! Басқа терезеге өтуге болмайды.\n\nСізде тағы 1 мүмкіндік қалды. Егер қайталанса, тест аяқталады.`);
+              } else {
+                  Alert.alert('Ескерту!', 'Қолданбадан шығуға болмайды.\n\nСізде тағы 1 мүмкіндік қалды. Егер қайталанса, тест аяқталады.');
+              }
+          } else if (antiCheatWarnings >= 3 && !hasFinished.current && test && !loading && !submitting) {
+              if (Platform.OS === 'web') {
+                  window.alert('Ереже 3 рет бұзылды! Тест автоматты түрде аяқталады.');
+              } else {
+                  Alert.alert('Ереже бұзылды!', 'Сіз қолданбадан 3 рет шықтыңыз. Тест автоматты түрде аяқталады.');
+              }
+              handleFinish(true);
+          }
+      }
+  }, [antiCheatWarnings, test, loading, submitting]);
 
   useEffect(() => {
     if (!test || timeLeft <= 0 || hasFinished.current) return;
