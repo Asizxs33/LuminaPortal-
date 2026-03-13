@@ -50,9 +50,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         for (let i = 0; i < testCases.length; i++) {
             const tc = testCases[i];
 
-            // We pass the raw code as-is. We also append tc.input at the end as fallback 
-            // for older questions where tc.input was executable python code like "print(solve(2,5))".
-            const fullCode = `${code}\n\n${tc.input}`;
+            // We pass the raw code as-is. The test input is passed via 'stdin' in wandbox API.
+            // (Removed appending `tc.input` to code, because inputting numbers like '2 3' causes SyntaxError).
+            const fullCode = code;
 
             const wandboxRes = await fetch('https://wandbox.org/api/compile.json', {
                 method: 'POST',
