@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, AppState, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, AppState, TextInput, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle2, Code2, Terminal, Play, Copy } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,6 +20,7 @@ interface Question {
   type: 'MULTIPLE_CHOICE' | 'CODE';
   text: string;
   initial_code?: string;
+  image_url?: string;
   test_cases?: any[];
   options: Option[];
 }
@@ -50,6 +51,8 @@ export default function TestTake() {
   
   const [mentorHint, setMentorHint] = useState<string | null>(null);
   const [mentorLoading, setMentorLoading] = useState(false);
+  const [coins, setCoins] = useState<number | null>(null);
+  const [testAttempts, setTestAttempts] = useState(1);
 
   const appState = useRef(AppState.currentState);
   const hasFinished = useRef(false);
@@ -65,17 +68,39 @@ export default function TestTake() {
 
   useEffect(() => {
     fetchTest();
-  }, [id]);
+    if (user?.id) {
+        fetch(`${API}/api/users/coins?userId=${user.id}`)
+            .then(res => res.json())
+            .then(data => { if (data.coins !== undefined) setCoins(data.coins); })
+            .catch(() => {});
+    }
+  }, [id, user]);
 
   useEffect(() => {
-    // Anti-Cheat: Listen for background state
+    // Anti-Cheat: Listen for background state & window resize/blur on web
+    const handleBlur = () => {
+       if (!hasFinished.current && test && !loading && !submitting) {
+          if (Platform.OS === 'web') {
+              window.alert('Ереже бұзылды! Басқа терезеге өтуге немесе экранды кішірейтуге болмайды.');
+          }
+          handleFinish(true);
+       }
+    };
+
+    if (Platform.OS === 'web') {
+        window.addEventListener('blur', handleBlur);
+        window.addEventListener('resize', handleBlur);
+    }
+
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (!hasFinished.current && test && !loading && !submitting) {
         if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
-          Alert.alert(
-            'Ереже бұзылды!',
-            'Анти-читерлік саясатқа сәйкес, тест кезінде қолданбадан шығуға болмайды. Тест автоматты түрде аяқталды.'
-          );
+          if (Platform.OS !== 'web') {
+            Alert.alert(
+              'Ереже бұзылды!',
+              'Анти-читерлік саясатқа сәйкес, тест кезінде қолданбадан шығуға болмайды. Тест автоматты түрде аяқталды.'
+            );
+          }
           handleFinish(true); // Forced finish
         }
       }
@@ -84,6 +109,10 @@ export default function TestTake() {
 
     return () => {
       subscription.remove();
+      if (Platform.OS === 'web') {
+          window.removeEventListener('blur', handleBlur);
+          window.removeEventListener('resize', handleBlur);
+      }
     };
   }, [test, loading, submitting]);
 
@@ -183,11 +212,12 @@ export default function TestTake() {
           const res = await fetch(`${API}/api/mentor/hint`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ questionText: q.text, userCode: code })
+              body: JSON.stringify({ questionText: q.text, userCode: code, userId: user?.id })
           });
           const data = await res.json();
           if (data.hint) {
               setMentorHint(data.hint);
+              if (data.coinsRemaining !== undefined) setCoins(data.coinsRemaining);
           } else if (data.error) {
               Alert.alert('Қате', data.error);
           }
@@ -222,6 +252,28 @@ export default function TestTake() {
       });
 
       const total = test.questions.length;
+      const percentage = Math.round((score / total) * 100);
+      const isPass = percentage >= test.passing_score;
+
+      if (!isPass && !forced && testAttempts < 3) {
+          const newAttempts = testAttempts + 1;
+          const remaining = 3 - testAttempts;
+          
+          if (Platform.OS === 'web') {
+              window.alert(`Сынақтан өтпедіңіз. Сіз ${percentage}% жинадыңыз (Шектік балл: ${test.passing_score}%).\n\nСізде тағы ${remaining} мүмкіндік бар. Әр қайта тапсыру -10% айыппұл әкеледі. Қателеріңізді түзеп, қайта жіберіңіз!`);
+          } else {
+              Alert.alert('Сынақтан өтпедіңіз', `Сіз ${percentage}% жинадыңыз (Шектік балл: ${test.passing_score}%).\n\nСізде тағы ${remaining} мүмкіндік бар. Әр қайта тапсыру -10% айыппұл әкеледі. Қателеріңізді түзеп, қайта жіберіңіз!`);
+          }
+
+          setTestAttempts(newAttempts);
+          setSubmitting(false);
+          hasFinished.current = false;
+          return;
+      }
+      
+      // Apply attempt penalty to score natively
+      let finalScore = score - ((testAttempts - 1) * 0.1 * total);
+      if (finalScore < 0) finalScore = 0;
       
       const token = await AsyncStorage.getItem('lumina_token');
       const res = await fetch(`${API}/api/results`, {
@@ -233,7 +285,7 @@ export default function TestTake() {
         body: JSON.stringify({
           test_id: test.id,
           user_id: user.id,
-          score,
+          score: finalScore,
           total
         })
       });
@@ -241,7 +293,7 @@ export default function TestTake() {
       if (res.ok) {
         router.replace({
           pathname: '/test/[id]/result',
-          params: { id: test.id, title: test.title, score: String(score), total: String(total), passScore: String(test.passing_score) }
+          params: { id: test.id, title: test.title, score: String(finalScore), total: String(total), passScore: String(test.passing_score) }
         });
       } else {
          Alert.alert('Қате', 'Нәтижені сақтау мүмкін болмады');
@@ -351,9 +403,17 @@ export default function TestTake() {
             </Text>
           </View>
 
-          <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a', marginBottom: isCodeQuestion ? 16 : 24, lineHeight: 28 }}>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a', marginBottom: currentQuestion.image_url ? 16 : (isCodeQuestion ? 16 : 24), lineHeight: 28 }}>
             {currentQuestion.text}
           </Text>
+
+          {currentQuestion.image_url && (
+              <Image 
+                source={{ uri: currentQuestion.image_url }} 
+                style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: isCodeQuestion ? 16 : 24 }} 
+                resizeMode="contain" 
+              />
+          )}
 
           {isCodeQuestion ? (
               // CODE IDE UI
@@ -409,7 +469,27 @@ export default function TestTake() {
                             lineHeight: 22
                         }}
                         value={codeAnswers[currentQuestionIndex]}
-                        onChangeText={(text) => setCodeAnswers(prev => ({ ...prev, [currentQuestionIndex]: text }))}
+                        onChangeText={(text) => {
+                            const prevCode = codeAnswers[currentQuestionIndex] || '';
+                            if (text.length > prevCode.length && text.endsWith('\n')) {
+                                const lines = text.split('\n');
+                                const prevLine = lines[lines.length - 2];
+                                if (prevLine && prevLine.trim().endsWith(':')) {
+                                    const match = prevLine.match(/^\s*/);
+                                    const indent = match ? match[0] : '';
+                                    setCodeAnswers(prev => ({ ...prev, [currentQuestionIndex]: text + indent + '    ' }));
+                                    return;
+                                } else if (prevLine) {
+                                    const match = prevLine.match(/^\s*/);
+                                    const indent = match ? match[0] : '';
+                                    if (indent) {
+                                        setCodeAnswers(prev => ({ ...prev, [currentQuestionIndex]: text + indent }));
+                                        return;
+                                    }
+                                }
+                            }
+                            setCodeAnswers(prev => ({ ...prev, [currentQuestionIndex]: text }));
+                        }}
                         placeholder="# Кодты осы жерге жазыңыз"
                         placeholderTextColor="#475569"
                     />
@@ -431,9 +511,17 @@ export default function TestTake() {
                         style={{ flex: 1, backgroundColor: mentorLoading ? '#c4b5fd' : '#8b5cf6', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
                      >
                         {mentorLoading ? <ActivityIndicator size="small" color="white" /> : <BookOpen size={18} color="white" />}
-                        <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>{mentorLoading ? 'Ойлануда...' : 'Кеңес сұрау'}</Text>
+                        <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>
+                          {mentorLoading ? 'Ойлануда...' : `Кеңес сұрау ${coins !== null ? `(10 ₿)` : ''}`}
+                        </Text>
                      </TouchableOpacity>
                  </View>
+                 
+                 {coins !== null && (
+                     <Text style={{ color: '#64748b', fontSize: 12, textAlign: 'center', marginTop: 4 }}>
+                         Сіздің балансыңыз: <Text style={{ fontWeight: '800', color: '#d97706' }}>{coins} ₿</Text>
+                     </Text>
+                 )}
 
                  {/* Mentor Hint Output */}
                  {mentorHint && (

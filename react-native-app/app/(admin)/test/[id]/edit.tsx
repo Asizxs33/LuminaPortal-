@@ -23,6 +23,7 @@ interface Question {
   text: string;
   options?: Option[];
   initial_code?: string;
+  image_url?: string;
   test_cases?: TestCase[];
   order_index?: number;
 }
@@ -50,6 +51,7 @@ export default function TestEditor() {
 
   // MC Form State
   const [mcText, setMcText] = useState('');
+  const [mcImageUrl, setMcImageUrl] = useState('');
   const [mcOptions, setMcOptions] = useState<Option[]>([
     { text: '', is_correct: true },
     { text: '', is_correct: false },
@@ -59,6 +61,7 @@ export default function TestEditor() {
 
   // Code Form State
   const [codeText, setCodeText] = useState('');
+  const [codeImageUrl, setCodeImageUrl] = useState('');
   const [codeInitial, setCodeInitial] = useState('');
   const [codeTestCases, setCodeTestCases] = useState<TestCase[]>([{ input: '', expected_output: '' }]);
 
@@ -125,6 +128,7 @@ export default function TestEditor() {
       const payload: Question = {
         type: 'MULTIPLE_CHOICE',
         text: mcText,
+        image_url: mcImageUrl || undefined,
         options: mcOptions,
         test_id: id as unknown
       } as any;
@@ -160,6 +164,7 @@ export default function TestEditor() {
       const payload: Question = {
         type: 'CODE',
         text: codeText,
+        image_url: codeImageUrl || undefined,
         initial_code: codeInitial,
         test_cases: codeTestCases,
         test_id: id as unknown
@@ -187,6 +192,7 @@ export default function TestEditor() {
 
   const resetMCForm = () => {
     setMcText('');
+    setMcImageUrl('');
     setMcOptions([
       { text: '', is_correct: true },
       { text: '', is_correct: false },
@@ -197,6 +203,7 @@ export default function TestEditor() {
 
   const resetCodeForm = () => {
     setCodeText('');
+    setCodeImageUrl('');
     setCodeInitial('');
     setCodeTestCases([{ input: '', expected_output: '' }]);
   };
@@ -445,10 +452,19 @@ export default function TestEditor() {
               <TextInput
                 multiline
                 numberOfLines={3}
-                style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, color: '#0f172a', fontSize: 15, textAlignVertical: 'top', minHeight: 100, marginBottom: 24 }}
+                style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, color: '#0f172a', fontSize: 15, textAlignVertical: 'top', minHeight: 100, marginBottom: 16 }}
                 placeholder="Сұрақты осында жазыңыз..."
                 value={mcText}
                 onChangeText={setMcText}
+              />
+              
+              <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Сурет сілтемесі (міндетті емес)</Text>
+              <TextInput
+                style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, color: '#0f172a', fontSize: 13, marginBottom: 24 }}
+                placeholder="https://mysite.com/image.jpg"
+                value={mcImageUrl}
+                onChangeText={setMcImageUrl}
+                autoCapitalize="none"
               />
 
               <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 12 }}>Жауап нұсқалары (Дұрыс жауапты таңдаңыз)</Text>
@@ -509,10 +525,19 @@ export default function TestEditor() {
               <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Есептің шарты</Text>
               <TextInput
                 multiline
-                style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, color: '#0f172a', fontSize: 15, textAlignVertical: 'top', minHeight: 100, marginBottom: 20 }}
+                style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, color: '#0f172a', fontSize: 15, textAlignVertical: 'top', minHeight: 100, marginBottom: 16 }}
                 placeholder="Есептің сипаттамасын жазыңыз..."
                 value={codeText}
                 onChangeText={setCodeText}
+              />
+              
+              <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Сурет сілтемесі (міндетті емес)</Text>
+              <TextInput
+                style={{ backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 16, color: '#0f172a', fontSize: 13, marginBottom: 20 }}
+                placeholder="https://mysite.com/image.jpg"
+                value={codeImageUrl}
+                onChangeText={setCodeImageUrl}
+                autoCapitalize="none"
               />
 
               <Text style={{ fontWeight: '700', color: '#334155', marginBottom: 8 }}>Бастапқы код (шаблон)</Text>

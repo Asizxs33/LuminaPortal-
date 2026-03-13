@@ -18,21 +18,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         if (req.method === 'POST') {
-            const { type, text, options, initial_code, test_cases, test_id } = req.body || {};
+            const { type, text, options, initial_code, test_cases, test_id, image_url } = req.body || {};
             if (!test_id || !text) return res.status(400).json({ error: 'test_id and text required' });
 
             // Insert matching the potentially new columns for CODE questions
             const qType = type || 'MULTIPLE_CHOICE';
 
             const { rows } = await pool.query(
-                `INSERT INTO questions (test_id, text, type, initial_code, test_cases) 
-                 VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+                `INSERT INTO questions (test_id, text, type, initial_code, test_cases, image_url) 
+                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
                 [
                     test_id,
                     text,
                     qType,
                     initial_code || null,
-                    test_cases ? JSON.stringify(test_cases) : null
+                    test_cases ? JSON.stringify(test_cases) : null,
+                    image_url || null
                 ]
             );
 

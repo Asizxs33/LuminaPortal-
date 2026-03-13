@@ -1,4 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Pool } from 'pg';
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+});
 
 function setCors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,10 +18,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     try {
-        const { questionText, userCode } = req.body;
+        const { questionText, userCode, userId } = req.body;
 
-        if (!questionText) {
-            return res.status(400).json({ error: 'Сұрақ мәтіні берілмеді' });
+        if (!questionText || !userId) {
+            return res.status(400).json({ error: 'Сұрақ мәтіні немесе қолданушы ID берілмеді' });
         }
 
         const apiKey = process.env.OPENAI_API_KEY;
@@ -23,7 +29,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Сервер конфигурациясында қате (OPENAI_API_KEY жоқ)' });
         }
 
-        const systemPrompt = `Сен тәжірибелі, мейірімді бағдарламалау менторысың (ұстаз). Студентке код жазу тапсырмасында көмектесу керек. Оларға тікелей жауапты (дайын кодты немесе формуланы) БЕРМЕУ КЕРЕК. Тек қана бағыт-бағдар сілтеп, қателерін түсінуге көмектесу керек. Қысқаша, 1-3 сөйлеммен ой салатын сұрақ немесе кеңес бер. Тіл: Қазақша.`;
+        // Check user coin balance
+        const userRes = await pool.query('SELECT coins FROM users WHERE id = $1', [userId]);
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Қолданушы табылмады' });
+        }
+
+        const coins = userRes.rows[0].coins;
+        if (coins < 10) {
+            return res.status(403).json({ error: 'Жеткілікті биткоин жоқ (10 қажет)' });
+        }
+
+        const systemPrompt = `Сен тәжірибелі, мейірімді бағдарламалау менторысың (ұстаз). Студентке код жазу тапсырмасында көмектесу керек. Бұл жолы толық дұрыс жауапты берместен, студентке нақты көмектесуің керек. Қажет болса формуланы, маңызды алгоритм қадамдарын немесе кодтың негізгі шаблонын (скелетін) көрсет. Студенттің қатесін нақты түсіндір және оны қалай түзеуге болатынын көрсет. Тіл: Қазақша.`;
 
         const userMessage = `Студенттің сұрағы/есебі:\n${questionText}\n\nСтуденттің жазған коды:\n${userCode ? userCode : '(код әлі жазылмаған)'}`;
 
@@ -39,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userMessage }
                 ],
-                max_tokens: 300,
+                max_tokens: 400,
                 temperature: 0.7
             })
         });
@@ -53,7 +70,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const hint = data?.choices?.[0]?.message?.content || 'Кеңес алу мүмкін болмады.';
 
-        return res.status(200).json({ hint });
+        // Deduct 10 coins after successful response
+        await pool.query('UPDATE users SET coins = coins - 10 WHERE id = $1', [userId]);
+
+        return res.status(200).json({ hint, coinsRemaining: coins - 10 });
     } catch (error: any) {
         console.error('Mentor API error:', error.message);
         res.status(500).json({ error: 'ИИ-менторға қосылу мүмкін болмады немесе серверде қате шықты.' });
