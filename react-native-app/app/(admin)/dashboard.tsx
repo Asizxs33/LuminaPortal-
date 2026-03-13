@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Edit2, Trash2, Eye, EyeOff, FileText, CheckCircle, Archive, Clock, Layers, Filter, Search, MoreVertical, BarChart3 } from 'lucide-react-native';
+import { Plus, Edit2, Trash2, Eye, EyeOff, FileText, CheckCircle, Archive, Clock, Layers, Filter, Search, MoreVertical, BarChart3, Coins } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -22,11 +22,13 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [coins, setCoins] = useState<number | null>(null);
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    fetchTests();
-  }, []);
+    loadData();
+  }, [user]);
 
   const fetchTests = async () => {
     try {
@@ -37,10 +39,34 @@ export default function AdminDashboard() {
       if (res.ok) setTests(await res.json());
     } catch (e) {
       console.error('Tests fetch error:', e);
-    } finally {
-      setLoading(false);
     }
   };
+
+  const fetchCoins = async () => {
+    try {
+      if (user?.id) {
+        const res = await fetch(`${API}/api/users/coins?userId=${user.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCoins(data.coins);
+        }
+      }
+    } catch (e) {
+      console.error('Coins err:', e);
+    }
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([fetchTests(), fetchCoins()]);
+    setLoading(false);
+  };
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchTests(), fetchCoins()]);
+    setRefreshing(false);
+  }, [user]);
 
   const togglePublish = async (test: Test) => {
     try {
@@ -110,13 +136,27 @@ export default function AdminDashboard() {
       <View className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-indigo-400/20 blur-3xl opacity-60" pointerEvents="none" />
       <View className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-purple-400/20 blur-3xl opacity-60" pointerEvents="none" />
 
-      <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-8 px-4 lg:px-8 pb-8" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+         className="flex-1" 
+         contentContainerClassName="pt-6 lg:pt-8 px-4 lg:px-8 pb-8" 
+         showsVerticalScrollIndicator={false}
+         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
 
         {/* Header Section (Desktop) */}
         <View className="hidden lg:flex flex-row justify-between items-end mb-8 pl-1">
           <View>
             <Text className="text-sm text-indigo-500 font-bold uppercase tracking-widest mb-1">Мұғалім кабинеті</Text>
             <Text className="text-[36px] font-black text-slate-900 tracking-tight">Басқару тақтасы</Text>
+          </View>
+          <View className="flex-row items-center gap-4">
+             {/* Coins Display */}
+             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, gap: 6, borderWidth: 1, borderColor: '#fde68a' }}>
+               <Coins size={18} color="#d97706" />
+               <Text style={{ fontWeight: '800', color: '#b45309', fontSize: 15 }}>
+                 {coins !== null ? coins : '...'} ₿
+               </Text>
+             </View>
           </View>
         </View>
 

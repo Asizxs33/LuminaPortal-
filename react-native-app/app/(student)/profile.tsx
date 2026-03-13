@@ -1,13 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
-import { LogOut, User, Mail, GraduationCap, ChevronRight, BookOpen } from 'lucide-react-native';
+import { LogOut, User, Mail, GraduationCap, ChevronRight, BookOpen, Coins } from 'lucide-react-native';
+
+import { API } from '../constants/api';
 
 export default function StudentProfile() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [coins, setCoins] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchCoins = async () => {
+      if (user?.id) {
+        try {
+          const res = await fetch(`${API}/api/users/coins?userId=${user.id}`);
+          if (res.ok) {
+            const data = await res.json();
+            setCoins(data.coins);
+          }
+        } catch (error) {
+          console.error('Error fetching coins', error);
+        }
+      }
+    };
+    fetchCoins();
+  }, [user?.id]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -56,6 +76,15 @@ export default function StudentProfile() {
           }}>
             <GraduationCap size={14} color="#15803d" />
             <Text style={{ color: '#15803d', fontWeight: '700', fontSize: 13 }}>Студент</Text>
+          </View>
+
+          <View style={{
+            flexDirection: 'row', alignItems: 'center', gap: 6,
+            backgroundColor: '#fef3c7', paddingHorizontal: 14, paddingVertical: 5,
+            borderRadius: 20, marginTop: 8, borderWidth: 1, borderColor: '#fde68a'
+          }}>
+            <Coins size={14} color="#d97706" />
+            <Text style={{ color: '#b45309', fontWeight: '800', fontSize: 13 }}>Баланс: {coins !== null ? coins : '...'} ₿</Text>
           </View>
         </View>
 

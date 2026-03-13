@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Clock, HelpCircle, ArrowRight, Lock, BookOpen, CheckCircle, Sparkles, ShieldAlert } from 'lucide-react-native';
+import { Search, BookOpen, Clock, Settings, LogOut, ChevronRight, BarChart3, User as UserIcon, CheckCircle2 as CheckCircle, Star, Target, Zap, Coins, Sparkles, Lock, HelpCircle, ArrowRight } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,13 +36,60 @@ export default function StudentDashboard() {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const [coins, setCoins] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
 
   useEffect(() => {
-    fetchData();
+    const fetchTests = async () => {
+      const token = await AsyncStorage.getItem('lumina_token');
+      const testsRes = await fetch(`${API}/api/tests`, { headers: { Authorization: `Bearer ${token}` } });
+      if (testsRes.ok) setTests(await testsRes.json());
+    };
+
+    const fetchResults = async () => {
+      if (user?.id) {
+        const token = await AsyncStorage.getItem('lumina_token');
+        const resultsRes = await fetch(`${API}/api/results/user/${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (resultsRes.ok) {
+          const results = await resultsRes.json();
+          setCompletedIds(new Set(results.map((r: any) => r.test_id)));
+        }
+      }
+    };
+
+    const fetchCoins = async () => {
+      try {
+        const uStr = await AsyncStorage.getItem('lumina_user');
+        if (uStr) {
+          const u = JSON.parse(uStr);
+          const res = await fetch(`${API}/api/users/coins?userId=${u.id}`);
+          if (res.ok) {
+            const data = await res.json();
+            setCoins(data.coins);
+          }
+        }
+      } catch (e) {
+        console.error('Coins fetch err', e);
+      }
+    };
+
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchTests(), fetchResults(), fetchCoins()]);
+      } catch (e) {
+        console.error('Data error:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
-  const fetchData = async () => {
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
     try {
       const token = await AsyncStorage.getItem('lumina_token');
       const [testsRes, resultsRes] = await Promise.all([
@@ -54,12 +101,22 @@ export default function StudentDashboard() {
         const results = await resultsRes.json();
         setCompletedIds(new Set(results.map((r: any) => r.test_id)));
       }
+      
+      const uStr = await AsyncStorage.getItem('lumina_user');
+      if (uStr) {
+        const u = JSON.parse(uStr);
+        const res = await fetch(`${API}/api/users/coins?userId=${u.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCoins(data.coins);
+        }
+      }
     } catch (e) {
-      console.error('Dashboard fetch error:', e);
+        console.error(e);
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [user?.id]);
 
   const filtered = tests.filter(t => {
     const matchSearch = t.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -81,7 +138,46 @@ export default function StudentDashboard() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#f6f6f8]">
-      <ScrollView className="flex-1" contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+         className="flex-1" 
+         contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16" 
+         showsVerticalScrollIndicator={false}
+         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+
+      {/* HEADER */}
+      <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, backgroundColor: 'white' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 48, height: 48, backgroundColor: '#f1f5f9', borderRadius: 24, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a' }}>
+                {user?.name?.charAt(0) || 'U'}
+              </Text>
+            </View>
+            <View>
+              <Text style={{ fontSize: 13, color: '#64748b', fontWeight: '500' }}>Сәлем,</Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f172a' }}>{user?.name}</Text>
+            </View>
+          </View>
+          
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            {/* Coins Display */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, gap: 6, borderWidth: 1, borderColor: '#fde68a' }}>
+              <Coins size={16} color="#d97706" />
+              <Text style={{ fontWeight: '800', color: '#b45309', fontSize: 14 }}>
+                {coins !== null ? coins : '...'} ₿
+              </Text>
+            </View>
+
+            <TouchableOpacity 
+              onPress={() => router.push('/(student)/profile')}
+              style={{ width: 44, height: 44, backgroundColor: '#f1f5f9', borderRadius: 22, justifyContent: 'center', alignItems: 'center' }}
+            >
+              <UserIcon size={20} color="#0f172a" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
 
         {/* Header Section */}
         <View className="flex-col lg:flex-row justify-between items-stretch lg:items-end mb-6 gap-4">
@@ -102,7 +198,7 @@ export default function StudentDashboard() {
                 onPress={() => router.push('/(admin)/dashboard')}
                 className="flex-row items-center bg-indigo-100 px-4 py-3 rounded-xl gap-2.5"
               >
-                <ShieldAlert size={18} color="#4848e5" />
+                <Zap size={18} color="#4848e5" />
                 <View>
                   <Text className="text-indigo-600 font-extrabold text-[13px]">Админ режиміне оралу</Text>
                 </View>
