@@ -24,7 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { email, password } = req.body || {};
         if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
         try {
-            const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+            const normalizedEmail = String(email).trim().toLowerCase();
+            const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1', [normalizedEmail]);
             const user = rows[0];
             if (!user) return res.status(401).json({ error: 'Invalid credentials' });
             const valid = await bcrypt.compare(password, user.password_hash);
@@ -45,12 +46,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { name, email, password, role = 'student', group_name } = req.body || {};
         if (!email || !password || !name) return res.status(400).json({ error: 'Name, email and password required' });
         try {
-            const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+            const normalizedEmail = String(email).trim().toLowerCase();
+            const existing = await pool.query('SELECT id FROM users WHERE LOWER(email) = $1', [normalizedEmail]);
             if (existing.rows.length > 0) return res.status(409).json({ error: 'Email already exists' });
             const password_hash = await bcrypt.hash(password, 10);
             const { rows } = await pool.query(
                 'INSERT INTO users (name, email, password_hash, role, group_name) VALUES ($1,$2,$3,$4,$5) RETURNING id, name, email, role',
-                [name, email, password_hash, role, group_name || null]
+                [name, normalizedEmail, password_hash, role, group_name || null]
             );
             return res.status(201).json({ user: rows[0] });
         } catch (err: any) {

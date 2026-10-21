@@ -169,7 +169,7 @@ export default function TestTake() {
   const fetchTest = async () => {
     try {
       const token = await AsyncStorage.getItem('lumina_token');
-      const res = await fetch(`${API}/api/tests/${id}`, {
+      const res = await fetch(`${API}/api/tests/${id}?forAttempt=true`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

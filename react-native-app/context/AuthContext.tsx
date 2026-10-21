@@ -44,16 +44,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loadUser();
     }, []);
 
-    const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const login = async (email: string, password: string): Promise<{ success: boolean; error?: string; role?: Role }> => {
         try {
             const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email: email.trim(), password }),
             });
             const data = await res.json();
             if (!res.ok) {
-                return { success: false, error: data.error || 'Login failed' };
+                if (res.status === 401) {
+                    return { success: false, error: 'Email немесе құпиясөз дұрыс емес.' };
+                }
+                return { success: false, error: data.error || 'Жүйеге кіру мүмкін болмады.' };
             }
             const loggedUser: User = {
                 id: String(data.user.id),

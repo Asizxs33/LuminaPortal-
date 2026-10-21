@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
+import jwt from 'jsonwebtoken';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -10,6 +11,17 @@ function setCors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
+const QUESTIONS_PER_STUDENT = 50;
+
+function shuffled<T>(items: T[]): T[] {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -26,9 +38,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const testRes = await pool.query('SELECT * FROM tests WHERE id = $1', [id]);
             if (!testRes.rows[0]) return res.status(404).json({ error: 'Test not found' });
 
-            const questions = await pool.query(
-                'SELECT * FROM questions WHERE test_id = $1 ORDER BY id', [id]
-            );
+            // A student keeps the same random set after refreshing or reopening a test.
+            // Tests with fewer than 50 questions simply use every available question.
+            let questionIds: number[] | null = null;
+            const auth = req.headers.authorization;
+            if (auth?.startsWith('Bearer ')) {
+                try {
+                    const user = jwt.verify(auth.slice(7), process.env.JWT_SECRET || 'fallback_secret') as { id: number; role?: string };
+                    if (user.role === 'student') {
+                        await pool.query(`
+                            CREATE TABLE IF NOT EXISTS test_question_assignments (
+                                user_id INT REFERENCES users(id) ON DELETE CASCADE,
+                                test_id TEXT REFERENCES tests(id) ON DELETE CASCADE,
+                                question_id INT REFERENCES questions(id) ON DELETE CASCADE,
+                                created_at TIMESTAMP DEFAULT NOW(),
+                                PRIMARY KEY (user_id, test_id, question_id)
+                            )
+                        `);
+                        const assigned = await pool.query(
+                            'SELECT question_id FROM test_question_assignments WHERE user_id = $1 AND test_id = $2',
+                            [user.id, id],
+                        );
+                        if (assigned.rows.length > 0) {
+                            questionIds = assigned.rows.map(row => row.question_id);
+                        } else {
+                            const selected = await pool.query(
+                                'SELECT id FROM questions WHERE test_id = $1 ORDER BY RANDOM() LIMIT $2',
+                                [id, QUESTIONS_PER_STUDENT],
+                            );
+                            questionIds = selected.rows.map(row => row.id);
+                            if (questionIds.length > 0) {
+                                await pool.query(
+                                    'INSERT INTO test_question_assignments (user_id, test_id, question_id) SELECT $1, $2, UNNEST($3::int[]) ON CONFLICT DO NOTHING',
+                                    [user.id, id, questionIds],
+                                );
+                            }
+                        }
+                    }
+                } catch {
+                    // The endpoint remains readable for admins and legacy clients.
+                }
+            }
+
+            // The test-taking screen always requests a 50-question attempt. The
+            // editor intentionally omits this flag and continues to show the full bank.
+            const isAttempt = req.query.forAttempt === 'true';
+            const questions = questionIds
+                ? await pool.query('SELECT * FROM questions WHERE id = ANY($1::int[])', [questionIds])
+                : isAttempt
+                    ? await pool.query('SELECT * FROM questions WHERE test_id = $1 ORDER BY RANDOM() LIMIT $2', [id, QUESTIONS_PER_STUDENT])
+                    : await pool.query('SELECT * FROM questions WHERE test_id = $1 ORDER BY id', [id]);
             const optionsRes = await pool.query(
                 `SELECT o.* FROM options o
                  JOIN questions q ON o.question_id = q.id
@@ -37,10 +96,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             const questionsWithOptions = questions.rows.map(q => ({
                 ...q,
-                options: optionsRes.rows.filter((o: any) => o.question_id === q.id),
+                options: shuffled(optionsRes.rows.filter((o: any) => o.question_id === q.id)),
             }));
 
-            return res.json({ ...testRes.rows[0], questions: questionsWithOptions });
+            return res.json({ ...testRes.rows[0], questions: (questionIds || isAttempt) ? shuffled(questionsWithOptions) : questionsWithOptions });
         }
 
         if (req.method === 'PATCH') {

@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import * as mammoth from 'mammoth';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -11,6 +13,102 @@ function setCors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
+type ImportedQuestion = { text: string; options: { text: string; is_correct: boolean }[] };
+
+function clean(value: string) {
+    return value.replace(/\s+/g, ' ').trim();
+}
+
+function parseQuestions(rawText: string): ImportedQuestion[] {
+    // This is the format used by the supplied АКТ question bank: every question
+    // is followed by <variant> tags and the first variant is the correct answer.
+    const taggedBlocks = [...rawText.matchAll(/<question>\s*([\s\S]*?)(?=<question>|$)/gi)];
+    if (taggedBlocks.length > 0) {
+        return taggedBlocks.map(match => {
+            const block = match[1];
+            const firstVariantAt = block.search(/<variant>/i);
+            const options = [...block.matchAll(/<variant>\s*([\s\S]*?)(?=<variant>|$)/gi)]
+                .map((variant, index) => ({ text: clean(variant[1]), is_correct: index === 0 }))
+                .filter(option => option.text);
+            return { text: clean(firstVariantAt === -1 ? block : block.slice(0, firstVariantAt)), options };
+        }).filter(question => question.text && question.options.length >= 2);
+    }
+
+    const lines = rawText.replace(/\r/g, '').split('\n').map(clean).filter(Boolean);
+    const questions: ImportedQuestion[] = [];
+    let current: ImportedQuestion | null = null;
+    let answerLetter: string | null = null;
+    const finish = () => {
+        if (!current) return;
+        if (answerLetter) {
+            const answerIndex = answerLetter.charCodeAt(0) - 65;
+            if (current.options[answerIndex]) current.options[answerIndex].is_correct = true;
+        }
+        if (current.text && current.options.length >= 2 && current.options.some(option => option.is_correct)) questions.push(current);
+        current = null;
+        answerLetter = null;
+    };
+    for (const line of lines) {
+        const question = line.match(/^(?:вопрос\s*)?(\d{1,4})\s*[.)、:-]\s*(.+)$/i);
+        const answer = line.match(/^(?:ответ|дұрыс\s*жауап|правильный\s*ответ)\s*[:：-]\s*([A-DА-Г])\b/i);
+        const option = line.match(/^\s*([*+✓✔]?)\s*([A-DА-Г])\s*[.)、:-]\s*(.+)$/i);
+        if (question) {
+            finish();
+            current = { text: question[2], options: [] };
+        } else if (current && answer) {
+            const letters: Record<string, string> = { А: 'A', Б: 'B', В: 'C', Г: 'D' };
+            answerLetter = letters[answer[1].toUpperCase()] || answer[1].toUpperCase();
+        } else if (current && option) {
+            current.options.push({ text: option[3].replace(/^\s*[*+✓✔]\s*/, ''), is_correct: Boolean(option[1]) || /\s[*✓✔]$/.test(option[3]) });
+        } else if (current && current.options.length === 0) {
+            current.text = `${current.text} ${line}`;
+        }
+    }
+    finish();
+    return questions;
+}
+
+async function importWordTest(req: VercelRequest, res: VercelResponse) {
+    const auth = req.headers.authorization;
+    if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'Authorization required' });
+    let user: { role?: string };
+    try {
+        user = jwt.verify(auth.slice(7), process.env.JWT_SECRET || 'fallback_secret') as { role?: string };
+    } catch {
+        return res.status(401).json({ error: 'Session expired. Please sign in again.' });
+    }
+    if (user.role !== 'admin') return res.status(403).json({ error: 'Only administrators can import tests' });
+    const { fileBase64, fileName, title, subject, duration_minutes, passing_score } = req.body || {};
+    if (!fileBase64 || !fileName || !title || !subject) return res.status(400).json({ error: 'File, title and subject are required' });
+    if (!/\.docx$/i.test(fileName)) return res.status(400).json({ error: 'Only .docx Word files are supported' });
+    const buffer = Buffer.from(String(fileBase64).replace(/^data:.*;base64,/, ''), 'base64');
+    if (buffer.length > 4 * 1024 * 1024) return res.status(413).json({ error: 'The Word file must be smaller than 4 MB' });
+    const extracted = await mammoth.extractRawText({ buffer });
+    const questions = parseQuestions(extracted.value);
+    if (questions.length === 0) return res.status(422).json({ error: 'Questions were not recognized. Use numbered questions, A-D options, and mark the correct answer.' });
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const testId = crypto.randomUUID();
+        const test = await client.query(
+            'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published) VALUES ($1,$2,$3,$4,$5,$6,false) RETURNING *',
+            [testId, title.trim(), subject.trim(), `Imported from ${fileName}`, Number(duration_minutes) || 30, Number(passing_score) || 70],
+        );
+        for (const [index, question] of questions.entries()) {
+            const inserted = await client.query('INSERT INTO questions (test_id, text, type, order_index) VALUES ($1,$2,$3,$4) RETURNING id', [testId, question.text, 'MULTIPLE_CHOICE', index]);
+            for (const option of question.options) await client.query('INSERT INTO options (question_id, text, is_correct) VALUES ($1,$2,$3)', [inserted.rows[0].id, option.text, option.is_correct]);
+        }
+        await client.query('COMMIT');
+        return res.status(201).json({ ...test.rows[0], imported_questions: questions.length });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -38,6 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.json(rows);
         }
         if (req.method === 'POST') {
+            if (req.body?.fileBase64) return await importWordTest(req, res);
             const { title, subject, description, duration_minutes, passing_score, is_published = false } = req.body || {};
             if (!title) return res.status(400).json({ error: 'Title required' });
 

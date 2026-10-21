@@ -1,20 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput, Platform, RefreshControl } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, BookOpen, Clock, Settings, LogOut, ChevronRight, BarChart3, User as UserIcon, CheckCircle2 as CheckCircle, Star, Target, Zap, Coins, Sparkles, Lock, HelpCircle, ArrowRight } from 'lucide-react-native';
-import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { ArrowRight, BookOpen, CheckCircle2, Clock3, Coins, HelpCircle, Search, UserRound } from 'lucide-react-native';
+import { useAuth } from '../../context/AuthContext';
 import { API } from '../constants/api';
+import LearningRoute from '../../components/LearningRoute';
+
+const COLORS = { ink: '#16213E', muted: '#69758B', border: '#D9E0EC', blue: '#315CF5', canvas: '#F5F7FB' };
 
 const SUBJECT_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
-  'Математика': { bg: '#ede9fe', text: '#7c3aed', accent: '#4848e5' },
-  'Физика': { bg: '#dcfce7', text: '#15803d', accent: '#059669' },
-  'Химия': { bg: '#fef9c3', text: '#a16207', accent: '#d97706' },
-  'Биология': { bg: '#dcfce7', text: '#15803d', accent: '#059669' },
-  'Тарих': { bg: '#fce7f3', text: '#9d174d', accent: '#ec4899' },
-  'default': { bg: '#dbeafe', text: '#1d4ed8', accent: '#2563eb' },
+  'Математика': { bg: '#EEF1FF', text: '#315CF5', accent: '#315CF5' },
+  'Физика': { bg: '#DDF6EA', text: '#16845B', accent: '#16845B' },
+  'Химия': { bg: '#FFF2D9', text: '#A65B09', accent: '#E29A35' },
+  'Биология': { bg: '#EAF7D0', text: '#4E7411', accent: '#85B52C' },
+  'Тарих': { bg: '#FFE8EE', text: '#A92E4C', accent: '#D65A78' },
+  default: { bg: '#E6F7FA', text: '#277986', accent: '#4BAFBC' },
 };
 
 interface Test {
@@ -32,381 +34,122 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const router = useRouter();
   const [tests, setTests] = useState<Test[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [coins, setCoins] = useState<number | null>(null);
+  const [search, setSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
 
-
-  useEffect(() => {
-    const fetchTests = async () => {
-      const token = await AsyncStorage.getItem('lumina_token');
-      const testsRes = await fetch(`${API}/api/tests`, { headers: { Authorization: `Bearer ${token}` } });
-      if (testsRes.ok) setTests(await testsRes.json());
-    };
-
-    const fetchResults = async () => {
-      if (user?.id) {
-        const token = await AsyncStorage.getItem('lumina_token');
-        const resultsRes = await fetch(`${API}/api/results/user/${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
-        if (resultsRes.ok) {
-          const results = await resultsRes.json();
-          setCompletedIds(new Set(results.map((r: any) => r.test_id)));
-        }
-      }
-    };
-
-    const fetchCoins = async () => {
-      try {
-        const uStr = await AsyncStorage.getItem('lumina_user');
-        if (uStr) {
-          const u = JSON.parse(uStr);
-          const res = await fetch(`${API}/api/users/coins?userId=${u.id}`);
-          if (res.ok) {
-            const data = await res.json();
-            setCoins(data.coins);
-          }
-        }
-      } catch (e) {
-        console.error('Coins fetch err', e);
-      }
-    };
-
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        await Promise.all([fetchTests(), fetchResults(), fetchCoins()]);
-      } catch (e) {
-        console.error('Data error:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true);
+  const loadData = useCallback(async () => {
+    setError('');
     try {
       const token = await AsyncStorage.getItem('lumina_token');
-      const [testsRes, resultsRes] = await Promise.all([
-        fetch(`${API}/api/tests`, { headers: { Authorization: `Bearer ${token}` } }),
-        user?.id ? fetch(`${API}/api/results/user/${user.id}`, { headers: { Authorization: `Bearer ${token}` } }) : Promise.resolve(null),
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      const [testsRes, resultsRes, coinsRes] = await Promise.all([
+        fetch(`${API}/api/tests`, { headers }),
+        user?.id ? fetch(`${API}/api/results/user/${user.id}`, { headers }) : Promise.resolve(null),
+        user?.id ? fetch(`${API}/api/users/coins?userId=${user.id}`, { headers }) : Promise.resolve(null),
       ]);
-      if (testsRes.ok) setTests(await testsRes.json());
+      if (!testsRes.ok) throw new Error('tests');
+      setTests(await testsRes.json());
       if (resultsRes?.ok) {
         const results = await resultsRes.json();
-        setCompletedIds(new Set(results.map((r: any) => r.test_id)));
+        setCompletedIds(new Set(results.map((result: { test_id: string }) => result.test_id)));
       }
-      
-      const uStr = await AsyncStorage.getItem('lumina_user');
-      if (uStr) {
-        const u = JSON.parse(uStr);
-        const res = await fetch(`${API}/api/users/coins?userId=${u.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setCoins(data.coins);
-        }
-      }
-    } catch (e) {
-        console.error(e);
-    } finally {
-      setRefreshing(false);
+      if (coinsRes?.ok) setCoins((await coinsRes.json()).coins);
+    } catch {
+      setError('Деректерді жүктеу мүмкін болмады. Интернет байланысын тексеріп, қайта көріңіз.');
     }
   }, [user?.id]);
 
-  const filtered = tests.filter(t => {
-    const matchSearch = t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.subject.toLowerCase().includes(search.toLowerCase());
-    if (activeFilter === 'completed') return matchSearch && completedIds.has(t.id);
-    return matchSearch;
-  });
+  useEffect(() => {
+    loadData().finally(() => setLoading(false));
+  }, [loadData]);
 
-  const getInitials = (name: string) => name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
+
+  const filtered = useMemo(() => tests.filter((test) => {
+    const query = search.trim().toLowerCase();
+    const matches = !query || test.title.toLowerCase().includes(query) || test.subject.toLowerCase().includes(query);
+    return matches && (activeFilter === 'all' || completedIds.has(test.id));
+  }), [activeFilter, completedIds, search, tests]);
+
+  const firstName = user?.name?.trim().split(' ')[0] || 'оқушы';
+  const remaining = Math.max(tests.length - completedIds.size, 0);
 
   if (loading) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#4848e5" />
-        <Text style={{ marginTop: 12, color: '#64748b', fontWeight: '600' }}>Жүктелуде...</Text>
-      </SafeAreaView>
-    );
+    return <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.canvas, alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator size="large" color={COLORS.blue} />
+      <Text style={{ color: COLORS.muted, fontWeight: '700', marginTop: 12 }}>Оқу бағыты жүктелуде…</Text>
+    </SafeAreaView>;
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#f6f6f8]">
-      <ScrollView 
-         className="flex-1" 
-         contentContainerClassName="pt-6 lg:pt-10 px-4 lg:px-10 pb-16" 
-         showsVerticalScrollIndicator={false}
-         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-
-      {/* HEADER */}
-      <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, backgroundColor: 'white' }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 48, height: 48, backgroundColor: '#f1f5f9', borderRadius: 24, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a' }}>
-                {user?.name?.charAt(0) || 'U'}
-              </Text>
-            </View>
-            <View>
-              <Text style={{ fontSize: 13, color: '#64748b', fontWeight: '500' }}>Сәлем,</Text>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f172a' }}>{user?.name}</Text>
-            </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.canvas }}>
+      <ScrollView contentContainerStyle={{ width: '100%', maxWidth: 1240, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 26, paddingBottom: 72 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.blue} />} showsVerticalScrollIndicator={false}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: COLORS.muted, fontSize: 14, fontWeight: '700' }}>Қайырлы күн, {firstName}</Text>
+            <Text style={{ color: COLORS.ink, fontSize: 30, lineHeight: 37, fontWeight: '900', letterSpacing: -0.8, marginTop: 3 }}>Бүгінгі оқу бағыты</Text>
           </View>
-          
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            {/* Coins Display */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, gap: 6, borderWidth: 1, borderColor: '#fde68a' }}>
-              <Coins size={16} color="#d97706" />
-              <Text style={{ fontWeight: '800', color: '#b45309', fontSize: 14 }}>
-                {coins !== null ? coins : '...'} ₿
-              </Text>
-            </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFF2D9', borderWidth: 1, borderColor: '#F4D69C', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 }}><Coins size={17} color="#A65B09" /><Text style={{ color: '#8B4C08', fontWeight: '900' }}>{coins ?? '—'}</Text></View>
+            <TouchableOpacity accessibilityLabel="Профильді ашу" onPress={() => router.push('/(student)/profile')} style={{ width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border }}><UserRound size={20} color={COLORS.ink} /></TouchableOpacity>
+          </View>
+        </View>
 
-            <TouchableOpacity 
-              onPress={() => router.push('/(student)/profile')}
-              style={{ width: 44, height: 44, backgroundColor: '#f1f5f9', borderRadius: 22, justifyContent: 'center', alignItems: 'center' }}
-            >
-              <UserIcon size={20} color="#0f172a" />
+        <View style={{ backgroundColor: 'white', borderRadius: 24, borderWidth: 1, borderColor: COLORS.border, padding: 22, marginBottom: 18 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
+            <View style={{ flex: 1, minWidth: 220 }}><Text style={{ color: COLORS.ink, fontSize: 20, fontWeight: '900' }}>Сіздің ілгерілеуіңіз</Text><Text style={{ color: COLORS.muted, lineHeight: 21, marginTop: 5 }}>Тестті таңдаңыз, орындаңыз және нәтижеден келесі қадамды көріңіз.</Text></View>
+            <TouchableOpacity onPress={() => router.push('/(student)/results')} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 }}><Text style={{ color: COLORS.blue, fontWeight: '800' }}>Барлық нәтижелер</Text><ArrowRight size={16} color={COLORS.blue} /></TouchableOpacity>
+          </View>
+          <LearningRoute steps={[
+            { label: 'Тестті таңдау', state: completedIds.size ? 'done' : 'current' },
+            { label: 'Сұрақтарға жауап', state: completedIds.size ? 'done' : 'next' },
+            { label: 'Нәтиже', detail: `${completedIds.size} аяқталды`, state: completedIds.size ? 'current' : 'next' },
+            { label: 'Келесі мақсат', state: 'next' },
+          ]} />
+        </View>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 22 }}>
+          {[{ value: tests.length, label: 'Қолжетімді тест', icon: BookOpen, color: COLORS.blue, bg: '#EEF1FF' }, { value: completedIds.size, label: 'Аяқталған', icon: CheckCircle2, color: '#16845B', bg: '#DDF6EA' }, { value: remaining, label: 'Кезекте', icon: Clock3, color: '#A65B09', bg: '#FFF2D9' }].map((item) => {
+            const Icon = item.icon;
+            return <View key={item.label} style={{ flexGrow: 1, flexBasis: 210, flexDirection: 'row', alignItems: 'center', gap: 13, backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 18, padding: 17 }}><View style={{ width: 43, height: 43, borderRadius: 13, backgroundColor: item.bg, alignItems: 'center', justifyContent: 'center' }}><Icon size={21} color={item.color} /></View><View><Text style={{ color: COLORS.ink, fontSize: 22, fontWeight: '900' }}>{item.value}</Text><Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '700' }}>{item.label}</Text></View></View>;
+          })}
+        </View>
+
+        <Text style={{ color: COLORS.ink, fontSize: 22, fontWeight: '900', marginBottom: 12 }}>Құжаттан жасалған тесттер</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 28 }}>
+          {[{ set: '1', count: 48, color: '#315CF5', bg: '#EEF1FF' }, { set: '2', count: 47, color: '#277986', bg: '#E6F7FA' }].map((item) => (
+            <TouchableOpacity key={item.set} onPress={() => router.push((item.set === '1' ? '/informatics' : '/informatics?set=2') as any)} style={{ flexGrow: 1, flexBasis: 300, backgroundColor: item.bg, borderRadius: 20, borderWidth: 1, borderColor: item.set === '1' ? '#C9D3FF' : '#BFE6EB', padding: 20 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}><View style={{ flex: 1 }}><Text style={{ color: item.color, fontSize: 13, fontWeight: '800' }}>Информатика</Text><Text style={{ color: COLORS.ink, fontSize: 20, lineHeight: 26, fontWeight: '900', marginTop: 5 }}>Тест {item.set}</Text><Text style={{ color: COLORS.muted, marginTop: 5 }}>{item.count} сұрақ · 50 минут</Text></View><View style={{ width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}><ArrowRight size={20} color={item.color} /></View></View>
             </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-        {/* Header Section */}
-        <View className="flex-col lg:flex-row justify-between items-stretch lg:items-end mb-6 gap-4">
-          <View className="flex-row justify-between items-center">
-            <View>
-              <Text style={{ fontSize: 14, color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 }}>Студент порталы</Text>
-              <Text className="text-2xl lg:text-3xl font-black text-slate-900 mt-1">Қош келдіңіз, {user?.name?.split(' ')[0]} 👋</Text>
-            </View>
-            <View className="flex lg:hidden w-11 h-11 rounded-full bg-indigo-600 items-center justify-center">
-              <Text className="text-white font-black text-base">{getInitials(user?.name || '')}</Text>
-            </View>
-          </View>
-
-          {/* Admin Back Button / Profile Header Right Side */}
-          <View className="flex-row items-center gap-4">
-            {user?.role === 'admin' && (
-              <TouchableOpacity
-                onPress={() => router.push('/(admin)/dashboard')}
-                className="flex-row items-center bg-indigo-100 px-4 py-3 rounded-xl gap-2.5"
-              >
-                <Zap size={18} color="#4848e5" />
-                <View>
-                  <Text className="text-indigo-600 font-extrabold text-[13px]">Админ режиміне оралу</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-
-            <View className="hidden lg:flex flex-row items-center gap-3 bg-white p-2 pr-4 rounded-[30px] border border-slate-200">
-              <View className="w-9 h-9 rounded-full bg-indigo-600 items-center justify-center">
-                <Text className="text-white font-black text-sm">{getInitials(user?.name || '')}</Text>
-              </View>
-              <Text className="font-bold text-slate-700">{user?.name}</Text>
-            </View>
-          </View>
+          ))}
         </View>
 
-        {/* Global Stats - Horizontal Row */}
-        <View className="flex-col md:flex-row flex-wrap lg:flex-nowrap gap-4 mb-6">
-          <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-            <View className="bg-indigo-50 p-3 rounded-xl">
-              <BookOpen size={24} color="#4848e5" />
-            </View>
-            <View>
-              <Text className="text-2xl font-black text-slate-900">{tests.length}</Text>
-              <Text className="text-[13px] text-slate-500 font-semibold">Бос тестер</Text>
-            </View>
-          </View>
-
-          <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-            <View className="bg-green-50 p-3 rounded-xl">
-              <CheckCircle size={24} color="#15803d" />
-            </View>
-            <View>
-              <Text className="text-2xl font-black text-slate-900">{completedIds.size}</Text>
-              <Text className="text-[13px] text-slate-500 font-semibold">Аяқталғандар</Text>
-            </View>
-          </View>
-
-          <View className="flex-1 w-full md:w-[48%] lg:w-auto bg-white p-5 rounded-2xl border border-slate-200 flex-row items-center gap-4">
-            <View className="bg-amber-50 p-3 rounded-xl">
-              <Clock size={24} color="#b45309" />
-            </View>
-            <View>
-              <Text className="text-2xl font-black text-slate-900">{tests.length - completedIds.size}</Text>
-              <Text className="text-[13px] text-slate-500 font-semibold">Кезектегілер</Text>
-            </View>
-          </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
+          <Text style={{ color: COLORS.ink, fontSize: 22, fontWeight: '900' }}>Барлық тесттер</Text>
+          <View style={{ flexDirection: 'row', backgroundColor: '#E9EDF4', borderRadius: 12, padding: 3 }}>{[{ key: 'all', label: 'Барлығы' }, { key: 'completed', label: 'Аяқталған' }].map((filter) => <TouchableOpacity key={filter.key} onPress={() => setActiveFilter(filter.key as 'all' | 'completed')} style={{ borderRadius: 9, paddingHorizontal: 15, paddingVertical: 9, backgroundColor: activeFilter === filter.key ? 'white' : 'transparent' }}><Text style={{ color: activeFilter === filter.key ? COLORS.ink : COLORS.muted, fontWeight: '800', fontSize: 13 }}>{filter.label}</Text></TouchableOpacity>)}</View>
         </View>
 
-        {/* Layout Split for Desktop vs Mobile */}
-        <View className="flex-col lg:flex-row gap-6">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 14, paddingHorizontal: 14, marginBottom: 16 }}><Search size={19} color="#8A94A6" /><TextInput value={search} onChangeText={setSearch} placeholder="Тест немесе пән атауын іздеу" placeholderTextColor="#8A94A6" accessibilityLabel="Тесттерді іздеу" style={{ flex: 1, color: COLORS.ink, fontSize: 15, paddingVertical: 14, outlineStyle: 'none' } as any} /></View>
 
-          {/* LEFT/MAIN COLUMN - Tests Grid */}
-          <View className="w-full lg:flex-[3]">
+        {!!error && <View style={{ alignItems: 'flex-start', backgroundColor: '#FFF0F2', borderWidth: 1, borderColor: '#F3B7C1', borderRadius: 16, padding: 18, marginBottom: 16 }}><Text style={{ color: '#9D2D43', lineHeight: 21, fontWeight: '700' }}>{error}</Text><TouchableOpacity onPress={onRefresh} style={{ marginTop: 12, backgroundColor: '#C73D4D', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 10 }}><Text style={{ color: 'white', fontWeight: '800' }}>Қайта жүктеу</Text></TouchableOpacity></View>}
 
-            {/* Toolbar: Search and Filter */}
-            <View className="flex-col md:flex-row justify-between gap-4 mb-5">
-
-              <View className="flex-row items-center bg-white border border-slate-200 rounded-xl px-3.5 flex-1">
-                <Search size={18} color="#94a3b8" />
-                <TextInput
-                  value={search} onChangeText={setSearch}
-                  placeholder="Пән немесе тест атауын іздеу..."
-                  placeholderTextColor="#94a3b8"
-                  className="flex-1 ml-2.5 py-3.5 text-slate-900 text-[15px] outline-none"
-                />
-              </View>
-
-              <View className="flex-row bg-slate-200 p-1 rounded-xl items-center w-full md:w-[220px]">
-                {[{ key: 'all', label: 'Барлығы' }, { key: 'completed', label: 'Аяқталған' }].map(f => (
-                  <TouchableOpacity
-                    key={f.key}
-                    onPress={() => setActiveFilter(f.key as any)}
-                    style={{
-                      flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center',
-                      backgroundColor: activeFilter === f.key ? 'white' : 'transparent',
-                      shadowColor: activeFilter === f.key ? '#000' : 'transparent',
-                      shadowOpacity: 0.05, shadowRadius: 2, elevation: activeFilter === f.key ? 1 : 0
-                    }}
-                  >
-                    <Text style={{ fontWeight: '700', fontSize: 13, color: activeFilter === f.key ? '#0f172a' : '#64748b' }}>
-                      {f.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* TESTS GRID */}
-            <View className="flex-row flex-wrap justify-between">
-              {filtered.length === 0 ? (
-                <View className="w-full bg-white p-16 rounded-2xl items-center border border-slate-200">
-                  <BookOpen size={48} color="#cbd5e1" />
-                  <Text className="text-slate-400 mt-4 font-bold text-lg">Тесттер табылмады</Text>
-                  <Text className="text-slate-400 mt-1">Іздеу сөздерін өзгертіп көріңіз</Text>
-                </View>
-              ) : (
-                filtered.map(test => {
-                  const colors = SUBJECT_COLORS[test.subject] || SUBJECT_COLORS.default;
-                  const isDone = completedIds.has(test.id);
-                  return (
-                    <View key={test.id} className="w-full md:w-[48%] mb-4 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                      <View style={{ height: 4, backgroundColor: colors.accent }} />
-
-                      <View className="p-5">
-                        <View className="flex-row justify-between items-start mb-4">
-                          <View style={{ backgroundColor: colors.bg }} className="px-3 py-1.5 rounded-lg">
-                            <Text style={{ color: colors.text }} className="font-extrabold text-xs tracking-wide">{test.subject.toUpperCase()}</Text>
-                          </View>
-                          {isDone && (
-                            <View className="flex-row items-center gap-1.5 bg-green-100 px-2.5 py-1.5 rounded-lg">
-                              <CheckCircle size={14} color="#15803d" />
-                              <Text className="text-green-700 text-xs font-bold">Тапсырылды</Text>
-                            </View>
-                          )}
-                        </View>
-
-                        <Text className="text-lg font-extrabold text-slate-900 mb-2 leading-relaxed" numberOfLines={2}>
-                          {test.title}
-                        </Text>
-
-                        {test.description ? (
-                          <Text className="text-slate-500 text-sm mb-4 leading-relaxed" numberOfLines={2}>
-                            {test.description}
-                          </Text>
-                        ) : <View className="h-4" />}
-
-                        <View className="flex-row gap-4 mb-5">
-                          <View className="flex-row items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-md">
-                            <Clock size={16} color="#64748b" />
-                            <Text className="text-slate-600 text-[13px] font-semibold">{test.duration_minutes} мин</Text>
-                          </View>
-                          <View className="flex-row items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-md">
-                            <HelpCircle size={16} color="#64748b" />
-                            <Text className="text-slate-600 text-[13px] font-semibold">{test.question_count}</Text>
-                          </View>
-                        </View>
-
-                        <TouchableOpacity
-                          onPress={() => isDone
-                            ? Alert.alert('Аяқталған', 'Бұл тестті бұрын тапсырдыңыз')
-                            : router.push(`/test/${test.id}/start` as any)
-                          }
-                          style={{ backgroundColor: isDone ? '#f1f5f9' : colors.accent }}
-                          className="flex-row items-center justify-center gap-2 py-3.5 rounded-xl min-h-[48px]"
-                        >
-                          {isDone
-                            ? <Text className="text-slate-500 font-extrabold text-sm">Нәтижелерді көру</Text>
-                            : <>
-                              <Text className="text-white font-extrabold text-[15px]">Тестті бастау</Text>
-                              <ArrowRight size={18} color="white" />
-                            </>
-                          }
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  );
-                })
-              )}
-            </View>
-          </View>
-
-          {/* RIGHT/SIDE COLUMN - Practice Banner (Desktop) */}
-          <View className="flex-none lg:flex-1 lg:min-w-[300px]">
-            {/* Practice Banner */}
-            <View className="bg-[#2e2e38] rounded-[20px] p-6 items-center">
-              <View className="w-16 h-16 rounded-full bg-indigo-600 items-center justify-center mb-4 shadow-xl shadow-indigo-600/50">
-                <Sparkles size={32} color="white" />
-              </View>
-              <Text className="text-white text-xl font-black mb-2 text-center">ЖИ Тәжірибе режимі</Text>
-              <Text className="text-slate-400 text-center text-sm leading-relaxed mb-6">
-                Емтиханға дейін қосымша сұрақтар генерациялап, дағдыларыңызды шыңдап шығыңыз. Жасанды интеллект сізге бейімделеді.
-              </Text>
-              <TouchableOpacity
-                onPress={() => Alert.alert('Жақында', 'Тәжірибе режимі дайындалып жатыр')}
-                className="bg-white w-full py-3.5 rounded-xl items-center"
-              >
-                <Text className="text-slate-900 font-black text-[15px]">Тәжірибені бастау</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Quick Tips (Desktop Only) */}
-            <View className="hidden lg:flex bg-white rounded-3xl p-6 mt-4 border border-slate-200">
-              <Text className="text-base font-extrabold text-slate-900 mb-4">Кеңестер</Text>
-
-              <View className="flex-row gap-3 mb-4">
-                <View className="w-8 h-8 rounded-lg bg-slate-100 items-center justify-center">
-                  <Clock size={16} color="#64748b" />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-bold text-slate-700 text-[13px] mb-1">Уақытты қадағалаңыз</Text>
-                  <Text className="text-slate-500 text-xs leading-5">Әр сұраққа орташа есеппен қанша уақыт кететінін ескеріңіз.</Text>
-                </View>
-              </View>
-
-              <View className="flex-row gap-3">
-                <View className="w-8 h-8 rounded-lg bg-slate-100 items-center justify-center">
-                  <Lock size={16} color="#64748b" />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-bold text-slate-700 text-[13px] mb-1">Интернет тұрақтылығы</Text>
-                  <Text className="text-slate-500 text-xs leading-5">Тест барысында қосылым үзілсе, парақшаны жаңартпаңыз.</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14 }}>
+          {filtered.map((test) => {
+            const palette = SUBJECT_COLORS[test.subject] || SUBJECT_COLORS.default;
+            const done = completedIds.has(test.id);
+            return <View key={test.id} style={{ flexGrow: 1, flexBasis: 320, maxWidth: 580, backgroundColor: 'white', borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' }}><View style={{ height: 5, backgroundColor: palette.accent }} /><View style={{ padding: 19 }}><View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}><View style={{ backgroundColor: palette.bg, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6 }}><Text style={{ color: palette.text, fontSize: 12, fontWeight: '900' }}>{test.subject}</Text></View>{done && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><CheckCircle2 size={15} color="#16845B" /><Text style={{ color: '#16845B', fontSize: 12, fontWeight: '800' }}>Аяқталды</Text></View>}</View><Text style={{ color: COLORS.ink, fontSize: 18, lineHeight: 24, fontWeight: '900', marginTop: 15 }}>{test.title}</Text>{!!test.description && <Text numberOfLines={2} style={{ color: COLORS.muted, lineHeight: 20, marginTop: 7 }}>{test.description}</Text>}<View style={{ flexDirection: 'row', gap: 14, marginTop: 16, marginBottom: 17 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Clock3 size={16} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>{test.duration_minutes} мин</Text></View><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><HelpCircle size={16} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>{test.question_count} сұрақ</Text></View></View><TouchableOpacity onPress={() => done ? router.push('/(student)/results') : router.push(`/test/${test.id}/start` as any)} style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, backgroundColor: done ? '#EEF1F6' : palette.accent }}><Text style={{ color: done ? COLORS.ink : 'white', fontWeight: '900' }}>{done ? 'Нәтижені көру' : 'Тестті бастау'}</Text><ArrowRight size={17} color={done ? COLORS.ink : 'white'} /></TouchableOpacity></View></View>;
+          })}
+          {!filtered.length && !error && <View style={{ width: '100%', alignItems: 'center', backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 20, padding: 34 }}><BookOpen size={34} color="#AAB4C5" /><Text style={{ color: COLORS.ink, fontWeight: '900', fontSize: 17, marginTop: 12 }}>Тесттер табылмады</Text><Text style={{ color: COLORS.muted, marginTop: 5 }}>Іздеу сөзін немесе сүзгіні өзгертіп көріңіз.</Text></View>}
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,10 +1,13 @@
 {
+    "$schema": "https://openapi.vercel.sh/vercel.json",
     "buildCommand": "cd react-native-app && npm install && npx expo export --platform web",
     "outputDirectory": "react-native-app/dist",
+    "cleanUrls": true,
     "rewrites": [
-        {
-            "source": "/((?!api/).*)",
-            "destination": "/index.html"
-        }
+        { "source": "/test/:id/start", "destination": "/test/[id]/start" },
+        { "source": "/test/:id/take", "destination": "/test/[id]/take" },
+        { "source": "/test/:id/result", "destination": "/test/[id]/result" },
+        { "source": "/test/:id/edit", "destination": "/test/[id]/edit" },
+        { "source": "/test/:id/results", "destination": "/test/[id]/results" }
     ]
 }

@@ -6,3 +6,12 @@ coverage/
 *.log
 .env*
 !.env.example
+.vercel
+.env*.local
+react-native-app/assets/test-source/
+react-native-app/assets/informatics-questions/q12.jpg
+react-native-app/assets/test2-questions/
+react-native-app/assets/informatics2-questions/q26.jpg
+react-native-app/assets/informatics2-questions/q27.jpg
+.impeccable/
+marketing-assets/

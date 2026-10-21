@@ -1,266 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BookOpen, ArrowRight, ShieldCheck, CheckCircle2, Zap, BarChart3, Users, Lock, ChevronRight, Play, Sparkles } from 'lucide-react-native';
+import { ArrowRight, BarChart3, Check, FileText, Route, ShieldCheck, Sparkles } from 'lucide-react-native';
+import { Link } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
-import { useRouter, Link } from 'expo-router';
+import BrandMark from '../components/BrandMark';
+import LearningRoute from '../components/LearningRoute';
 
-const AbstractHeroGraphic = () => (
-  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', position: 'relative', height: 400 }}>
-    {/* Background glow / shapes */}
-    <View style={{ position: 'absolute', width: 300, height: 300, backgroundColor: '#eef2ff', borderRadius: 150, top: 40, right: 20 }} />
-    <View style={{ position: 'absolute', width: 200, height: 200, backgroundColor: '#fdf4ff', borderRadius: 100, bottom: 20, left: 40 }} />
-    
-    {/* Main glass card mock */}
-    <View style={{ 
-      width: 380, backgroundColor: 'white', padding: 24, borderRadius: 24, 
-      shadowColor: '#4848e5', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.1, shadowRadius: 40,
-      elevation: 10, borderWidth: 1, borderColor: '#f1f5f9', zIndex: 10
-    }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <View style={{ gap: 6 }}>
-          <View style={{ width: 120, height: 12, backgroundColor: '#e2e8f0', borderRadius: 6 }} />
-          <View style={{ width: 80, height: 10, backgroundColor: '#f1f5f9', borderRadius: 5 }} />
-        </View>
-        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#4848e5', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: 'white', fontWeight: '800' }}>98</Text>
-        </View>
-      </View>
-
-      <View style={{ gap: 12 }}>
-         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 12, backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#f1f5f9' }}>
-           <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#e0e7ff', alignItems: 'center', justifyContent: 'center' }}><CheckCircle2 size={14} color="#4848e5" /></View>
-           <View style={{ flex: 1, height: 10, backgroundColor: '#cbd5e1', borderRadius: 5 }} />
-         </View>
-         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 12, backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#10b981' }}>
-           <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center' }}><CheckCircle2 size={14} color="#10b981" /></View>
-           <View style={{ flex: 1, height: 10, backgroundColor: '#10b981', borderRadius: 5 }} />
-         </View>
-         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 12, backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#f1f5f9' }}>
-           <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#e0e7ff', alignItems: 'center', justifyContent: 'center' }}><CheckCircle2 size={14} color="#4848e5" /></View>
-           <View style={{ width: '60%', height: 10, backgroundColor: '#cbd5e1', borderRadius: 5 }} />
-         </View>
-      </View>
-
-      <View style={{ marginTop: 24, height: 48, backgroundColor: '#4848e5', borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
-         <View style={{ width: 100, height: 10, backgroundColor: 'white', borderRadius: 5, opacity: 0.8 }} />
-      </View>
-    </View>
-    
-    {/* Floating element */}
-    <View style={{
-      position: 'absolute', top: 60, left: -20, backgroundColor: 'white', padding: 16, borderRadius: 16,
-      shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 5,
-      flexDirection: 'row', alignItems: 'center', gap: 12, zIndex: 20
-    }}>
-      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#fef08a', alignItems: 'center', justifyContent: 'center' }}>
-        <Zap size={16} color="#ca8a04" />
-      </View>
-      <View>
-        <Text style={{ fontWeight: '800', color: '#0f172a', fontSize: 13 }}>ЖИ Анализ</Text>
-        <Text style={{ color: '#64748b', fontSize: 11 }}>Дайын</Text>
-      </View>
-    </View>
-  </View>
-);
+const features = [
+  { icon: FileText, title: 'Тест құрастыру', text: 'Қарапайым сұрақтардан бастап құжат негізіндегі күрделі тапсырмаларға дейін.' },
+  { icon: BarChart3, title: 'Нақты нәтиже', text: 'Балл, өту шегі және аяқталған жұмыстар бір жерде көрінеді.' },
+  { icon: ShieldCheck, title: 'Басқарылатын қолжетімділік', text: 'Студент пен әкімші әрекеттері рөлге сәйкес бөлінген.' },
+];
 
 export default function LandingPage() {
-  const { isAuthenticated, user, logout } = useAuth();
-  const router = useRouter();
-  const handleStart = () => {
-    if (isAuthenticated) {
-      if (user?.role === 'admin') router.push('/(admin)/dashboard');
-      else router.push('/(student)/dashboard');
-    } else {
-      router.push('/login');
-    }
-  };
-
+  const { isAuthenticated, user } = useAuth();
+  const dashboard = user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 60 }}
-        showsVerticalScrollIndicator={false}
-      >
-          {/* ----- HEADER ----- */}
-          <View className="border-b border-slate-100 bg-white">
-            <View className="flex-row items-center justify-between px-4 md:px-8 py-4 self-center w-full max-w-[1400px]">
-              <View className="flex-row items-center gap-2 md:gap-3">
-                <View className="bg-indigo-600 p-2 md:p-2.5 rounded-xl">
-                  <BookOpen size={20} color="white" />
-                </View>
-                <Text className="text-[18px] md:text-[22px] font-black text-slate-900 tracking-tight">LuminaPortal</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F7FB' }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 38 }}>
+        <View style={{ backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#E3E8F0' }}>
+          <View className="w-full max-w-[1240px] self-center px-5 lg:px-8 py-4 flex-row items-center justify-between">
+            <BrandMark compact />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Link href="/login" asChild><TouchableOpacity style={{ paddingHorizontal: 16, paddingVertical: 11, borderRadius: 10 }}><Text style={{ color: '#34415A', fontWeight: '800' }}>Кіру</Text></TouchableOpacity></Link>
+              <Link href={(isAuthenticated ? dashboard : '/register') as any} asChild><TouchableOpacity style={{ backgroundColor: '#315CF5', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 10 }}><Text style={{ color: 'white', fontWeight: '900' }}>{isAuthenticated ? 'Кабинетке өту' : 'Тіркелу'}</Text></TouchableOpacity></Link>
+            </View>
+          </View>
+        </View>
+
+        <View className="w-full max-w-[1240px] self-center px-5 lg:px-8 pt-12 lg:pt-20">
+          <View className="flex-col lg:flex-row gap-10 lg:gap-16 items-stretch">
+            <View className="flex-1 justify-center py-4 lg:py-8">
+              <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#E9EEFF', borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8, marginBottom: 22 }}>
+                <Route size={16} color="#315CF5" />
+                <Text style={{ color: '#315CF5', fontWeight: '900', fontSize: 13 }}>Оқу бағыты анық көрінеді</Text>
               </View>
-              <View className="flex-row items-center gap-2 md:gap-3">
-                {!isAuthenticated ? (
-                  <>
-                    <Link href="/login" asChild>
-                      <TouchableOpacity className="px-3 md:px-5 py-2 md:py-2.5 rounded-xl">
-                        <Text className="text-slate-600 text-[14px] md:text-[15px] font-bold">Кіру</Text>
-                      </TouchableOpacity>
-                    </Link>
-                    <Link href="/register" asChild>
-                      <TouchableOpacity className="px-4 md:px-5 py-2 md:py-3 bg-slate-900 rounded-xl">
-                        <Text className="text-white text-[14px] md:text-[15px] font-bold">Тіркелу</Text>
-                      </TouchableOpacity>
-                    </Link>
-                  </>
-                ) : (
-                  <TouchableOpacity
-                    onPress={logout}
-                    className="px-4 md:px-5 py-2 md:py-2.5 bg-slate-100 rounded-xl"
-                  >
-                    <Text className="text-slate-600 text-[14px] md:text-[15px] font-bold">Шығу</Text>
-                  </TouchableOpacity>
-                )}
+              <Text style={{ color: '#16213E', fontSize: 48, lineHeight: 54, fontWeight: '900', letterSpacing: -2 }} className="lg:text-[64px] lg:leading-[68px]">Тесттен нәтижеге дейін — бір түсінікті бағыт</Text>
+              <Text style={{ color: '#69758B', fontSize: 18, lineHeight: 29, marginTop: 22, maxWidth: 610 }}>LuminaPortal тест құруды, өткізуді және нәтижені талдауды бір жұмыс кеңістігіне жинайды.</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 30 }}>
+                <Link href={(isAuthenticated ? dashboard : '/register') as any} asChild><TouchableOpacity style={{ minHeight: 54, backgroundColor: '#315CF5', borderRadius: 12, paddingHorizontal: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}><Text style={{ color: 'white', fontWeight: '900', fontSize: 16 }}>{isAuthenticated ? 'Оқуды жалғастыру' : 'Тегін бастау'}</Text><ArrowRight size={19} color="white" /></TouchableOpacity></Link>
+                <Link href="/informatics?set=2" asChild><TouchableOpacity style={{ minHeight: 54, backgroundColor: 'white', borderWidth: 1, borderColor: '#CAD3E1', borderRadius: 12, paddingHorizontal: 22, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#16213E', fontWeight: '900', fontSize: 16 }}>Демо тестті ашу</Text></TouchableOpacity></Link>
+              </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 18, marginTop: 26 }}>
+                {['Телефон мен компьютерде', 'Нәтиже бірден', 'Қазақша интерфейс'].map((item) => <View key={item} style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}><Check size={16} color="#16845B" strokeWidth={3} /><Text style={{ color: '#526078', fontWeight: '700', fontSize: 13 }}>{item}</Text></View>)}
+              </View>
+            </View>
+
+            <View className="flex-1 bg-white border border-[#D9E0EC] rounded-[24px] p-5 lg:p-7 shadow-sm justify-between min-h-[430px]">
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><View><Text style={{ color: '#69758B', fontWeight: '700', fontSize: 13 }}>Студент кабинеті</Text><Text style={{ color: '#16213E', fontWeight: '900', fontSize: 23, marginTop: 4 }}>Бүгінгі оқу бағыты</Text></View><View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#E9EEFF', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#315CF5', fontWeight: '900' }}>АН</Text></View></View>
+              <View style={{ backgroundColor: '#F8FAFD', borderWidth: 1, borderColor: '#E3E8F0', borderRadius: 16, padding: 18, marginVertical: 24 }}><LearningRoute steps={[{ label: 'Кіру', state: 'done' }, { label: 'Таңдау', state: 'done' }, { label: 'Тест', state: 'current' }, { label: 'Нәтиже', state: 'next' }]} /></View>
+              <View style={{ gap: 11 }}>
+                {[['Информатика · Тест 2', '47 сұрақ', '#315CF5'], ['Ақпараттық технологиялар', '50 минут', '#16845B']].map(([title, meta, color]) => <View key={title} style={{ borderWidth: 1, borderColor: '#E3E8F0', borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}><View style={{ width: 6, height: 42, borderRadius: 6, backgroundColor: color }} /><View style={{ flex: 1 }}><Text style={{ color: '#16213E', fontWeight: '900', fontSize: 15 }}>{title}</Text><Text style={{ color: '#69758B', fontSize: 12, marginTop: 4 }}>{meta}</Text></View><ArrowRight size={18} color="#69758B" /></View>)}
               </View>
             </View>
           </View>
 
-          {/* ----- MAIN CONTENT WRAPPER ----- */}
-          <View style={{ flex: 1, width: '100%', maxWidth: 1400, alignSelf: 'center' }}>
-            
-            {/* HERO SECTION */}
-            <View className="flex-col lg:flex-row items-center px-4 lg:px-16 pt-10 lg:pt-20 pb-10 lg:pb-16 gap-10">
-              
-              {/* Text Side */}
-              <View className="items-center lg:items-start w-full lg:flex-1">
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#eef2ff', marginBottom: 24 }}>
-                  <Zap size={16} color="#4848e5" />
-                  <Text style={{ color: '#4848e5', fontSize: 14, fontWeight: '800' }}>Жаңа буынды платформа</Text>
-                </View>
-
-                <Text className="text-[40px] lg:text-[56px] text-center lg:text-left font-black text-slate-900 mb-6 leading-[48px] lg:leading-[64px] tracking-tight">
-                  Оқу процесін <Text style={{ color: '#4848e5' }}>сандық</Text> деңгейге көтеріңіз
-                </Text>
-
-                <Text className="text-lg text-center lg:text-left text-slate-500 mb-10 leading-7 lg:max-w-[90%]">
-                  LuminaPortal — сіздің оқу орныңызға немесе бизнесіңізге арналған қауіпсіз, ЖИ қамтылған және ең озық онлайн бағалау жүйесі. 
-                </Text>
-
-                <View className="flex-col w-full lg:w-auto items-center lg:items-start mt-2">
-                  <Link href={isAuthenticated ? (user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard') : '/login'} asChild>
-                    <TouchableOpacity className="flex-row items-center justify-center gap-3 bg-indigo-600 px-8 py-4 rounded-2xl shadow-lg shadow-indigo-600/30 w-full lg:w-auto">
-                      <Text style={{ color: 'white', fontSize: 16, fontWeight: '800' }}>
-                        {isAuthenticated ? 'Панельге өту' : 'Бастау'}
-                      </Text>
-                      <ArrowRight size={20} color="#ffffff" />
-                    </TouchableOpacity>
-                  </Link>
-                </View>
-
-                {/* Trust badges */}
-                <View className="flex-row flex-wrap justify-center lg:justify-start gap-5 mt-10">
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <CheckCircle2 size={20} color="#10b981" />
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748b' }}>ЖИ генератор</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <CheckCircle2 size={20} color="#10b981" />
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748b' }}>Анти-чит</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <CheckCircle2 size={20} color="#10b981" />
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748b' }}>Нақты уақыт</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Graphic Side (Desktop Only) */}
-              <View className="hidden lg:flex lg:flex-1 items-center justify-center">
-                <AbstractHeroGraphic />
-              </View>
-
+          <View className="mt-16 lg:mt-24">
+            <Text style={{ color: '#16213E', fontSize: 34, lineHeight: 41, fontWeight: '900', letterSpacing: -1, maxWidth: 650 }}>Күнделікті бағалау жұмысына қажет негізгі құралдар</Text>
+            <View className="flex-col md:flex-row gap-4 mt-8">
+              {features.map(({ icon: Icon, title, text }, index) => <View key={title} style={{ flex: 1, backgroundColor: index === 0 ? '#16213E' : 'white', borderWidth: 1, borderColor: index === 0 ? '#16213E' : '#D9E0EC', borderRadius: 18, padding: 24 }}><View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: index === 0 ? 'rgba(115,210,222,0.18)' : '#E9EEFF', alignItems: 'center', justifyContent: 'center' }}><Icon size={22} color={index === 0 ? '#73D2DE' : '#315CF5'} /></View><Text style={{ color: index === 0 ? 'white' : '#16213E', fontSize: 20, fontWeight: '900', marginTop: 22 }}>{title}</Text><Text style={{ color: index === 0 ? '#BBC6DC' : '#69758B', fontSize: 15, lineHeight: 23, marginTop: 9 }}>{text}</Text></View>)}
             </View>
-
-            {/* FULL WIDTH STATS BANNER */}
-            <View className="mx-4 md:mx-6 lg:mx-10 bg-slate-900 rounded-[32px] p-10 mb-16 lg:mb-20 flex-col md:flex-row justify-around items-center gap-10 lg:gap-8 shadow-2xl shadow-indigo-900/10">
-              <View className="items-center">
-                <Text className="text-[#38bdf8] text-5xl md:text-5xl lg:text-5xl font-black tracking-tighter">10K+</Text>
-                <Text className="text-slate-400 text-sm md:text-base font-bold mt-2 uppercase tracking-wide">Студент</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-[#a78bfa] text-5xl md:text-5xl lg:text-5xl font-black tracking-tighter">500+</Text>
-                <Text className="text-slate-400 text-sm md:text-base font-bold mt-2 uppercase tracking-wide">Тест & Құжат</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-[#34d399] text-5xl md:text-5xl lg:text-5xl font-black tracking-tighter">98%</Text>
-                <Text className="text-slate-400 text-sm md:text-base font-bold mt-2 uppercase tracking-wide">Дәлдік</Text>
-              </View>
-            </View>
-
-            {/* FEATURES */}
-            <View style={{ paddingHorizontal: '5%', marginBottom: 80 }}>
-              <View style={{ alignItems: 'center', marginBottom: 40 }}>
-                <Text style={{ fontSize: 32, fontWeight: '900', color: '#0f172a', marginBottom: 16, letterSpacing: -1, textAlign: 'center' }}>
-                  Мүмкіндіктердің <Text style={{ color: '#4848e5' }}>жаңа шегі</Text>
-                </Text>
-                <Text style={{ fontSize: 18, color: '#64748b', textAlign: 'center', maxWidth: 600, lineHeight: 28 }}>
-                  Сізге оқу процесін бақылау және басқару үшін қажетті барлық құралдар бір жерде жинақталған.
-                </Text>
-              </View>
-
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24, justifyContent: 'space-between' }}>
-                {[
-                  { icon: <BarChart3 size={28} color="#4848e5" />, title: 'Нақты уақыт аналитика', desc: 'Студенттердің нәтижелерін графиктер мен кестелер арқылы бақылаңыз.', bg: '#eef2ff' },
-                  { icon: <ShieldCheck size={28} color="#10b981" />, title: 'Қауіпсіздік кепілдігі', desc: 'Анти-чит механизмі және мобилді платформада сенімді тестілеу.', bg: '#dcfce7' },
-                  { icon: <Sparkles size={28} color="#9333ea" />, title: 'ЖИ сұрақ генераторы', desc: 'Жасанды интеллект көмегімен тақырып бойынша сұрақтарды автоматты жасаңыз.', bg: '#f3e8ff' },
-                  { icon: <Users size={28} color="#ea580c" />, title: 'Рөлдік жүйе', desc: 'Студент және Әкімші — әрқайсысына арнайы функционал және интерфейс.', bg: '#ffedd5' },
-                ].map((ft, idx) => (
-                  <View key={idx} style={{ 
-                    flexBasis: 300, flexGrow: 1, 
-                    backgroundColor: '#f8fafc', padding: 32, borderRadius: 24, borderWidth: 1, borderColor: '#e2e8f0',
-                    gap: 20
-                  }}>
-                    <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: ft.bg, alignItems: 'center', justifyContent: 'center' }}>
-                      {ft.icon}
-                    </View>
-                    <View>
-                      <Text style={{ fontSize: 22, fontWeight: '800', color: '#0f172a', marginBottom: 10 }}>{ft.title}</Text>
-                      <Text style={{ fontSize: 15, color: '#64748b', lineHeight: 24 }}>{ft.desc}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* CTA */}
-            <View className="px-5 w-full self-center mb-16">
-              <View className="bg-indigo-600 p-8 md:p-12 rounded-[32px] items-center flex-col gap-8 overflow-hidden relative w-full shadow-2xl shadow-indigo-600/20">
-                {/* Decorative circles */}
-                <View className="absolute w-[400px] h-[400px] rounded-full bg-white/10 -top-[200px] -right-[100px]" />
-                <View className="absolute w-[200px] h-[200px] rounded-full bg-white/5 -bottom-[50px] -left-[50px]" />
-
-                <View className="z-10 items-center">
-                  <Text className="text-white text-3xl md:text-4xl font-black mb-4 text-center tracking-tight">Келесі қадам жасаңыз</Text>
-                  <Text className="text-indigo-100 text-[16px] md:text-lg text-center leading-7 max-w-[500px]">
-                    Платформаның барлық мүмкіндіктеріне ие болыңыз. Тегін тіркеліп, студенттеріңізді бүгіннен бастап бағалаңыз.
-                  </Text>
-                </View>
-
-                <Link href="/register" asChild>
-                  <TouchableOpacity className="bg-white py-4 md:py-5 px-8 md:px-10 rounded-full flex-row items-center justify-center gap-3 shadow-xl shadow-black/10 z-10 w-full sm:w-auto">
-                    <Text className="text-indigo-600 text-[16px] md:text-lg font-black">Тіркелу — Тегін</Text>
-                    <ArrowRight size={20} color="#4848e5" />
-                  </TouchableOpacity>
-                </Link>
-              </View>
-            </View>
-
-            {/* FOOTER */}
-            <View style={{ borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 40, paddingHorizontal: '5%', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 24 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                 <View style={{ backgroundColor: '#f1f5f9', padding: 6, borderRadius: 8 }}>
-                  <BookOpen size={16} color="#64748b" />
-                 </View>
-                 <Text style={{ fontSize: 16, fontWeight: '800', color: '#0f172a' }}>LuminaPortal</Text>
-              </View>
-              <Text style={{ color: '#94a3b8', fontSize: 14, fontWeight: '600' }}>© 2026 Барлық құқықтар қорғалған.</Text>
-            </View>
-
           </View>
-        </ScrollView>
+
+          <View className="mt-16 lg:mt-24 bg-[#315CF5] rounded-[24px] p-7 lg:p-12 flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+            <View style={{ maxWidth: 650 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><Sparkles size={20} color="#B8E34A" /><Text style={{ color: '#DCE4FF', fontWeight: '800' }}>Келесі қадам</Text></View><Text style={{ color: 'white', fontSize: 31, lineHeight: 38, fontWeight: '900', marginTop: 12 }}>Алғашқы тестті қазір ашып көріңіз</Text><Text style={{ color: '#DCE4FF', lineHeight: 24, marginTop: 9 }}>Тіркелмей-ақ демо тесттің құрылымын көруге болады.</Text></View>
+            <Link href="/informatics?set=2" asChild><TouchableOpacity style={{ minHeight: 52, backgroundColor: 'white', borderRadius: 12, paddingHorizontal: 22, flexDirection: 'row', alignItems: 'center', gap: 9 }}><Text style={{ color: '#315CF5', fontWeight: '900' }}>Демо тест</Text><ArrowRight size={18} color="#315CF5" /></TouchableOpacity></Link>
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderTopWidth: 1, borderTopColor: '#D9E0EC', paddingTop: 26, marginTop: 54 }}><BrandMark compact /><Text style={{ color: '#7A869B', fontSize: 13 }}>© 2026 LuminaPortal</Text></View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

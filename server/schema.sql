@@ -41,6 +41,15 @@ CREATE TABLE IF NOT EXISTS options (
   is_correct BOOLEAN DEFAULT false
 );
 
+-- The same random 50 questions remain assigned to a student if they reopen a test.
+CREATE TABLE IF NOT EXISTS test_question_assignments (
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  test_id TEXT REFERENCES tests(id) ON DELETE CASCADE,
+  question_id INT REFERENCES questions(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (user_id, test_id, question_id)
+);
+
 -- Test results
 CREATE TABLE IF NOT EXISTS results (
   id SERIAL PRIMARY KEY,

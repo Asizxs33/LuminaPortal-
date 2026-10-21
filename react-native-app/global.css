@@ -33,7 +33,7 @@ body {
 }
 
 body {
-  background-color: #f6f6f8;
+  background-color: #f5f7fb;
   -webkit-touch-callout: none;
   /* user-select is handled by React Native Web, don't force it globally */
   -webkit-tap-highlight-color: transparent;
@@ -49,7 +49,7 @@ body {
 /* ===== Desktop (768px+) ===== */
 @media (min-width: 768px) {
   body {
-    background-color: #eef1f8;
+    background-color: #f5f7fb;
   }
 
   /* Nice scrollbar */
@@ -67,4 +67,20 @@ body {
   ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
   }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  color: #16213e;
+  background: #dce4ff;
+}
+
+button:focus-visible,
+input:focus-visible,
+[role='button']:focus-visible {
+  outline: 3px solid rgba(49, 92, 245, 0.28);
+  outline-offset: 2px;
 }

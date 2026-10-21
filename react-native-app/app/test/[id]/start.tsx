@@ -21,26 +21,57 @@ export default function TestStart() {
   const router = useRouter();
   const [test, setTest] = useState<TestDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTest();
-  }, [id]);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
-  const fetchTest = async () => {
-    try {
-      const token = await AsyncStorage.getItem('lumina_token');
-      const res = await fetch(`${API}/api/tests/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        setTest(await res.json());
+    const fetchTest = async () => {
+      if (!id) {
+        setError('Тест идентификаторы табылмады.');
+        setLoading(false);
+        return;
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      try {
+        const token = await AsyncStorage.getItem('lumina_token');
+        // This also creates/reuses the student's persistent random set of 50 questions.
+        const res = await fetch(`${API}/api/tests/${id}?forAttempt=true`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Тестті жүктеу мүмкін болмады (${res.status}).`);
+        }
+
+        const data = await res.json();
+        if (!Array.isArray(data.questions) || data.questions.length === 0) {
+          throw new Error('Тестте сұрақтар табылмады.');
+        }
+        setTest(data);
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') {
+          console.error('Failed to load test start screen:', e);
+        }
+        setError(
+          (e as Error).name === 'AbortError'
+            ? 'Жүктеу уақыты аяқталды. Интернетті тексеріп, қайта көріңіз.'
+            : (e as Error).message || 'Тестті жүктеу мүмкін болмады.'
+        );
+      } finally {
+        clearTimeout(timeout);
+        setLoading(false);
+      }
+    };
+
+    fetchTest();
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [id]);
 
   if (loading) {
     return (
@@ -53,7 +84,8 @@ export default function TestStart() {
   if (!test) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: '#0f172a', marginBottom: 16 }}>Тест табылмады</Text>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: '#0f172a', marginBottom: 8 }}>Тест жүктелмеді</Text>
+        <Text style={{ color: '#64748b', textAlign: 'center', marginBottom: 16 }}>{error || 'Тест табылмады'}</Text>
         <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#4848e5', borderRadius: 12 }}>
           <Text style={{ color: 'white', fontWeight: '700' }}>Тақтаға оралу</Text>
         </TouchableOpacity>
@@ -130,7 +162,7 @@ export default function TestStart() {
           onPress={() => router.push(`/test/${test.id}/take`)} 
           style={{ backgroundColor: '#4848e5', paddingVertical: 16, borderRadius: 16, alignItems: 'center', marginBottom: 16 }}
         >
-          <Text style={{ color: 'white', fontSize: 16, fontWeight: '800', tracking: 1 }}>Тестті бастау</Text>
+          <Text style={{ color: 'white', fontSize: 16, fontWeight: '800', letterSpacing: 1 }}>Тестті бастау</Text>
         </TouchableOpacity>
         
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
