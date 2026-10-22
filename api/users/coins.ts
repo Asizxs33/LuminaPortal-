@@ -1,13 +1,14 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Pool } from 'pg';
+import { secure } from '../_lib/secure';
+import type { VercelRequest, VercelResponse } from '../_lib/http';
+import { Pool } from '../_lib/db';
 import jwt from 'jsonwebtoken';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: true },
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -26,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'User ID required' });
         }
 
-        const decoded = jwt.verify(auth.slice(7), process.env.JWT_SECRET || 'fallback_secret') as { id?: number; role?: string };
+        const decoded = jwt.verify(auth.slice(7), process.env.JWT_SECRET!) as { id?: number; role?: string };
         if (decoded.role !== 'admin' && String(decoded.id) !== String(userId)) {
             return res.status(403).json({ error: 'Access denied' });
         }
@@ -40,6 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
         console.error('Coins API error:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Қызмет қатесі. Қайта көріңіз.' });
     }
 }
+
+export default secure(handler, 'users/coins.ts');

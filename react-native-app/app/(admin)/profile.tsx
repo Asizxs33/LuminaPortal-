@@ -1,146 +1,47 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
+import { confirmAction } from '../../lib/confirmAction';
+import { notify } from '../../lib/notify';
+import { displayFont } from '../../theme';
+import React, {useState} from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Platform, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
-import { LogOut, User, Mail, Shield, BookOpen, ChevronRight, Settings, ArrowLeft, GraduationCap } from 'lucide-react-native';
+import { LogOut, User, Mail, ShieldCheck, ChevronRight, ArrowLeft, ArrowRight, History } from 'lucide-react-native';
 
+const ink='#230D13',burgundy='#8C102B';
 export default function AdminProfile() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
-
-  const handleLogout = () => {
-    const performLogout = async () => {
-      await logout();
-      router.replace('/login');
-    };
-
-    if (Platform.OS === 'web') {
-      if (window.confirm('Жүйеден шығуды растаңыз')) performLogout();
-    } else {
-      Alert.alert(
-        'Шығу',
-        'Жүйеден шығуды растаңыз',
-        [
-          { text: 'Бас тарту', style: 'cancel' },
-          {
-            text: 'Шығу',
-            style: 'destructive',
-            onPress: performLogout
-          }
-        ]
-      );
-    }
+  const {user,logout}=useAuth();
+  const router=useRouter();
+  const [leaving,setLeaving]=useState(false);
+  const handleLogout=async()=>{
+    if(leaving)return;
+    setLeaving(true);
+    try{if(await confirmAction('Жүйеден шығуды растаңыз')){await logout();router.replace('/login');}}catch{notify.error('Жүйеден шығу мүмкін болмады. Қайта көріңіз.');}finally{setLeaving(false);}
   };
-
-  const getInitials = (name: string) => {
-    if (!name) return '?';
-    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  return (
-    <SafeAreaView className="flex-1 bg-parchment-50 relative overflow-hidden">
-      {/* Soft decorative background orbs */}
-      <ScrollView className="flex-1" contentContainerClassName="p-6 md:p-10 pb-20">
-
-        <TouchableOpacity 
-          onPress={() => router.back()} 
-          className="flex-row items-center gap-2 mb-8"
-        >
-          <ArrowLeft size={20} color="#756D70" />
-          <Text className="text-parchment-500 font-bold">Артқа</Text>
-        </TouchableOpacity>
-
-        <View className="max-w-[700px] w-full mx-auto">
-          {/* Header */}
-          <Text className="font-display text-3xl font-bold text-parchment-900 tracking-tight mb-8">Профиль</Text>
-
-          {/* Avatar Card */}
-          <View className="bg-white rounded-xl p-8 items-center border border-parchment-200   mb-6">
-            <View className="w-24 h-24 rounded-full bg-academic-600 items-center justify-center mb-4  ">
-              <Text className="font-display text-white text-3xl font-bold">{getInitials(user?.name || '')}</Text>
-            </View>
-
-            <Text className="font-display text-2xl font-bold text-parchment-900">{user?.name || 'Пайдаланушы'}</Text>
-            <Text className="text-parchment-500 mt-1 text-base font-medium">{user?.email}</Text>
-
-            <View className="flex-row items-center gap-1.5 bg-academic-50 px-4 py-2 rounded-full mt-4 border border-academic-100">
-               <Shield size={16} color="#800F1D" />
-               <Text className="text-academic-600 font-bold text-[14px]">Әкімші</Text>
-            </View>
-          </View>
-
-          {/* Info blocks */}
-          <View className="bg-white rounded-xl border border-parchment-200   mb-6 overflow-hidden">
-            <View className="p-6 border-b border-parchment-100/60 flex-row items-center gap-4">
-              <View className="w-12 h-12 rounded-xl bg-academic-50 items-center justify-center">
-                <User size={22} color="#800F1D" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-[12px] text-parchment-400 font-bold tracking-wider mb-1">АТЫ-ЖӨНІ</Text>
-                <Text className="text-base font-bold text-parchment-900">{user?.name}</Text>
-              </View>
-            </View>
-
-            <View className="p-6 flex-row items-center gap-4">
-              <View className="w-12 h-12 rounded-xl bg-emerald-50 items-center justify-center">
-                <Mail size={22} color="#10b981" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-[12px] text-parchment-400 font-bold tracking-wider mb-1">ЭЛЕКТРОНДЫҚ ПОШТА</Text>
-                <Text className="text-base font-bold text-parchment-900">{user?.email}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Quick Links */}
-          <View className="bg-white rounded-xl border border-parchment-200   mb-8 overflow-hidden">
-             
-             {/* Go to Student View */}
-             <TouchableOpacity
-               className="p-6 flex-row items-center gap-4 border-b border-parchment-100/60 active:bg-parchment-50/50 transition-colors"
-               onPress={() => router.push('/(student)/dashboard')}
-             >
-               <View className="w-12 h-12 rounded-xl bg-teal-50 items-center justify-center">
-                 <GraduationCap size={22} color="#0d9488" />
-               </View>
-               <Text className="flex-1 text-base font-bold text-parchment-900">Студент порталына өту</Text>
-               <ChevronRight size={20} color="#DFD2C3" />
-             </TouchableOpacity>
-
-             <TouchableOpacity
-               className="p-6 flex-row items-center gap-4 border-b border-parchment-100/60 active:bg-parchment-50/50 transition-colors"
-               onPress={() => Alert.alert('Жақында', 'Бұл мүмкіндік дайындалуда')}
-             >
-               <View className="w-12 h-12 rounded-xl bg-orange-50 items-center justify-center">
-                 <Settings size={22} color="#f97316" />
-               </View>
-               <Text className="flex-1 text-base font-bold text-parchment-900">Баптаулар</Text>
-               <ChevronRight size={20} color="#DFD2C3" />
-             </TouchableOpacity>
-
-             <TouchableOpacity
-               className="p-6 flex-row items-center gap-4 active:bg-parchment-50/50 transition-colors"
-               onPress={() => Alert.alert('LuminaPortal', 'Нұсқа: 1.0.0')}
-             >
-               <View className="w-12 h-12 rounded-xl bg-academic-50 items-center justify-center">
-                 <BookOpen size={22} color="#a855f7" />
-               </View>
-               <Text className="flex-1 text-base font-bold text-parchment-900">LuminaPortal туралы</Text>
-               <ChevronRight size={20} color="#DFD2C3" />
-             </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            onPress={handleLogout}
-            className="flex-row items-center justify-center gap-3 bg-red-50 py-5 rounded-xl border border-red-100 active:bg-red-100 transition-colors"
-          >
-            <LogOut size={22} color="#dc2626" />
-            <Text className="text-red-600 font-bold text-lg">Жүйеден шығу</Text>
-          </TouchableOpacity>
-
+  const initials=(user?.name||'?').trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const role=user?.role==='admin'?'Әкімші':'Мұғалім';
+  const openHistory=()=>router.push('/(admin)/history' as any);
+  const titleStyle={fontFamily:displayFont,fontSize:26,lineHeight:32,fontWeight:'700' as const,color:ink};
+  const cardStyle={padding:18,borderWidth:1,borderColor:'#E1D7CE',borderRadius:12,backgroundColor:'#FFF'};
+  return <SafeAreaView className="teacher-profile-page" style={{flex:1,backgroundColor:'#FCFAF7'}}>
+    <ScrollView contentContainerClassName="teacher-profile-content" contentContainerStyle={{padding:18,paddingTop:24,paddingBottom:28}} keyboardShouldPersistTaps="handled">
+      <View style={{width:'100%',maxWidth:1400,alignSelf:'center'}}>
+        <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',marginBottom:8}}><Text style={{fontSize:13,color:'#786776'}}>Мұғалім кабинеті  /  <Text style={{color:burgundy}}>Профиль</Text></Text><TouchableOpacity accessibilityRole="button" accessibilityLabel="Тарих және резервтік көшірмелер" onPress={openHistory} style={{flexDirection:'row',alignItems:'center',gap:7,minHeight:20}}><Text style={{fontSize:13,color:burgundy}}>Тарих және резервтік көшірмелер</Text><ArrowRight size={16} color={burgundy}/></TouchableOpacity></View>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Артқа" onPress={()=>router.push('/(admin)/dashboard')} style={{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:10,minHeight:28,marginBottom:8}}><ArrowLeft size={22} color="#8C7E88"/><Text style={{fontSize:14,fontWeight:'600',color:'#7A6D7C'}}>Артқа</Text></TouchableOpacity>
+        <Text className="teacher-profile-title" style={{fontFamily:displayFont,fontSize:38,lineHeight:46,fontWeight:'700',letterSpacing:-.8,color:ink}}>Профиль</Text><Text className="teacher-profile-subtitle" style={{fontFamily:displayFont,fontSize:18,lineHeight:26,color:'#788197',marginTop:4,marginBottom:20}}>Жеке ақпарат пен аккаунтты басқару</Text>
+        <View className="teacher-profile-hero" style={{minHeight:220,borderRadius:12,overflow:'hidden',backgroundColor:'#650918',justifyContent:'center',marginBottom:18}}>
+          <Image source={require('../../assets/library-hero.png')} resizeMode="cover" style={{position:'absolute',top:0,right:0,width:'75%',height:'100%'}}/>
+          <View pointerEvents="none" style={{position:'absolute',top:0,bottom:0,left:0,right:0,...Platform.select({web:{backgroundImage:'linear-gradient(90deg, #780D23 0%, #650918 34%, rgba(75,3,18,.66) 57%, rgba(51,0,9,.08) 100%)'} as any,default:{backgroundColor:'rgba(86,6,24,.7)'}})}}/>
+          <View className="teacher-profile-identity" style={{padding:24,flexDirection:'row',alignItems:'center',gap:20}}><View className="teacher-profile-avatar" style={{width:84,height:84,borderRadius:60,backgroundColor:'#FFF8EC',alignItems:'center',justifyContent:'center'}}><Text style={{fontFamily:displayFont,fontSize:42,fontWeight:'700',color:'#62091A'}}>{initials}</Text></View><View style={{minWidth:0,flexShrink:1}}><Text className="teacher-profile-name" style={{fontFamily:displayFont,fontSize:32,lineHeight:40,fontWeight:'700',color:'#FFF8F0'}}>{user?.name||'…'}</Text><Text style={{fontSize:16,lineHeight:23,color:'#F3E1DA',marginTop:4}}>{user?.email||'…'}</Text><View style={{flexDirection:'row',alignItems:'center',gap:9,alignSelf:'flex-start',borderWidth:1,borderColor:'#C7A377',borderRadius:30,paddingHorizontal:16,paddingVertical:8,marginTop:14}}><ShieldCheck size={18} color="#FFF8EB"/><Text style={{fontSize:14,color:'#FFF8EB',fontWeight:'500'}}>{role}</Text></View></View><View className="teacher-profile-divider" style={{display:'none',width:1,height:118,backgroundColor:'rgba(204,158,92,.55)',marginLeft:24}}/></View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+        <View className="teacher-profile-cards" style={{gap:16}}>
+          <View className="teacher-profile-personal" style={cardStyle}><Text style={titleStyle}>Жеке ақпарат</Text>
+            {[{label:'АТЫ-ЖӨНІ',value:user?.name,Icon:User,bg:'#FFF0F3',color:burgundy},{label:'ЭЛЕКТРОНДЫҚ ПОШТА',value:user?.email,Icon:Mail,bg:'#EBFAF6',color:'#369D99'}].map(({label,value,Icon,bg,color},i)=><View key={label} style={{flexDirection:'row',alignItems:'center',gap:20,paddingVertical:12,borderTopWidth:i?1:0,borderTopColor:'#E8E2DE',marginTop:i?0:8}}><View style={{width:48,height:48,borderRadius:11,backgroundColor:bg,alignItems:'center',justifyContent:'center'}}><Icon size={25} color={color}/></View><View style={{flex:1,minWidth:0}}><Text style={{fontSize:11,lineHeight:16,fontWeight:'600',color:'#A09598'}}>{label}</Text><Text selectable style={{fontSize:16,lineHeight:23,fontWeight:'600',color:'#19202D',marginTop:3}}>{value||'—'}</Text></View></View>)}
+          </View>
+          <View className="teacher-profile-account" style={cardStyle}><Text style={titleStyle}>Аккаунт</Text><View style={{flexDirection:'row',alignItems:'center',gap:18,paddingVertical:12,marginTop:8}}><View style={{width:48,height:48,borderRadius:11,backgroundColor:'#FFF0F3',alignItems:'center',justifyContent:'center'}}><ShieldCheck size={26} color={burgundy}/></View><Text style={{flex:1,fontSize:16,color:'#404550'}}>Рөл</Text><View style={{paddingHorizontal:18,paddingVertical:10,borderRadius:20,backgroundColor:'#FFF0F3'}}><Text style={{fontSize:16,fontWeight:'600',color:burgundy}}>{role}</Text></View></View><TouchableOpacity accessibilityRole="button" accessibilityLabel="Тарих және көшірмелер" onPress={openHistory} style={{borderTopWidth:1,borderTopColor:'#E8E2DE',flexDirection:'row',alignItems:'center',gap:18,minHeight:73,paddingVertical:12}}><View style={{width:48,alignItems:'center'}}><History size={26} color={burgundy}/></View><Text style={{flex:1,fontSize:16,lineHeight:23,fontWeight:'600',color:'#68728B'}}>Тарих және көшірмелер</Text><ChevronRight size={21} color="#68728B"/></TouchableOpacity></View>
+        </View>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Жүйеден шығу" disabled={leaving} onPress={handleLogout} style={{backgroundColor:'#FFF',borderWidth:1,borderColor:'#E1D7CE',borderRadius:11,minHeight:56,paddingHorizontal:22,flexDirection:'row',alignItems:'center',gap:22,marginTop:16,opacity:leaving?0.6:1}}>{leaving?<ActivityIndicator color={burgundy}/>:<LogOut size={25} color={burgundy}/>}<Text style={{flex:1,fontSize:16,fontWeight:'600',color:burgundy}}>Жүйеден шығу</Text><ChevronRight size={21} color={burgundy}/></TouchableOpacity>
+      </View>
+    </ScrollView>
+  </SafeAreaView>;
 }

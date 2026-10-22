@@ -1,13 +1,14 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Pool } from 'pg';
+import { secure } from '../../_lib/secure';
+import type { VercelRequest, VercelResponse } from '../../_lib/http';
+import { Pool } from '../../_lib/db';
 import jwt from 'jsonwebtoken';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: true },
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: VercelRequest, res: VercelResponse) {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -46,8 +47,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const { userId, amount } = req.body;
-        
-        if (!userId || typeof amount !== 'number') {
+
+        if (!Number.isInteger(Number(userId)) || !Number.isInteger(amount) || amount < 1 || amount > 10000) {
             return res.status(400).json({ error: 'Missing required fields: userId and amount' });
         }
 
@@ -61,9 +62,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
 
-        return res.status(200).json({ 
-            message: 'Монеты успешно добавлены', 
-            user: result.rows[0] 
+        return res.status(200).json({
+            message: 'Монеты успешно добавлены',
+            user: result.rows[0]
         });
 
     } catch (error) {
@@ -71,3 +72,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 }
+
+export default secure(handler, 'admin/users/grant-coins.ts');

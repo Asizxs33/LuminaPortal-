@@ -1,9 +1,13 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Pool } from 'pg';
+import { secure } from './_lib/secure';
+import jwt from 'jsonwebtoken';
+import { createHash } from 'node:crypto';
+import { session } from './_lib/session';
+import type { VercelRequest, VercelResponse } from './_lib/http';
+import { Pool } from './_lib/db';
 
-const pool = new Pool({
+const pool = new Pool({connectionTimeoutMillis:10000,
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: true },
 });
 
 function setCors(res: VercelResponse) {
@@ -12,18 +16,26 @@ function setCors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: VercelRequest, res: VercelResponse) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+    const actor = session(req);
+    if (!actor) return res.status(401).json({error:'Кіру қажет.'});
     try {
-        const { code, language, test_id, question_index } = req.body;
+        const { code, language, test_id, question_index, question_id } = req.body;
 
-        if (!code || !language || !test_id || question_index === undefined) {
+        if (!code || !language || !test_id || (question_index === undefined && !question_id)) {
             return res.status(400).json({ status: 'FAILED', output: 'Missing required parameters' });
         }
 
+        const test=(await pool.query('SELECT exam_mode,answers_released FROM tests WHERE id=$1',[test_id])).rows[0];
+        if(!test)return res.status(404).end();
+        if(test.exam_mode){
+          const active=(await pool.query('SELECT questions FROM exam_attempts WHERE test_id=$1 AND user_id=$2 AND deadline>NOW() AND finished=false',[test_id,actor.id])).rows[0];
+          if(test.answers_released||!active||!active.questions.some((q:any)=>String(q.id)===String(question_id)))return res.status(403).json({status:'FAILED',output:'Емтихан уақыты аяқталған.'});
+        }
         const result = await pool.query(
             'SELECT * FROM questions WHERE test_id = $1 ORDER BY order_index ASC, id ASC',
             [test_id]
@@ -33,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(404).json({ status: 'FAILED', output: 'Test or questions not found' });
         }
 
-        const targetQuestion = result.rows[question_index];
+        const targetQuestion = question_id ? result.rows.find(q=>String(q.id)===String(question_id)) : result.rows[question_index];
 
         if (!targetQuestion || targetQuestion.type !== 'CODE' || !targetQuestion.test_cases) {
             return res.status(400).json({ status: 'FAILED', output: 'Invalid question or not a code question' });
@@ -82,7 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const expected = tc.expected_output.trim();
             const actual = stdout;
             let isPassed = false;
-            
+
             if (actual === expected) {
                 isPassed = true;
             } else {
@@ -108,10 +120,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         return res.json({
+            proof: jwt.sign({purpose:'code-grade',user_id:actor.id,question_id:targetQuestion.id,code_hash:createHash('sha256').update(code).digest('hex'),passed:finalStatus==='PASSED'},process.env.JWT_SECRET!,{expiresIn:'7d'}),
             status: finalStatus,
             passed: passedCount,
             total: testCases.length,
-            output: consoleOutput
+            output: test.exam_mode ? (finalStatus==='PASSED'?'Тексерулер орындалды.':'Код тексеруден өтпеді.') : consoleOutput
         });
 
     } catch (error: any) {
@@ -119,3 +132,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         res.status(500).json({ status: 'FAILED', output: 'Server error during code execution' });
     }
 }
+
+export default secure(handler, 'execute.ts');

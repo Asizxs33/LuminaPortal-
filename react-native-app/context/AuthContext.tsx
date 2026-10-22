@@ -33,7 +33,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             try {
                 const savedUser = await AsyncStorage.getItem(USER_KEY);
                 if (savedUser) {
-                    setUser(JSON.parse(savedUser));
+                    const token=await AsyncStorage.getItem(TOKEN_KEY);
+                    if(!token){await AsyncStorage.removeItem(USER_KEY);return;}
+                    const response=await fetch(`${API_URL}/api/auth/me`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(10000)});
+                    if(response.status===401||response.status===404){await AsyncStorage.multiRemove([USER_KEY,TOKEN_KEY]);return;}
+                    if(response.ok){const current=await response.json();setUser(current);await AsyncStorage.setItem(USER_KEY,JSON.stringify(current));}
+                    else setUser(JSON.parse(savedUser));
                 }
             } catch (e) {
                 console.error('Failed to load user', e);

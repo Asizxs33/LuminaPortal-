@@ -1,10 +1,13 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Pool } from 'pg';
+import { secure } from '../_lib/secure';
+import { examAction } from '../_lib/exams';
+import { session } from '../_lib/session';
+import type { VercelRequest, VercelResponse } from '../_lib/http';
+import { Pool } from '../_lib/db';
 import jwt from 'jsonwebtoken';
 
-const pool = new Pool({
+const pool = new Pool({connectionTimeoutMillis:10000,
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: true },
 });
 
 function setCors(res: VercelResponse) {
@@ -24,27 +27,33 @@ function shuffled<T>(items: T[]): T[] {
     return copy;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: VercelRequest, res: VercelResponse) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'GET' && req.method !== 'DELETE' && req.method !== 'PATCH') {
+    if (req.method !== 'POST' && req.method !== 'GET' && req.method !== 'DELETE' && req.method !== 'PATCH') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     const { id } = req.query;
+    const actor = session(req);
+    if (!actor) return res.status(401).json({error:'Кіру қажет.'});
+    if (req.method !== 'GET' && req.method !== 'POST' && actor.role !== 'admin') return res.status(403).json({error:'Мұғалім рұқсаты қажет.'});
 
     try {
+        if (req.method === 'POST') return await examAction(pool,req,res,actor);
         if (req.method === 'GET') {
             const testRes = await pool.query('SELECT * FROM tests WHERE id = $1', [id]);
             if (!testRes.rows[0]) return res.status(404).json({ error: 'Test not found' });
 
+            if (!testRes.rows[0].is_published && !testRes.rows[0].answers_released && actor.role !== 'admin') return res.status(403).json({error:'Тест жабық.'});
+            if(req.query.summary==='true')return res.json(testRes.rows[0]);
             // A student keeps the same random set after refreshing or reopening a test.
             // Tests with fewer than 50 questions simply use every available question.
             let questionIds: number[] | null = null;
             const auth = req.headers.authorization;
             if (auth?.startsWith('Bearer ')) {
                 try {
-                    const user = jwt.verify(auth.slice(7), process.env.JWT_SECRET || 'fallback_secret') as { id: number; role?: string };
+                    const user = jwt.verify(auth.slice(7), process.env.JWT_SECRET!) as { id: number; role?: string };
                     if (user.role === 'student') {
                         await pool.query(`
                             CREATE TABLE IF NOT EXISTS test_question_assignments (
@@ -82,6 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             // The test-taking screen always requests a 50-question attempt. The
             // editor intentionally omits this flag and continues to show the full bank.
+            if(testRes.rows[0].exam_mode && actor.role !== 'admin') return res.json({...testRes.rows[0],questions:[],question_count:Math.min(50,Number((await pool.query('SELECT COUNT(*) FROM questions WHERE test_id=$1',[id])).rows[0].count))});
             const isAttempt = req.query.forAttempt === 'true';
             const questions = questionIds
                 ? await pool.query('SELECT * FROM questions WHERE id = ANY($1::int[])', [questionIds])
@@ -99,10 +109,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 options: shuffled(optionsRes.rows.filter((o: any) => o.question_id === q.id)),
             }));
 
-            return res.json({ ...testRes.rows[0], questions: (questionIds || isAttempt) ? shuffled(questionsWithOptions) : questionsWithOptions });
+            const ordered = (questionIds || isAttempt) ? shuffled(questionsWithOptions) : questionsWithOptions;
+            const attempt = isAttempt ? jwt.sign({ purpose:'attempt', user_id:actor.id, test_id:id, question_ids:ordered.map(q=>q.id) }, process.env.JWT_SECRET!, {expiresIn:'7d'}) : undefined;
+            const visible = (actor.role !== 'admin' || isAttempt) ? ordered.map(q=>({...q,options:q.options.map(({is_correct,...option})=>option)})) : ordered;
+            return res.json({ ...testRes.rows[0], questions:visible, attempt_token:attempt });
         }
 
         if (req.method === 'PATCH') {
+            if (req.body?.answers_released === true) {
+              await pool.query('UPDATE tests SET answers_released=true,is_published=false WHERE id=$1',[id]);
+              await pool.query('UPDATE exam_attempts SET deadline=LEAST(deadline,NOW()) WHERE test_id=$1',[id]);
+              return res.json({success:true});
+            }
+            if (typeof req.body?.exam_mode === 'boolean') {
+              const changed=await pool.query('UPDATE tests SET exam_mode=$1 WHERE id=$2 AND NOT EXISTS(SELECT 1 FROM exam_attempts WHERE test_id=$2) RETURNING *',[req.body.exam_mode,id]);
+              return res.status(changed.rows.length?200:409).json(changed.rows[0]||{error:'Басталған емтихан режимін өзгертуге болмайды.'});
+            }
             const { published } = req.body || {};
             if (typeof published !== 'boolean') {
                 return res.status(400).json({ error: 'published boolean is required' });
@@ -122,6 +144,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
     } catch (err: any) {
         console.error('Test operation error:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Қызмет қатесі. Қайта көріңіз.' });
     }
 }
+
+export default secure(handler, 'tests/[id].ts');

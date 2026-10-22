@@ -1,7 +1,10 @@
+import { confirmAction } from '../../../lib/confirmAction';
+import { usePreventRemove } from '@react-navigation/native';
+import { useNavigation } from 'expo-router';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, AppState, TextInput, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, AppState, TextInput, KeyboardAvoidingView, Platform, Image, Modal, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle2, Code2, Terminal, Play, Copy } from 'lucide-react-native';
+import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle2, Code2, Terminal, Play, Copy, Flag } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,12 +34,23 @@ interface TestDetail {
   subject: string;
   duration_minutes: number;
   passing_score: number;
+  attempt_token: string;
+  exam_mode?: boolean;
+  exam_attempt_id?:string;
   questions: Question[];
 }
 
 export default function TestTake() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const navigation = useNavigation();
+  const compact = useWindowDimensions().width < 700;
+  const questionScroll = useRef<ScrollView>(null);
+  const [finishReview, setFinishReview] = useState(false);
+  const [syncState, setSyncState] = useState('Жауаптар сақталуда…');
+  const [online, setOnline] = useState(true);
+  const [visited, setVisited] = useState<number[]>([0]);
+  const answerRevision = useRef(0);
   const { user } = useAuth();
   
   const [test, setTest] = useState<TestDetail | null>(null);
@@ -45,14 +59,27 @@ export default function TestTake() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, any>>({});
   const [codeAnswers, setCodeAnswers] = useState<Record<number, string>>({});
-  const [codeStatuses, setCodeStatuses] = useState<Record<number, { status: string, output: string, passed: number, total: number }>>({});
+  const [codeStatuses, setCodeStatuses] = useState<Record<number, { status: string, output: string, passed: number, total: number, proof?: string }>>({});
   const [runningCode, setRunningCode] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   
   const [mentorHint, setMentorHint] = useState<string | null>(null);
   const [mentorLoading, setMentorLoading] = useState(false);
   const [coins, setCoins] = useState<number | null>(null);
-  const [testAttempts, setTestAttempts] = useState(1);
+  const [flagged, setFlagged] = useState<number[]>([]);
+  const [saveNotice, setSaveNotice] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [examGate,setExamGate]=useState(false);
+  const [examNotice,setExamNotice]=useState('');
+  const [fullScreen,setFullScreen]=useState(false);
+  const examQueue=useRef<Promise<any>>(Promise.resolve());
+  const mono=()=>typeof performance!=='undefined'?performance.now():Date.now();
+  const [restored, setRestored] = useState(false);
+  const deadline = useRef(0);
+  const startedAt = useRef(0);
+  const submissionId = useRef('');
+  const persistQueue = useRef<Promise<void>>(Promise.resolve());
+  const storageKey = `attempt-v2:${user?.id}:${id}`;
   const [antiCheatWarnings, setAntiCheatWarnings] = useState(0);
 
   const appState = useRef(AppState.currentState);
@@ -70,9 +97,9 @@ export default function TestTake() {
   };
 
   useEffect(() => {
-    fetchTest();
+    if (user?.id) fetchTest();
     if (user?.id) {
-        fetch(`${API}/api/users/coins?userId=${user.id}`)
+        AsyncStorage.getItem('lumina_token').then(token=>fetch(`${API}/api/users/coins?userId=${user.id}`, {headers:{Authorization:`Bearer ${token}`}}))
             .then(res => res.json())
             .then(data => { if (data.coins !== undefined) setCoins(data.coins); })
             .catch(() => {});
@@ -80,6 +107,7 @@ export default function TestTake() {
   }, [id, user]);
 
   useEffect(() => {
+    if(test?.exam_mode)return;
     const handleBlur = () => {
        if (!hasFinished.current && !loading && !submitting) {
           const now = Date.now();
@@ -113,84 +141,124 @@ export default function TestTake() {
           window.removeEventListener('blur', handleBlur);
       }
     };
-  }, [loading, submitting]);
+  }, [loading, submitting,test?.exam_mode]);
 
   useEffect(() => {
+      if(test?.exam_mode)return;
       if (antiCheatWarnings > lastAlertedWarning.current) {
           lastAlertedWarning.current = antiCheatWarnings;
           
-          if (antiCheatWarnings === 1) {
-              if (Platform.OS === 'web') {
-                  window.alert(`Ескерту! Басқа терезеге өтуге болмайды.\n\nСізде тағы 2 мүмкіндік қалды.`);
-              } else {
-                  Alert.alert('Ескерту!', 'Тест кезінде қолданбадан шығуға немесе жабуға болмайды.\n\nСізде тағы 2 мүмкіндік қалды.');
-              }
-          } else if (antiCheatWarnings === 2) {
-              if (Platform.OS === 'web') {
-                  window.alert(`Ескерту! Басқа терезеге өтуге болмайды.\n\nСізде тағы 1 мүмкіндік қалды. Егер қайталанса, тест аяқталады.`);
-              } else {
-                  Alert.alert('Ескерту!', 'Қолданбадан шығуға болмайды.\n\nСізде тағы 1 мүмкіндік қалды. Егер қайталанса, тест аяқталады.');
-              }
-          } else if (antiCheatWarnings >= 3 && !hasFinished.current && test && !loading && !submitting) {
-              if (Platform.OS === 'web') {
-                  window.alert('Ереже 3 рет бұзылды! Тест автоматты түрде аяқталады.');
-              } else {
-                  Alert.alert('Ереже бұзылды!', 'Сіз қолданбадан 3 рет шықтыңыз. Тест автоматты түрде аяқталады.');
-              }
-              handleFinish(true);
-          }
+          setExamNotice(`Басқа терезеге ауысу тіркелді: ${antiCheatWarnings}/3. Уақыт тоқтамайды.`);
+          if (antiCheatWarnings >= 3 && !hasFinished.current && test && !loading && !submitting) handleFinish(true);
       }
   }, [antiCheatWarnings, test, loading, submitting]);
 
-  useEffect(() => {
-    if (!test || timeLeft <= 0 || hasFinished.current) return;
+  usePreventRemove(Boolean(test && !loading && !submitting), async ({ data }) => {
+    const leave=()=>navigation.dispatch(data.action);
+    const message='Жауаптар осы құрылғыда сақталды. Уақыт тоқтамайды. Шығасыз ба?';
+    if(Platform.OS==='web'){if(await confirmAction(message))leave();}
+    else Alert.alert('Тесттен шығу',message,[{text:'Қалу',style:'cancel'},{text:'Шығу',onPress:leave}]);
+  });
+  useEffect(()=>{
+    if(!test || loading || submitting || hasFinished.current) return;
+    const raw=JSON.stringify({test,answers,codeAnswers,codeStatuses,currentQuestionIndex,flagged,visited,deadline:deadline.current,startedAt:startedAt.current,submissionId:submissionId.current,antiCheatWarnings});
+    persistQueue.current=persistQueue.current.catch(()=>{}).then(()=>AsyncStorage.setItem(storageKey,raw));
+    persistQueue.current.then(()=>setSaveNotice('Жауаптар осы құрылғыда сақталды')).catch(()=>setSaveNotice('Жауаптарды сақтау мүмкін болмады. Бетті жаппаңыз.'));
+  },[test,answers,codeAnswers,codeStatuses,currentQuestionIndex,flagged,visited,antiCheatWarnings,loading,submitting,storageKey]);
+  useEffect(()=>{
+    if(Platform.OS!=='web'||!test||loading)return;
+    const warn=(event:BeforeUnloadEvent)=>{if(!hasFinished.current){event.preventDefault();event.returnValue='';}};
+    window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);
+  },[test,loading]);
+  const finishRef=useRef<() => void>(()=>{});
+  const timedOut=useRef(false);
+  useEffect(()=>{
+    if(!test || loading || hasFinished.current)return;
+    const tick=()=>{
+      const seconds=Math.max(0,Math.ceil((deadline.current-(test.exam_mode?mono():Date.now()))/1000));setTimeLeft(seconds);
+      if(!seconds&&!timedOut.current){timedOut.current=true;finishRef.current();}
+    };
+    tick();const timer=setInterval(tick,1000);return()=>clearInterval(timer);
+  },[test,loading]);
 
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setTimeout(() => {
-            if (Platform.OS === 'web') {
-              window.alert('Уақыт бітті! Тестке бөлінген уақыт аяқталды. Нәтижелер сақталуда...');
-            } else {
-              Alert.alert('Уақыт бітті!', 'Тестке бөлінген уақыт аяқталды. Нәтижелер сақталуда...');
-            }
-            handleFinish();
-          }, 0);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [test, timeLeft]);
-
-  const fetchTest = async () => {
-    try {
-      const token = await AsyncStorage.getItem('lumina_token');
-      const res = await fetch(`${API}/api/tests/${id}?forAttempt=true`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setTest(data);
-        setTimeLeft(data.duration_minutes * 60);
-        
-        // Initialize code answers
-        const initialCodes: Record<number, string> = {};
-        data.questions.forEach((q: Question, idx: number) => {
-            if (q.type === 'CODE' && q.initial_code) {
-                initialCodes[idx] = q.initial_code;
-            }
-        });
-        setCodeAnswers(initialCodes);
+  const sendExam = (body:any) => {
+    examQueue.current=examQueue.current.catch(()=>{}).then(async()=>{
+      const token=await AsyncStorage.getItem('lumina_token');
+      const response=await fetch(`${API}/api/tests/${id}`,{method:'POST',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(body)});
+      const data=await response.json();if(!response.ok)throw Error(data.error);
+      deadline.current=mono()+Math.max(0,data.deadline-data.server_now);
+      const count=data.events.filter((e:any)=>e.kind!=='fullscreen_unavailable').length;
+      setAntiCheatWarnings(count);
+      if(body.action==='save' && body.revision===answerRevision.current) setSyncState('Жауаптар серверде сақталды');
+      if(body.action==='event') {
+        const reasons:Record<string,string>={window_blur:'Басқа терезеге ауысу',hidden:'Бетті жасыру',fullscreen_exit:'Толық экраннан шығу',fullscreen_unavailable:'Толық экран қолжетімсіз'};
+        setExamNotice(`${reasons[body.kind] || 'Оқиға тіркелді'} · ${count}/3. Уақыт тоқтамайды.`);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+      if(data.deadline<=data.server_now&&!hasFinished.current)finishRef.current();
+    }).catch(()=>setSyncState('Серверге сақталмады. Байланысты тексеріңіз; уақыт тоқтамайды.'));
+  };
+  const latestExam=useRef<any>({});
+  latestExam.current={answers:Object.fromEntries((test?.questions||[]).map((q,i)=>[q.id,answers[i]])),code_answers:Object.fromEntries((test?.questions||[]).map((q,i)=>[q.id,codeAnswers[i]])),code_proofs:Object.fromEntries((test?.questions||[]).map((q,i)=>[q.id,codeStatuses[i]?.proof]))};
+  useEffect(()=>{
+    if(!test?.exam_attempt_id||loading||submitting)return;
+    answerRevision.current++; setSyncState('Жауаптар сақталуда…');
+    const save=()=>sendExam({action:'save',revision:answerRevision.current,...latestExam.current});
+    const timeout=setTimeout(save,300);const interval=setInterval(save,5000);
+    return()=>{clearTimeout(timeout);clearInterval(interval);};
+  },[test?.exam_attempt_id,answers,codeAnswers,codeStatuses,loading,submitting]);
+  useEffect(()=>{
+    if(!test?.exam_attempt_id||loading||submitting||Platform.OS!=='web')return;
+    const record=(kind:string)=>sendExam({action:'event',kind,event_id:`${Date.now()}-${Math.random()}`});
+    const blur=()=>record('window_blur');
+    const hidden=()=>{if(document.hidden)record('hidden');};
+    const fullscreen=()=>{setFullScreen(!!document.fullscreenElement);if(!document.fullscreenElement)record('fullscreen_exit');};
+    window.addEventListener('blur',blur);document.addEventListener('visibilitychange',hidden);document.addEventListener('fullscreenchange',fullscreen);
+    if(!document.fullscreenEnabled)record('fullscreen_unavailable');
+    return()=>{window.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',hidden);document.removeEventListener('fullscreenchange',fullscreen);};
+  },[test?.exam_attempt_id,loading,submitting]);
+  const enterFullscreen=async()=>{if(Platform.OS==='web'&&document.fullscreenEnabled){await document.documentElement.requestFullscreen();setFullScreen(true);}};
+
+  const fetchTest = async (beginExam=false) => {
+    try {
+      const auth=await AsyncStorage.getItem('lumina_token');
+      const metaResponse=await fetch(`${API}/api/tests/${id}`,{headers:{Authorization:`Bearer ${auth}`}});
+      const meta=await metaResponse.json();
+      if(meta.exam_mode){
+        if(!beginExam){setExamGate(true);return;}
+        const response=await fetch(`${API}/api/tests/${id}`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${auth}`},body:JSON.stringify({action:'begin'})});
+        const data=await response.json();if(!response.ok)throw Error(data.error);
+        if(data.finished){router.replace({pathname:'/test/[id]/result',params:{id:String(id),resultId:String((await (await fetch(`${API}/api/results`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${auth}`},body:JSON.stringify({test_id:id,submission_id:data.exam_attempt_id,attempt_token:data.attempt_token})})).json()).id)}});return;}
+        const choices:Record<number,any>={},codes:Record<number,string>={},proofs:Record<number,any>={};
+        data.questions.forEach((q:Question,i:number)=>{choices[i]=data.answers[q.id];codes[i]=data.code_answers[q.id]??q.initial_code??'';if(data.code_proofs[q.id])proofs[i]={proof:data.code_proofs[q.id]};});
+        setAnswers(choices);setCodeAnswers(codes);setCodeStatuses(proofs);
+        try { const saved=JSON.parse(await AsyncStorage.getItem(storageKey)||'{}');
+          if(saved.submissionId===data.exam_attempt_id){setFlagged(saved.flagged||[]);setVisited(saved.visited||[0]);setCurrentQuestionIndex(Math.min(saved.currentQuestionIndex||0,data.questions.length-1));setRestored(true);}
+        } catch { /* Server answers remain available if local navigation state cannot be restored. */ }
+        setSyncState('Жауаптар серверден қалпына келтірілді');
+        deadline.current=mono()+Math.max(0,data.deadline-data.server_now);startedAt.current=data.started_at;submissionId.current=data.exam_attempt_id;
+        setTimeLeft(Math.max(0,Math.ceil((data.deadline-data.server_now)/1000)));setTest(data);setExamGate(false);return;
+      }
+      const raw=await AsyncStorage.getItem(storageKey);
+      if(raw) {
+        let saved:any;try{saved=JSON.parse(raw);}catch{saved={};}
+        if(saved.test?.id===id && saved.test?.attempt_token && saved.deadline && saved.submissionId) {
+          setTest(saved.test);setAnswers(saved.answers||{});setCodeAnswers(saved.codeAnswers||{});setCodeStatuses(saved.codeStatuses||{});
+          setCurrentQuestionIndex(Math.min(saved.currentQuestionIndex||0,saved.test.questions.length-1));setFlagged(saved.flagged||[]);setVisited(saved.visited||[0]);
+          deadline.current=saved.deadline;startedAt.current=saved.startedAt;submissionId.current=saved.submissionId;
+          lastAlertedWarning.current=saved.antiCheatWarnings||0;setAntiCheatWarnings(saved.antiCheatWarnings||0);
+          setTimeLeft(Math.max(0,Math.ceil((deadline.current-Date.now())/1000)));setRestored(true);return;
+        }
+      }
+      const token=await AsyncStorage.getItem('lumina_token');
+      const response=await fetch(`${API}/api/tests/${id}?forAttempt=true`,{headers:{Authorization:`Bearer ${token}`}});
+      if(!response.ok)throw Error('load');
+      const data=await response.json();
+      startedAt.current=Date.now();deadline.current=Date.now()+data.duration_minutes*60000;
+      submissionId.current=`${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setTest(data);setTimeLeft(data.duration_minutes*60);
+      const initial:Record<number,string>={};data.questions.forEach((q:Question,i:number)=>{if(q.type==='CODE')initial[i]=q.initial_code||'';});setCodeAnswers(initial);
+    } catch { setSubmitError('Тестті жүктеу мүмкін болмады. Байланысты тексеріңіз.'); }
+    finally {setLoading(false);}
   };
 
   const handleRunCode = async () => {
@@ -211,7 +279,8 @@ export default function TestTake() {
                   code: code,
                   language: 'python', // Switched from JS to Python
                   test_id: test.id,
-                  question_index: currentQuestionIndex
+                  question_index: currentQuestionIndex,
+                  question_id: q.id
               })
           });
 
@@ -237,8 +306,8 @@ export default function TestTake() {
       try {
           const res = await fetch(`${API}/api/mentor/hint`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ questionText: q.text, userCode: code, userId: user?.id })
+              headers: { 'Content-Type': 'application/json', Authorization:`Bearer ${await AsyncStorage.getItem('lumina_token')}` },
+              body: JSON.stringify({ test_id:id, questionText: q.text, userCode: code, userId: user?.id })
           });
           const data = await res.json();
           if (data.hint) {
@@ -261,95 +330,35 @@ export default function TestTake() {
     setSubmitting(true);
 
     try {
-      let score = 0;
-      test.questions.forEach((q, index) => {
-        if (q.type === 'CODE') {
-             // For code questions, user gets a point if passed status is PASSED
-             if (codeStatuses[index]?.status === 'PASSED') {
-                 score += 1;
-             }
-        } else {
-            const selectedId = answers[index];
-            const option = q.options?.find(o => o.id === selectedId);
-            if (option && option.is_correct) {
-            score += 1;
-            }
-        }
-      });
-
-      const total = test.questions.length;
-      const percentage = Math.round((score / total) * 100);
-      const isPass = percentage >= test.passing_score;
-
-      if (!isPass && !forced && testAttempts < 3) {
-          const newAttempts = testAttempts + 1;
-          const remaining = 3 - testAttempts;
-          
-          if (Platform.OS === 'web') {
-              window.alert(`Сынақтан өтпедіңіз. Сіз ${percentage}% жинадыңыз (Шектік балл: ${test.passing_score}%).\n\nСізде тағы ${remaining} мүмкіндік бар. Әр қайта тапсыру -10% айыппұл әкеледі. Қателеріңізді түзеп, қайта жіберіңіз!`);
-          } else {
-              Alert.alert('Сынақтан өтпедіңіз', `Сіз ${percentage}% жинадыңыз (Шектік балл: ${test.passing_score}%).\n\nСізде тағы ${remaining} мүмкіндік бар. Әр қайта тапсыру -10% айыппұл әкеледі. Қателеріңізді түзеп, қайта жіберіңіз!`);
-          }
-
-          setTestAttempts(newAttempts);
-          setSubmitting(false);
-          hasFinished.current = false;
-          return;
-      }
-      
-      // Apply attempt penalty to score natively
-      let finalScore = score - ((testAttempts - 1) * 0.1 * total);
-      if (finalScore < 0) finalScore = 0;
-      
-      const token = await AsyncStorage.getItem('lumina_token');
-      const res = await fetch(`${API}/api/results`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          test_id: test.id,
-          user_id: user.id,
-          score: finalScore,
-          total
-        })
-      });
-
-      if (res.ok) {
-        router.replace({
-          pathname: '/test/[id]/result',
-          params: { id: test.id, title: test.title, score: String(finalScore), total: String(total), passScore: String(test.passing_score) }
-        });
-      } else {
-         Alert.alert('Қате', 'Нәтижені сақтау мүмкін болмады');
-         setSubmitting(false);
-         hasFinished.current = false;
-      }
-    } catch (e) {
-      console.error(e);
-      Alert.alert('Қате', 'Серверге қосылу мүмкін болмады');
-      setSubmitting(false);
-      hasFinished.current = false;
+      await examQueue.current.catch(()=>{});
+      const token=await AsyncStorage.getItem('lumina_token');
+      const selected:Record<number,any>={},codes:Record<number,string>={},proofs:Record<number,string>={};
+      test.questions.forEach((q,i)=>{selected[q.id]=answers[i];codes[q.id]=codeAnswers[i]||'';proofs[q.id]=codeStatuses[i]?.proof||'';});
+      const response=await fetch(`${API}/api/results`,{method:'POST',signal:AbortSignal.timeout(20000),headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({test_id:test.id,submission_id:submissionId.current,attempt_token:test.attempt_token,answers:selected,code_answers:codes,code_proofs:proofs,time_spent:Math.floor((Date.now()-startedAt.current)/1000)})});
+      const result=await response.json();
+      if(!response.ok)throw Error(result.error||'Нәтиже сақталмады.');
+      await persistQueue.current.catch(()=>{});await AsyncStorage.removeItem(storageKey);
+      router.replace({pathname:'/test/[id]/result',params:{id:test.id,resultId:String(result.id)}});
+    } catch(error:any) {
+      setSubmitError(error.message||'Нәтиже сақталмады. Жауаптар құрылғыда сақталған. Қайта жіберіңіз.');
+      setSubmitting(false);hasFinished.current=false;
     }
   };
+  finishRef.current=()=>{void handleFinish(true);};
 
-  const confirmFinish = () => {
-    if (Platform.OS === 'web') {
-      if (window.confirm("Тестті ерте аяқтағыңыз келе ме?")) {
-        handleFinish(false);
-      }
-    } else {
-      Alert.alert(
-        "Аяқтау", 
-        "Тестті ерте аяқтағыңыз келе ме?",
-        [
-          { text: "Жоқ", style: "cancel" },
-          { text: "Иә, аяқтау", onPress: () => handleFinish(false), style: "destructive" }
-        ]
-      );
-    }
-  };
+  const isAnswered = (i:number) => test?.questions[i]?.type === 'CODE'
+    ? Boolean(codeAnswers[i]?.trim() && codeAnswers[i] !== (test.questions[i].initial_code || '')) || Boolean(codeStatuses[i]?.proof)
+    : answers[i] !== undefined && answers[i] !== null;
+  const missing = (test?.questions || []).map((_,i)=>i).filter(i=>!isAnswered(i));
+  const confirmFinish = () => setFinishReview(true);
+  const goToQuestion = (i:number) => {setCurrentQuestionIndex(i);setMentorHint(null);questionScroll.current?.scrollTo({y:0,animated:false});};
+  useEffect(()=>{setVisited(v=>v.includes(currentQuestionIndex)?v:[...v,currentQuestionIndex]);},[currentQuestionIndex]);
+  useEffect(()=>{
+    if(Platform.OS!=='web')return;
+    const update=()=>setOnline(navigator.onLine);update();
+    window.addEventListener('online',update);window.addEventListener('offline',update);
+    return()=>{window.removeEventListener('online',update);window.removeEventListener('offline',update);};
+  },[]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -368,10 +377,13 @@ export default function TestTake() {
     );
   }
 
+  if(examGate)return <SafeAreaView style={{flex:1,justifyContent:'center',padding:24,backgroundColor:'#F5F7FA'}}><Text style={{fontSize:24,fontWeight:'700',marginBottom:16}}>Емтихан режимі</Text><Text style={{lineHeight:24,marginBottom:20}}>Толық экраннан шығу мен терезелерді ауыстыру тіркеледі. 3 бұзушылықтан кейін емтихан аяқталады. Сервердегі уақыт тоқтамайды. ЖИ кеңестері өшірулі.</Text>{!!submitError&&<Text style={{color:'#990F2E'}}>{submitError}</Text>}<TouchableOpacity onPress={async()=>{try{await enterFullscreen();setLoading(true);await fetchTest(true);}catch{setSubmitError('Толық экранға рұқсат беріңіз.');}}} style={{padding:16,backgroundColor:'#990F2E',borderRadius:12}}><Text style={{color:'white'}}>Толық экранда бастау / жалғастыру</Text></TouchableOpacity></SafeAreaView>;
+
   if (!test || !test.questions?.length) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: '#10131B', marginBottom: 16 }}>Сұрақтар жоқ</Text>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: '#10131B', marginBottom: 16 }}>{submitError || 'Сұрақтар жоқ'}</Text>
+        {!!submitError && <TouchableOpacity onPress={()=>{setSubmitError('');setLoading(true);void fetchTest();}} style={{padding:14,marginBottom:12}}><Text style={{color:'#990F2E'}}>Қайта жүктеу</Text></TouchableOpacity>}
         <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#800F1D', borderRadius: 12 }}>
           <Text style={{ color: 'white', fontWeight: '700' }}>Тақтаға оралу</Text>
         </TouchableOpacity>
@@ -416,10 +428,14 @@ export default function TestTake() {
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={questionScroll} style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 40, width:'100%', maxWidth:1000, alignSelf:'center' }} keyboardShouldPersistTaps="handled">
         
+        <Text style={{color:'#707B90',fontSize:12,marginBottom:10}}>{restored?'Сессия қалпына келтірілді. ':''}{!online?'Байланыс жоқ. Жауаптар құрылғыда сақталады.':test.exam_mode?syncState:saveNotice}</Text>
+        {!!submitError && <View style={{backgroundColor:'#FFF0F2',padding:14,borderRadius:10,marginBottom:14}}><Text accessibilityRole="alert" style={{color:'#990F2E'}}>{submitError}</Text><TouchableOpacity accessibilityRole="button" onPress={()=>handleFinish(true)} style={{paddingVertical:12}}><Text style={{color:'#990F2E',fontWeight:'600'}}>Қайта жіберу</Text></TouchableOpacity></View>}
+        <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:14,gap:12}}><Text style={{color:'#707B90'}}>Сұрақ {currentQuestionIndex+1} / {test.questions.length}</Text><TouchableOpacity accessibilityRole="button" accessibilityState={{selected:flagged.includes(currentQuestionIndex)}} onPress={()=>setFlagged(old=>old.includes(currentQuestionIndex)?old.filter(i=>i!==currentQuestionIndex):[...old,currentQuestionIndex])} style={{flexDirection:'row',alignItems:'center',gap:6,padding:10}}><Flag size={17} color="#990F2E"/><Text style={{color:'#990F2E'}}>{flagged.includes(currentQuestionIndex)?'Белгіленді':'Кейін қарау'}</Text></TouchableOpacity></View>
+        {(test.exam_mode || !!examNotice) && <View style={{padding:14,backgroundColor:'#FAEAF0',borderRadius:10,marginBottom:14}}><Text style={{color:'#990F2E',lineHeight:21}}>{examNotice || 'Емтихан · уақыт серверде бақыланады'}</Text>{!fullScreen&&Platform.OS==='web'&&<TouchableOpacity onPress={()=>enterFullscreen().catch(()=>setExamNotice('Толық экран бұл браузерде қолжетімсіз.'))} style={{paddingVertical:12}}><Text style={{color:'#990F2E',fontWeight:'600'}}>Толық экранға оралу</Text></TouchableOpacity>}</View>}
         {/* Question Card */}
-        <View style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#DFD2C3', padding: 24, marginBottom: 24 }}>
+        <View style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#DFD2C3', padding: 18, marginBottom: 18 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <View style={{ backgroundColor: isCodeQuestion ? '#fef3c7' : '#F4E6E6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
               <Text style={{ color: isCodeQuestion ? '#d97706' : '#800F1D', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' }}>{currentQuestionIndex + 1}-СҰРАҚ</Text>
@@ -429,7 +445,7 @@ export default function TestTake() {
             </Text>
           </View>
 
-          <Text style={{ fontSize: 20, fontWeight: '800', color: '#10131B', marginBottom: currentQuestion.image_url ? 16 : (isCodeQuestion ? 16 : 24), lineHeight: 28 }}>
+          <Text style={{ fontSize: 18, fontWeight: '800', color: '#10131B', marginBottom: currentQuestion.image_url ? 16 : (isCodeQuestion ? 16 : 24), lineHeight: 28 }}>
             {currentQuestion.text}
           </Text>
 
@@ -533,12 +549,12 @@ export default function TestTake() {
 
                      <TouchableOpacity 
                         onPress={handleAskMentor}
-                        disabled={mentorLoading}
+                        disabled={mentorLoading || !!test.exam_mode}
                         style={{ flex: 1, backgroundColor: mentorLoading ? '#c4b5fd' : '#800F1D', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
                      >
                         {mentorLoading ? <ActivityIndicator size="small" color="white" /> : <BookOpen size={18} color="white" />}
                         <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>
-                          {mentorLoading ? 'Ойлануда...' : `Кеңес сұрау ${coins !== null ? `(10 ₿)` : ''}`}
+                          {test.exam_mode ? 'Емтиханда өшірулі' : mentorLoading ? 'Ойлануда...' : `Кеңес сұрау ${coins !== null ? `(10 ₿)` : ''}`}
                         </Text>
                      </TouchableOpacity>
                  </View>
@@ -596,9 +612,10 @@ export default function TestTake() {
                 return (
                     <TouchableOpacity
                     key={option.id}
+                    accessibilityRole="radio" accessibilityState={{checked:isSelected}}
                     onPress={() => setAnswers(prev => ({ ...prev, [currentQuestionIndex]: option.id }))}
                     style={{
-                        flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2,
+                        minHeight: 56, flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2,
                         borderColor: isSelected ? '#800F1D' : '#DFD2C3',
                         backgroundColor: isSelected ? '#F4E6E6' : 'white'
                     }}
@@ -621,8 +638,10 @@ export default function TestTake() {
 
         </View>
 
+        <Text style={{color:'#756D70',fontSize:12,lineHeight:20,marginBottom:12}}>Ағымдағы — бордо · ✓ жауап берілді · – өткізіліп кетті · ⚑ кейін қарау</Text>
+        <View style={{flexDirection:'row',flexWrap:'wrap',gap:8,marginBottom:20}}>{test.questions.map((q,i)=><TouchableOpacity key={q.id} accessibilityRole="button" accessibilityState={{selected:i===currentQuestionIndex}} accessibilityLabel={`Сұрақ ${i+1}, ${isAnswered(i)?'жауап берілді':visited.includes(i)?'өткізіліп кетті':'жауап берілмеген'}${flagged.includes(i)?', кейін қарау':''}`} onPress={()=>goToQuestion(i)} style={{width:46,height:46,borderRadius:8,borderWidth:flagged.includes(i)?2:1,borderColor:flagged.includes(i)?'#B2770C':'#E0E5ED',backgroundColor:i===currentQuestionIndex?'#990F2E':isAnswered(i)?'#E3FAEF':'white',alignItems:'center',justifyContent:'center'}}><Text style={{color:i===currentQuestionIndex?'white':'#101827'}}>{i+1}{flagged.includes(i)?' ⚑':isAnswered(i)?' ✓':visited.includes(i)?' –':''}</Text></TouchableOpacity>)}</View>
         {/* Navigation Buttons */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ display:compact?'none':'flex', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <TouchableOpacity
             onPress={() => { 
                 if (currentQuestionIndex > 0) {
@@ -666,15 +685,25 @@ export default function TestTake() {
 
         <View style={{ marginTop: 24, alignItems: 'center' }}>
             <Text style={{ color: '#A29792', fontSize: 11, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase' }}>
-              Барлығы {test.questions.length} сұрақтың {currentQuestionIndex + 1}-шісі
+              Жауап берілді: {test.questions.length-missing.length} / {test.questions.length}
             </Text>
             <View style={{ height: 6, width: '100%', backgroundColor: '#DFD2C3', borderRadius: 3, overflow: 'hidden' }}>
-                <View style={{ height: '100%', backgroundColor: '#800F1D', borderRadius: 3, width: `${((currentQuestionIndex + 1) / test.questions.length) * 100}%` }} />
+                <View style={{ height: '100%', backgroundColor: '#800F1D', borderRadius: 3, width: `${((test.questions.length-missing.length) / test.questions.length) * 100}%` }} />
             </View>
         </View>
 
       </ScrollView>
+      {compact && <View style={{flexDirection:'row',gap:12,padding:12,paddingBottom:20,backgroundColor:'white',borderTopWidth:1,borderColor:'#DFD2C3'}}><TouchableOpacity accessibilityRole="button" disabled={currentQuestionIndex===0} onPress={()=>goToQuestion(currentQuestionIndex-1)} style={{flex:1,padding:16,borderRadius:16,alignItems:'center',backgroundColor:'#F3EDE4',opacity:currentQuestionIndex===0?.5:1}}><Text style={{color:'#756D70',fontWeight:'800'}}>Артқа</Text></TouchableOpacity><TouchableOpacity accessibilityRole="button" onPress={()=>isLastQuestion?confirmFinish():goToQuestion(currentQuestionIndex+1)} style={{flex:1,padding:16,borderRadius:16,alignItems:'center',backgroundColor:isLastQuestion?'#059669':'#800F1D'}}><Text style={{color:'white',fontWeight:'800'}}>{isLastQuestion?'Аяқтау':'Келесі'}</Text></TouchableOpacity></View>}
       </KeyboardAvoidingView>
+      <Modal visible={finishReview && !submitting} transparent animationType="fade" onRequestClose={()=>setFinishReview(false)}>
+        <View style={{flex:1,justifyContent:'center',alignItems:'center',padding:20,backgroundColor:'rgba(23,28,39,.36)'}}><View accessibilityViewIsModal style={{width:'100%',maxWidth:440,maxHeight:'85%',backgroundColor:'white',borderRadius:16,padding:24,gap:16}}>
+          <Text accessibilityRole="header" style={{fontSize:22,fontWeight:'700',color:'#10131B'}}>Жауаптарды тексеру</Text>
+          <Text style={{color:'#756D70',lineHeight:23}}>Жауап берілді: {test.questions.length-missing.length} / {test.questions.length}. Кейін қарау: {flagged.length}. Уақыт тоқтамайды.</Text>
+          {missing.length>0&&<><Text style={{color:'#990F2E'}}>Жауап берілмеген сұрақтар:</Text><ScrollView style={{maxHeight:150}}><View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>{missing.map(i=><TouchableOpacity key={i} accessibilityRole="button" accessibilityLabel={`${i+1}-сұраққа өту`} onPress={()=>{setFinishReview(false);goToQuestion(i);}} style={{padding:12,minWidth:44,backgroundColor:'#F3EDE4',borderRadius:8}}><Text>{i+1}</Text></TouchableOpacity>)}</View></ScrollView></>}
+          <TouchableOpacity accessibilityRole="button" onPress={()=>setFinishReview(false)} style={{padding:14,borderWidth:1,borderColor:'#DFD2C3',borderRadius:12,alignItems:'center'}}><Text>Тестке оралу</Text></TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" onPress={()=>{setFinishReview(false);void handleFinish(false);}} style={{padding:14,backgroundColor:'#800F1D',borderRadius:12,alignItems:'center'}}><Text style={{color:'white',fontWeight:'700'}}>Жауаптарды жіберу</Text></TouchableOpacity>
+        </View></View>
+      </Modal>
     </SafeAreaView>
   );
 }

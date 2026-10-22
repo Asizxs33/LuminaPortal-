@@ -1,10 +1,12 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Pool } from 'pg';
+import { session } from '../_lib/session';
+import { secure } from '../_lib/secure';
+import type { VercelRequest, VercelResponse } from '../_lib/http';
+import { Pool } from '../_lib/db';
 import jwt from 'jsonwebtoken';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: true },
 });
 
 function setCors(res: VercelResponse) {
@@ -21,7 +23,7 @@ function requireAdmin(req: VercelRequest, res: VercelResponse): boolean {
     }
 
     try {
-        const decoded = jwt.verify(auth.slice(7), process.env.JWT_SECRET || 'fallback_secret') as { role?: string };
+        const decoded = jwt.verify(auth.slice(7), process.env.JWT_SECRET!) as { role?: string };
         if (decoded.role !== 'admin') {
             res.status(403).json({ error: 'Admin access required' });
             return false;
@@ -33,19 +35,24 @@ function requireAdmin(req: VercelRequest, res: VercelResponse): boolean {
     }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req: VercelRequest, res: VercelResponse) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (!requireAdmin(req, res)) return;
 
     const { id } = req.query;
+    if (typeof id !== "string" || !/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) return res.status(400).json({error:"Invalid user ID"});
+    if (['DELETE','PATCH'].includes(req.method||'')) {
+      const actor=session(req);
+      if(String(actor?.id)===String(id))return res.status(409).json({error:'Өз аккаунтыңызды өшіру немесе рөліңізді төмендету мүмкін емес.'});
+    }
 
     if (req.method === 'GET') {
         try {
             const { rows } = await pool.query(
-                'SELECT id, name, email, group_name, role, created_at FROM users WHERE id = $1', [id]
+                'SELECT id, name, email, group_name, role, created_at FROM users WHERE id = $1 AND deleted_at IS NULL', [id]
             );
-            if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+            if (!rows[0]) return res.status(404).json({ error: 'Active student not found or action not allowed' });
             const results = await pool.query(
                 `SELECT r.*, t.title as test_title FROM results r
                  JOIN tests t ON r.test_id = t.id
@@ -53,16 +60,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             );
             res.json({ ...rows[0], results: results.rows });
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Қызмет қатесі. Қайта көріңіз.' });
         }
     } else if (req.method === 'DELETE') {
         try {
-            const { rows } = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
-            if (!rows[0]) return res.status(404).json({ error: 'User not found' });
-            return res.json({ success: true, deleted_id: rows[0].id });
+            const { rows } = await pool.query("UPDATE users SET deleted_at=now() WHERE id=$1 AND deleted_at IS NULL AND role='student' RETURNING id", [id]);
+            if (!rows[0]) return res.status(404).json({ error: 'Active student not found or action not allowed' });
+            return res.json({ success: true, deleted_id: rows[0].id, archived: true });
         } catch (err: any) {
             console.error('Delete User Error:', err.message);
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Қызмет қатесі. Қайта көріңіз.' });
         }
     } else if (req.method === 'PATCH') {
         const { role } = req.body || {};
@@ -70,15 +77,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         try {
             const { rows } = await pool.query(
-                'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, name, email, role',
+                'UPDATE users SET role = $1 WHERE id = $2 AND deleted_at IS NULL RETURNING id, name, email, role',
                 [role, id]
             );
-            if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+            if (!rows[0]) return res.status(404).json({ error: 'Active student not found or action not allowed' });
             res.json(rows[0]);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            res.status(500).json({ error: 'Қызмет қатесі. Қайта көріңіз.' });
         }
     } else {
         res.status(405).json({ error: 'Method not allowed' });
     }
 }
+
+export default secure(handler, 'students/[id].ts');

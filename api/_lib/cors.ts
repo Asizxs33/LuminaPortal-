@@ -1,4 +1,4 @@
-import type { VercelResponse } from '@vercel/node';
+import type { VercelResponse } from './http';
 
 export function cors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');

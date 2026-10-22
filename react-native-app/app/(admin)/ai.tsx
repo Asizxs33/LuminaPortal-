@@ -1,3 +1,4 @@
+import { notify } from '../../lib/notify';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,7 +17,7 @@ export default function AiGenerator() {
     setTimeout(() => {
       setAiLoading(false);
       setAiTopic('');
-      Alert.alert('ЖИ Генераторы', 'Бұл мүмкіндік кейінірек қосылады. Әзірге қолмен жасау (Редактор) бөлімін пайдаланыңыз.');
+      notify.info('Бұл мүмкіндік кейінірек қосылады. Әзірге қолмен жасау (Редактор) бөлімін пайдаланыңыз.');
     }, 1000);
   };
 

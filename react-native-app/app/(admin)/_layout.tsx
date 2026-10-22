@@ -25,7 +25,7 @@ export default function AdminLayout() {
           <BottomTabBar {...props} />
         </View>
       )}
-      screenOptions={{ headerShown: false, tabBarActiveTintColor: '#800F1D', tabBarInactiveTintColor: '#756D70', tabBarStyle: { backgroundColor: '#FCFAF6', borderTopColor: '#DFD2C3' } }}
+      screenOptions={{ headerShown: false, tabBarActiveTintColor: '#800F1D', tabBarInactiveTintColor: '#756D70', tabBarLabelStyle:{fontSize:10,lineHeight:14,flexShrink:0},tabBarIconStyle:{height:24,flexGrow:0,flexShrink:0},tabBarStyle: { backgroundColor: '#FCFAF7', borderTopColor: '#DFD2C3',height:64,paddingTop:7,paddingBottom:7 } }}
     >
       <Tabs.Screen
         name="dashboard"
@@ -77,6 +77,7 @@ export default function AdminLayout() {
         name="test/[id]/results"
         options={{ href: null }}
       />
+      <Tabs.Screen name="history" options={{href:null}} />
     </Tabs>
   );
 }

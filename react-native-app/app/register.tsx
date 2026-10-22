@@ -20,7 +20,7 @@ export default function Register() {
     if (loading) return;
     if (!form.name.trim() || !form.email.trim() || !form.password || !form.confirm) return setError('Барлық өрісті толтырыңыз.');
     if (form.password !== form.confirm) return setError('Құпиясөздер сәйкес келмейді.');
-    if (form.password.length < 8) return setError('Құпиясөз кемінде 8 таңбадан тұруы керек.');
+    if (form.password.length < 10) return setError('Құпиясөз кемінде 10 таңбадан тұруы керек.');
     setLoading(true);
     try {
       const email = form.email.trim().toLowerCase();
@@ -40,7 +40,7 @@ export default function Register() {
   const fields = [
     { key: 'name' as const, label: 'Аты-жөні', placeholder: 'Аты-жөніңізді енгізіңіз', icon: UserRound, secure: false },
     { key: 'email' as const, label: 'Электрондық пошта', placeholder: 'name@example.com', icon: Mail, secure: false },
-    { key: 'password' as const, label: 'Құпиясөз', placeholder: 'Кемінде 8 таңба', icon: LockKeyhole, secure: true },
+    { key: 'password' as const, label: 'Құпиясөз', placeholder: 'Кемінде 10 таңба', icon: LockKeyhole, secure: true },
     { key: 'confirm' as const, label: 'Құпиясөзді қайталаңыз', placeholder: 'Қайта енгізіңіз', icon: LockKeyhole, secure: true },
   ];
 

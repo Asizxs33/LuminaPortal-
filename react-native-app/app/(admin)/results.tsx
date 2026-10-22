@@ -1,9 +1,11 @@
+import { confirmAction } from '../../lib/confirmAction';
+import { notify } from '../../lib/notify';
 import { displayFont } from '../../theme';
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Users, CheckCircle2, Clock, Search, BarChart3, ArrowUpRight, ArrowDownRight, FileText, Trash2 } from 'lucide-react-native';
-import { useAuth } from '../../context/AuthContext';
+import { Users, CheckCircle2, Search, BarChart3, FileText, Trash2, ArrowRight, Info, XCircle, Check } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { API } from '../constants/api';
@@ -14,7 +16,9 @@ interface Result {
   test_id: string;
   score: number;
   total: number;
-  passed: boolean;
+  passed?: boolean;
+  passing_score?: number;
+  email?: string;
   completed_at: string;
   student_name: string;
   test_title: string;
@@ -24,6 +28,10 @@ export default function ResultsDashboard() {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const router=useRouter();
+  const [filter,setFilter]=useState<'all'|'passed'|'failed'>('all');
+  const [loadError,setLoadError]=useState('');
+  const [deleting,setDeleting]=useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -31,17 +39,16 @@ export default function ResultsDashboard() {
   }, []);
 
   const fetchResults = async () => {
+    setLoading(true);setLoadError('');
     try {
       const token = await AsyncStorage.getItem('lumina_token');
       const res = await fetch(`${API}/api/results`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setResults(data);
-      }
+      if(!res.ok)throw Error("Load failed");
+      setResults(await res.json());
     } catch (e) {
-      console.error('Results fetch error:', e);
+      setLoadError('Нәтижелерді жүктеу мүмкін болмады. Қайта көріңіз.');
     } finally {
       setLoading(false);
     }
@@ -56,9 +63,10 @@ export default function ResultsDashboard() {
 
   const deleteSelected = async () => {
     const idsToDelete = Array.from(selectedIds);
-    if (idsToDelete.length === 0) return;
+    if (idsToDelete.length === 0 || deleting) return;
 
     const performDelete = async () => {
+      setDeleting(true);
       try {
         const token = await AsyncStorage.getItem('lumina_token');
         const res = await fetch(`${API}/api/results`, {
@@ -71,18 +79,18 @@ export default function ResultsDashboard() {
         });
 
         if (res.ok) {
-          setResults(prev => prev.filter(r => !selectedIds.has(r.id)));
+          setResults(prev => prev.filter(r => !idsToDelete.includes(r.id)));
           setSelectedIds(new Set());
         } else {
-          Alert.alert('Қате', 'Өшіру сәтсіз аяқталды');
+          notify.error('Өшіру сәтсіз аяқталды');
         }
       } catch (e) {
-        Alert.alert('Қате', 'Серверге қосылу мүмкін емес');
-      }
+        notify.error('Серверге қосылу мүмкін емес');
+      } finally {setDeleting(false);}
     };
 
     if (Platform.OS === 'web') {
-      if (window.confirm(`Таңдалған ${idsToDelete.length} нәтижені өшіргіңіз келе ме?`)) {
+      if (await confirmAction(`Таңдалған ${idsToDelete.length} нәтижені өшіргіңіз келе ме?`)) {
         performDelete();
       }
     } else {
@@ -97,30 +105,19 @@ export default function ResultsDashboard() {
     }
   };
 
-  const filtered = results.filter(r =>
-    (r.student_name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (r.test_title || '').toLowerCase().includes(search.toLowerCase())
-  );
-
-  const avgScore = results.length
-    ? Math.round(results.reduce((a, r) => a + (r.score / r.total) * 100, 0) / results.length)
-    : 0;
-  const passCount = results.filter(r => r.passed).length;
-  const passRate = results.length ? Math.round((passCount / results.length) * 100) : 0;
-
-  const getScoreColor = (score: number, total: number) => {
-    const pct = (score / total) * 100;
-    if (pct >= 75) return { bg: '#dcfce7', text: '#15803d' };
-    if (pct >= 50) return { bg: '#fef9c3', text: '#a16207' };
-    return { bg: '#fee2e2', text: '#dc2626' };
-  };
-
+  const percentage=(r:Result)=>r.total>0?Math.max(0,Math.min(100,r.score/r.total*100)):0;
+  const isPassed=(r:Result)=>r.total>0&&percentage(r)>=Number(r.passing_score??70);
+  const filtered=results.filter(r=>(filter==='all'||isPassed(r)===(filter==='passed'))&&`${r.student_name||''} ${r.email||''} ${r.test_title||''}`.toLowerCase().includes(search.trim().toLowerCase()));
+  const avgScore=results.length?Math.round(results.reduce((sum,r)=>sum+percentage(r),0)/results.length):0;
+  const passCount=results.filter(isPassed).length;
+  const passRate=results.length?Math.round(passCount/results.length*100):0;
+  const allVisibleSelected=filtered.length>0&&filtered.every(r=>selectedIds.has(r.id));
+  const toggleAll=()=>setSelectedIds(previous=>{const next=new Set(previous);filtered.forEach(r=>allVisibleSelected?next.delete(r.id):next.add(r.id));return next;});
   const getInitials = (name: string) => {
     if (!name) return '?';
-    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const avatarColors = ['#800F1D', '#800F1D', '#059669', '#d97706', '#dc2626'];
 
   if (loading) {
     return (
@@ -131,151 +128,31 @@ export default function ResultsDashboard() {
     );
   }
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: 24, paddingHorizontal: 16, paddingBottom: 40 }}
-      >
-        {/* Header */}
-        <View style={{ marginBottom: 20 }}>
-          <Text style={{ fontFamily: displayFont, fontSize: 24, fontWeight: '800', color: '#10131B' }}>Аналитика</Text>
-          <Text style={{ color: '#756D70', marginTop: 4 }}>Нақты нәтижелер мен статистика</Text>
+  const kpis=[{label:'Орташа ұпай',value:`${avgScore}%`,Icon:BarChart3,bg:'#FDECEF',color:'#9B1230'},{label:'Өту көрсеткіші',value:`${passRate}%`,Icon:CheckCircle2,bg:'#E3FAED',color:'#009C64'},{label:'Тапсырулар',value:String(results.length),Icon:Users,bg:'#FDECEF',color:'#9B1230'},{label:'Өтті',value:String(passCount),Icon:FileText,bg:'#FFF5D8',color:'#9C6512'}];
+  const checkbox=(checked:boolean,action:()=>void,label:string,mixed=false)=><TouchableOpacity accessibilityRole="checkbox" accessibilityLabel={label} accessibilityState={{checked:mixed?'mixed':checked,disabled:deleting}} disabled={deleting} onPress={action} style={{width:30,minHeight:40,alignItems:'center',justifyContent:'center'}}><View style={{width:19,height:19,borderRadius:4,borderWidth:1.5,borderColor:checked?'#940B27':'#D8CDBF',backgroundColor:checked?'#940B27':'#FFF',alignItems:'center',justifyContent:'center'}}>{checked?<Check size={13} color="white"/>:mixed?<View style={{width:10,height:2,backgroundColor:'#940B27'}}/>:null}</View></TouchableOpacity>;
+  return <SafeAreaView className="admin-results-page" style={{flex:1,backgroundColor:'#FCFAF7'}}>
+    <View className="results-campus" pointerEvents="none" style={{position:'absolute',top:0,left:0,right:0,height:280,overflow:'hidden',display:'none'}}><Image source={require('../../assets/campus-header.png')} resizeMode="cover" style={{position:'absolute',top:0,right:0,width:'86%',height:280,opacity:.7}}/><View style={{position:'absolute',top:0,bottom:0,left:0,right:0,...Platform.select({web:{backgroundImage:'linear-gradient(90deg, #FCFAF7 0%, rgba(252,250,247,.93) 26%, rgba(252,250,247,0) 100%), linear-gradient(180deg, rgba(252,250,247,0) 20%, #FCFAF7 100%)'} as any,default:{backgroundColor:'rgba(252,250,247,.6)'}})}}/></View>
+    <ScrollView contentContainerClassName="results-content" contentContainerStyle={{padding:18,paddingTop:24,paddingBottom:32}} keyboardShouldPersistTaps="handled"><View style={{width:'100%',maxWidth:1400,alignSelf:'center'}}>
+      <Text style={{fontSize:13,color:'#748096',marginBottom:14}}>Мұғалім кабинеті  /  Нәтижелер</Text><Text className="results-title" style={{fontFamily:displayFont,fontSize:36,lineHeight:44,fontWeight:'700',letterSpacing:-1,color:'#101521'}}>Аналитика</Text><Text className="results-subtitle" style={{fontFamily:displayFont,fontSize:18,lineHeight:26,color:'#778094',marginTop:4,marginBottom:26}}>Нақты нәтижелер мен статистика</Text>
+      <View className="results-kpis" style={{flexDirection:'row',flexWrap:'wrap',gap:12,marginBottom:20}}>{kpis.map(({label,value,Icon,bg,color})=><View className="results-kpi" key={label} style={{flexGrow:1,flexBasis:'45%',minWidth:0,padding:16,borderRadius:14,borderWidth:1,borderColor:'#E8E1DA',backgroundColor:'#FFF'}}><View style={{width:44,height:44,borderRadius:11,backgroundColor:bg,alignItems:'center',justifyContent:'center',marginBottom:12}}><Icon size={27} color={color} strokeWidth={1.8}/></View><Text style={{fontSize:14,color:'#758096',marginBottom:4}}>{label}</Text><Text style={{fontFamily:displayFont,fontSize:34,lineHeight:40,fontWeight:'700',color:'#101521'}}>{value}</Text></View>)}</View>
+      <View className="results-panel" style={{backgroundColor:'#FFF',borderRadius:14,borderWidth:1,borderColor:'#E8E1DA',padding:16}}>
+        <View className="results-toolbar" style={{gap:16,marginBottom:16}}><View><Text style={{fontFamily:displayFont,fontSize:28,lineHeight:34,fontWeight:'700',color:'#101521'}}>Соңғы тапсырулар</Text><Text style={{color:'#758096',fontSize:14,marginTop:3}}>{results.length} нәтиже</Text></View><View className="results-search" style={{flexDirection:'row',alignItems:'center',gap:12,paddingHorizontal:14,borderWidth:1,borderColor:'#DADCE3',borderRadius:10,minHeight:46}}><Search size={22} color="#727C8F"/><TextInput accessibilityLabel="Нәтижелерді іздеу" value={search} onChangeText={setSearch} placeholder="Студент немесе тест бойынша іздеу" placeholderTextColor="#8891A2" style={{flex:1,minWidth:0,fontSize:14,color:'#1D2635',paddingVertical:12,...Platform.select({web:{outlineColor:'#940B27'} as any})}}/></View></View>
+        <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',borderBottomWidth:1,borderBottomColor:'#EEE8E1',marginBottom:16}}><View style={{flexDirection:'row',gap:14}}>{[{key:'all',label:'Барлығы'},{key:'passed',label:'Өтті'},{key:'failed',label:'Өтпеді'}].map(item=><TouchableOpacity key={item.key} accessibilityRole="button" accessibilityState={{selected:filter===item.key}} onPress={()=>setFilter(item.key as any)} style={{paddingHorizontal:12,paddingVertical:12,borderBottomWidth:2,borderBottomColor:filter===item.key?'#940B27':'transparent'}}><Text style={{fontSize:14,fontWeight:filter===item.key?'700':'400',color:filter===item.key?'#940B27':'#768197'}}>{item.label}</Text></TouchableOpacity>)}</View>{selectedIds.size>0&&<TouchableOpacity accessibilityRole="button" disabled={deleting} onPress={deleteSelected} style={{flexDirection:'row',alignItems:'center',gap:8,paddingHorizontal:12,minHeight:36,borderRadius:8,backgroundColor:'#FFF0F3',marginBottom:6}}>{deleting?<ActivityIndicator size="small" color="#940B27"/>:<Trash2 size={16} color="#940B27"/>}<Text style={{fontSize:12,color:'#940B27'}}>{selectedIds.size} өшіру</Text></TouchableOpacity>}</View>
+        {!!loadError&&<View style={{padding:14,backgroundColor:'#FFF1F3',borderRadius:8,marginBottom:12}}><Text accessibilityRole="alert" style={{color:'#940B27'}}>{loadError}</Text><TouchableOpacity accessibilityRole="button" onPress={fetchResults} style={{paddingTop:12}}><Text style={{color:'#940B27',fontWeight:'700'}}>Қайта жүктеу</Text></TouchableOpacity></View>}
+        <View style={{borderWidth:1,borderColor:'#EEE9E3',borderRadius:10,overflow:'hidden'}}>
+          <View className="results-table-heading" style={{display:'none',flexDirection:'row',alignItems:'center',gap:14,backgroundColor:'#FAF8F5',paddingHorizontal:12,minHeight:40}}><View style={{flex:1,flexDirection:'row',gap:12,alignItems:'center'}}>{checkbox(allVisibleSelected,toggleAll,'Көрсетілген нәтижелерді таңдау',!allVisibleSelected&&filtered.some(r=>selectedIds.has(r.id)))}<Text style={{fontSize:13,color:'#7C8290'}}>Студент</Text></View><Text style={{width:100,fontSize:13,color:'#7C8290'}}>Тест</Text><Text style={{width:160,fontSize:13,color:'#7C8290'}}>Нәтиже</Text><Text style={{width:112,fontSize:13,color:'#7C8290'}}>Мәртебе</Text><View style={{width:110}}/></View>
+          {!filtered.length&&!loadError&&<View style={{padding:36,alignItems:'center',gap:12}}><BarChart3 size={34} color="#C6B6AC"/><Text style={{color:'#858998'}}>Нәтиже табылмады</Text></View>}
+          {filtered.map((r,i)=>{const passed=isPassed(r),pct=Math.round(percentage(r));const color=passed?'#008A5B':'#B91436',bg=passed?'#E7F8EF':'#FDECEF';return <View className="results-row" key={r.id} style={{padding:12,gap:14,borderTopWidth:i?1:0,borderTopColor:'#EEE9E3',backgroundColor:selectedIds.has(r.id)?'#FFF7F8':'#FFF'}}>
+            <View className="results-person" style={{flexDirection:'row',alignItems:'center',gap:12,minWidth:0}}>{checkbox(selectedIds.has(r.id),()=>toggleSelection(r.id),`${r.student_name||'Студент'}: нәтижені таңдау`)}<View style={{width:44,height:44,borderRadius:24,backgroundColor:'#008D7F',alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:16,color:'white',fontWeight:'700'}}>{getInitials(r.student_name)}</Text></View><View style={{flex:1,minWidth:0}}><Text numberOfLines={1} style={{fontSize:15,lineHeight:21,fontWeight:'600',color:'#151C29'}}>{r.student_name||'Белгісіз'}</Text><Text numberOfLines={1} style={{fontSize:12,lineHeight:18,color:'#74829A',marginTop:2}}>{r.email||'—'}</Text></View></View>
+            <View className="results-test" style={{flexDirection:'row',alignItems:'center',gap:10}}><View style={{width:32,height:34,borderRadius:8,backgroundColor:'#FFF0F3',alignItems:'center',justifyContent:'center'}}><FileText size={20} color="#990E2C"/></View><Text numberOfLines={2} style={{flex:1,fontSize:13,color:'#66718A'}}>{r.test_title||r.test_id}</Text></View>
+            <View className="results-score" style={{flexDirection:'row',alignItems:'center',gap:12}}><View style={{paddingHorizontal:10,paddingVertical:6,borderRadius:7,backgroundColor:bg}}><Text style={{fontSize:14,color,fontWeight:'700'}}>{pct}%</Text></View><View accessibilityRole="progressbar" accessibilityLabel="Нәтиже пайызы" accessibilityValue={{min:0,max:100,now:pct}} style={{flex:1,height:8,borderRadius:8,backgroundColor:'#ECECEF',overflow:'hidden'}}><View style={{width:`${pct}%`,height:8,borderRadius:8,backgroundColor:color}}/></View></View>
+            <View className="results-status" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12}}><View style={{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:8,backgroundColor:bg,paddingHorizontal:10,paddingVertical:7,borderRadius:8}}>{passed?<CheckCircle2 size={18} color={color}/>:<XCircle size={18} color={color}/>}<Text style={{fontSize:13,color}}>{passed?'Өтті':'Өтпеді'}</Text></View></View>
+            <TouchableOpacity className="results-details" accessibilityRole="button" accessibilityLabel={`${r.student_name||'Студент'}: толық нәтиже`} onPress={()=>router.push(`/test/${r.test_id}/result?resultId=${r.id}` as any)} style={{minHeight:38,paddingHorizontal:12,borderWidth:1,borderColor:'#A5233F',borderRadius:8,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:9,alignSelf:'flex-end'}}><Text style={{fontSize:13,fontWeight:'600',color:'#940B27'}}>Толығырақ</Text><ArrowRight size={17} color="#940B27"/></TouchableOpacity>
+          </View>;})}
         </View>
-
-        {/* KPI Cards */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
-          <View style={{ backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', flex: 1, minWidth: '45%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <View style={{ padding: 8, backgroundColor: '#F4E6E6', borderRadius: 10 }}>
-                <BarChart3 size={20} color="#800F1D" />
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#dcfce7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                <ArrowUpRight size={10} color="#15803d" />
-                <Text style={{ color: '#15803d', fontSize: 10, fontWeight: '700', marginLeft: 2 }}>+4.2%</Text>
-              </View>
-            </View>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#A29792', letterSpacing: 0.5, marginBottom: 4 }}>ОРТАША ҰПАЙ</Text>
-            <Text style={{ fontFamily: displayFont, fontSize: 26, fontWeight: '700', color: '#10131B' }}>{avgScore}%</Text>
-          </View>
-
-          <View style={{ backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', flex: 1, minWidth: '45%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <View style={{ padding: 8, backgroundColor: '#dcfce7', borderRadius: 10 }}>
-                <CheckCircle2 size={20} color="#15803d" />
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#dcfce7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                <ArrowUpRight size={10} color="#15803d" />
-                <Text style={{ color: '#15803d', fontSize: 10, fontWeight: '700', marginLeft: 2 }}>өту %</Text>
-              </View>
-            </View>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#A29792', letterSpacing: 0.5, marginBottom: 4 }}>ӨТТІ/ӨТПЕДІ</Text>
-            <Text style={{ fontFamily: displayFont, fontSize: 26, fontWeight: '700', color: '#10131B' }}>{passRate}%</Text>
-          </View>
-
-          <View style={{ backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', flex: 1, minWidth: '45%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <View style={{ padding: 8, backgroundColor: '#F4E6E6', borderRadius: 10 }}>
-                <Users size={20} color="#800F1D" />
-              </View>
-            </View>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#A29792', letterSpacing: 0.5, marginBottom: 4 }}>ТАПСЫРУЛАР</Text>
-            <Text style={{ fontFamily: displayFont, fontSize: 26, fontWeight: '700', color: '#10131B' }}>{results.length}</Text>
-          </View>
-
-          <View style={{ backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', flex: 1, minWidth: '45%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <View style={{ padding: 8, backgroundColor: '#fef9c3', borderRadius: 10 }}>
-                <FileText size={20} color="#a16207" />
-              </View>
-            </View>
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#A29792', letterSpacing: 0.5, marginBottom: 4 }}>ӨТТІ</Text>
-            <Text style={{ fontFamily: displayFont, fontSize: 26, fontWeight: '700', color: '#10131B' }}>{passCount}</Text>
-          </View>
-        </View>
-
-        {/* Results List */}
-        <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', overflow: 'hidden' }}>
-          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#F3EDE4', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontSize: 17, fontWeight: '800', color: '#10131B' }}>Соңғы тапсырулар</Text>
-
-            {selectedIds.size > 0 && (
-              <TouchableOpacity
-                onPress={deleteSelected}
-                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fee2e2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
-              >
-                <Trash2 size={14} color="#dc2626" />
-                <Text style={{ color: '#dc2626', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>
-                  {selectedIds.size} өшіру
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={{ paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#F3EDE4' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FCFAF6', borderWidth: 1, borderColor: '#DFD2C3', borderRadius: 10, paddingHorizontal: 12 }}>
-              <Search size={16} color="#A29792" />
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder="Студент немесе тест бойынша іздеу..."
-                placeholderTextColor="#A29792"
-                style={{ flex: 1, marginLeft: 8, paddingVertical: 10, color: '#10131B', fontSize: 14 }}
-              />
-            </View>
-          </View>
-
-          {filtered.length === 0 ? (
-            <View style={{ padding: 40, alignItems: 'center' }}>
-              <BarChart3 size={40} color="#DFD2C3" />
-              <Text style={{ color: '#A29792', marginTop: 12, fontWeight: '600' }}>Нәтиже табылмады</Text>
-            </View>
-          ) : (
-            filtered.map((r, i) => {
-              const pct = Math.round((r.score / r.total) * 100);
-              const colors = getScoreColor(r.score, r.total);
-              const avatarColor = avatarColors[r.user_id % avatarColors.length];
-              const isSelected = selectedIds.has(r.id);
-
-              return (
-                <TouchableOpacity
-                  key={r.id}
-                  onPress={() => toggleSelection(r.id)}
-                  activeOpacity={0.7}
-                  style={{
-                    padding: 14, flexDirection: 'row', alignItems: 'center',
-                    borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#F3EDE4',
-                    backgroundColor: isSelected ? '#F4E6E6' : 'transparent'
-                  }}
-                >
-                  {/* Custom Checkbox */}
-                  <View style={{
-                    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
-                    borderColor: isSelected ? '#800F1D' : '#DFD2C3',
-                    backgroundColor: isSelected ? '#800F1D' : 'white',
-                    alignItems: 'center', justifyContent: 'center', marginRight: 12
-                  }}>
-                    {isSelected && <CheckCircle2 size={14} color="white" />}
-                  </View>
-
-                  <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: avatarColor, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                    <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>
-                      {getInitials(r.student_name || '?')}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: '700', color: '#10131B', fontSize: 14 }} numberOfLines={1}>{r.student_name || 'Белгісіз'}</Text>
-                    <Text style={{ color: '#756D70', fontSize: 12, marginTop: 2 }} numberOfLines={1}>{r.test_title || r.test_id}</Text>
-                  </View>
-                  <View style={{ backgroundColor: colors.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
-                    <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>{pct}%</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })
-          )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+        <View style={{backgroundColor:'#FAF8F4',borderRadius:9,padding:14,flexDirection:'row',alignItems:'center',gap:12,marginTop:16}}><Info size={19} color="#A16C20"/><Text style={{flex:1,fontSize:13,lineHeight:20,color:'#7D8698'}}>Нәтижелер тест аяқталғаннан кейін көрсетіледі.</Text></View>
+        <Text accessibilityLiveRegion="polite" style={{fontSize:13,color:'#9198A6',marginTop:18,marginBottom:2}}>{filtered.length} / {results.length} нәтиже</Text>
+      </View>
+    </View></ScrollView>
+  </SafeAreaView>;
 }

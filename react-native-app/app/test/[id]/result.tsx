@@ -1,90 +1,56 @@
-import { displayFont } from '../../../theme';
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View,Text,ScrollView,TouchableOpacity,ActivityIndicator,Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Award, ArrowLeft, XCircle, RotateCcw } from 'lucide-react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-
-export default function TestResult() {
-  const { id, title, score: scoreStr, total: totalStr, passScore: passScoreStr } = useLocalSearchParams<{ id: string, title?: string, score: string, total: string, passScore: string }>();
-  const router = useRouter();
-
-  if (!scoreStr || !totalStr || !passScoreStr) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: '#10131B', marginBottom: 16 }}>Нәтиже табылмады</Text>
-        <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#800F1D', borderRadius: 12 }}>
-          <Text style={{ color: 'white', fontWeight: '700' }}>Тақтаға оралу</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  const score = parseInt(scoreStr, 10) || 0;
-  const total = parseInt(totalStr, 10) || 1;
-  const passScorePercentage = parseInt(passScoreStr, 10) || 50;
-  
-  const percentage = Math.round((score / total) * 100);
-  const passed = percentage >= passScorePercentage;
-
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 16 }}>
-        <View style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#DFD2C3', overflow: 'hidden' }}>
-          
-          <View style={{ height: 140, alignItems: 'center', justifyContent: 'center', backgroundColor: passed ? '#10b981' : '#ef4444' }}>
-            {passed ? (
-              <Award size={72} color="#ffffff" />
-            ) : (
-              <XCircle size={72} color="#ffffff" />
-            )}
-          </View>
-
-          <View style={{ padding: 24, paddingTop: 32, alignItems: 'center' }}>
-            <Text style={{ fontFamily: displayFont, fontSize: 28, fontWeight: '700', color: '#10131B', marginBottom: 8, textAlign: 'center' }}>
-              {passed ? 'Құттықтаймыз! 🎉' : 'Өкінішке орай...'}
-            </Text>
-            <Text style={{ fontSize: 15, color: '#756D70', marginBottom: 32, textAlign: 'center', lineHeight: 22 }}>
-              Сіз <Text style={{ fontWeight: '800', color: '#10131B' }}>{title || 'тестті'}</Text> аяқтадыңыз. Нақты нәтижелер төменде көрсетілген:
-            </Text>
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%', marginBottom: 32 }}>
-              <View style={{ width: '31%', backgroundColor: '#FCFAF6', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
-                <Text style={{ color: '#756D70', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Ұпай</Text>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: passed ? '#059669' : '#dc2626' }}>
-                  {score} <Text style={{ fontSize: 12, color: '#A29792' }}>/ {total}</Text>
-                </Text>
-              </View>
-
-              <View style={{ width: '31%', backgroundColor: '#FCFAF6', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
-                <Text style={{ color: '#756D70', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Пайыз</Text>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: passed ? '#059669' : '#dc2626' }}>
-                  {percentage}%
-                </Text>
-              </View>
-
-              <View style={{ width: '31%', backgroundColor: '#FCFAF6', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
-                <Text style={{ color: '#756D70', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Өту шегі</Text>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: '#10131B' }}>
-                  {passScorePercentage}%
-                </Text>
-              </View>
-            </View>
-
-            <View style={{ width: '100%', gap: 12 }}>
-              <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, backgroundColor: '#F3EDE4', borderRadius: 16 }}>
-                <ArrowLeft size={20} color="#756D70" />
-                <Text style={{ fontWeight: '800', color: '#756D70', fontSize: 15 }}>Тақтаға оралу</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity onPress={() => router.replace('/(student)/results')} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderWidth: 2, borderColor: '#DFD2C3', borderRadius: 16 }}>
-                <Text style={{ fontWeight: '800', color: '#46393D', fontSize: 15 }}>Барлық нәтижелер</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+import { useLocalSearchParams,useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ArrowLeft, FileText, Calculator, Trophy, Clock3, BookOpen, ChevronDown, CheckCircle2, MinusCircle, LockKeyhole, Info } from 'lucide-react-native';
+import { displayFont } from '../../../theme';
+import { useAuth } from '../../../context/AuthContext';
+import { API } from '../../constants/api';
+export default function TestResult(){
+ const {user}=useAuth();
+ const [expanded,setExpanded]=useState<Record<string,boolean>>({});
+ const {resultId}=useLocalSearchParams<{resultId?:string}>();const router=useRouter();
+ const [result,setResult]=useState<any>(null);const [error,setError]=useState('');const [loading,setLoading]=useState(true);const [errorsOnly,setErrorsOnly]=useState(false);
+ const [explanations,setExplanations]=useState<Record<string,string>>({});
+ const [explaining,setExplaining]=useState<string|null>(null);
+ const [explanationErrors,setExplanationErrors]=useState<Record<string,string>>({});
+ const explain=async(questionId:string)=>{if(explaining)return;setExplaining(questionId);setExplanationErrors(v=>({...v,[questionId]:''}));try{const token=await AsyncStorage.getItem('lumina_token');const response=await fetch(`${API}/api/mentor/hint`,{method:'POST',signal:AbortSignal.timeout(25000),headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({result_id:resultId,question_id:questionId})});const data=await response.json();if(!response.ok)throw Error(data.error||'Түсіндірме алынбады.');setExplanations(v=>({...v,[questionId]:data.hint}));}catch(e:any){setExplanationErrors(v=>({...v,[questionId]:e.message||'Байланысты тексеріңіз.'}));}finally{setExplaining(null);}};
+ const load=async()=>{setLoading(true);setError('');try{if(!resultId)throw Error('Нәтижені «Нәтижелер» бөлімінен ашыңыз.');const token=await AsyncStorage.getItem('lumina_token');const res=await fetch(`${API}/api/results?id=${resultId}`,{headers:{Authorization:`Bearer ${token}`}});if(!res.ok)throw Error('Нәтиже табылмады немесе оны қарауға рұқсат жоқ.');setResult(await res.json());}catch(e:any){setError(e.message);}finally{setLoading(false);}};
+ useEffect(()=>{setExplanations({});setExplanationErrors({});setExpanded({});setErrorsOnly(false);load();},[resultId]);
+ const percentage=result?.total?Math.round(result.score/result.total*100):0;
+ const review=!result?.review_locked&&Array.isArray(result?.review)?result.review:[];
+ const seconds=Math.max(0,Math.floor(Number(result?.time_spent)||0));
+ const wrongCount=review.filter((q:any)=>!q.is_correct).length;
+ const stats=[{label:'Жиналған ұпай',value:`${result?.score??0} / ${result?.total??0}`,Icon:Calculator,bg:'#FCEBF0',color:'#990F2E'},{label:'Өту шегі',value:`${result?.passing_score??0}%`,Icon:Trophy,bg:'#FFF3DE',color:'#9D6615'},{label:'Жұмсалған уақыт',value:`${Math.floor(seconds/60)} мин ${seconds%60} сек`,Icon:Clock3,bg:'#FCEBF0',color:'#990F2E'}];
+ return <SafeAreaView className="result-detail-page" style={{flex:1,backgroundColor:'#FCFAF7'}}><ScrollView contentContainerStyle={{padding:20,paddingBottom:35}}>
+  <TouchableOpacity accessibilityRole="button" onPress={()=>router.replace(user?.role==='admin'?'/(admin)/results':'/(student)/results')} style={{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:5,alignSelf:'flex-start',marginBottom:14}}><ArrowLeft size={19} color="#990F2E"/><Text style={{fontSize:13,fontWeight:'500',color:'#990F2E'}}>Барлық нәтижелер</Text></TouchableOpacity>
+  {loading?<ActivityIndicator color="#990F2E" style={{marginTop:40}}/>:error?<View style={{padding:22,borderWidth:1,borderColor:'#E6DED3',borderRadius:12,backgroundColor:'#FFF',gap:16}}><Text accessibilityRole="alert" style={{color:'#990F2E',lineHeight:24}}>{error}</Text><TouchableOpacity accessibilityRole="button" onPress={load}><Text style={{color:'#990F2E',fontWeight:'600'}}>Қайта жүктеу</Text></TouchableOpacity></View>:<>
+   <Text style={{fontSize:13,color:'#7C869B',marginBottom:10}}>Нәтижелер  /  {result.test_title}</Text>
+   <Text className="result-detail-title" style={{fontFamily:displayFont,fontSize:39,lineHeight:46,fontWeight:'700',color:'#101521'}}>{result.test_title}</Text>
+   <Text className="result-completed" style={{fontFamily:displayFont,fontSize:16,lineHeight:23,color:'#7C869B',marginTop:3,marginBottom:20}}>Аяқталды · {new Date(result.completed_at).toLocaleString('ru-RU')}</Text>
+   <View className="result-summary" style={{flexDirection:'row',flexWrap:'wrap',backgroundColor:'#FFF',borderWidth:1,borderColor:'#E4DCD1',borderRadius:12,overflow:'hidden',marginBottom:22}}>
+    <View className="result-score-hero" style={{flexBasis:'100%',backgroundColor:'#990F2E',padding:22,alignItems:'center',justifyContent:'center',gap:8}}><View style={{flexDirection:'row',alignItems:'center',gap:15}}><View style={{width:40,height:40,borderRadius:10,backgroundColor:'rgba(255,255,255,.07)',alignItems:'center',justifyContent:'center'}}><FileText size={25} color="#FFF"/></View><Text style={{fontSize:14,color:'#FFF'}}>Нәтиже</Text></View><Text style={{fontFamily:displayFont,fontSize:60,lineHeight:68,fontWeight:'700',color:'#FFF8F0'}}>{percentage}%</Text></View>
+    {stats.map(({label,value,Icon,bg,color})=><View key={label} className="result-summary-item" style={{flexBasis:'100%',padding:20,gap:8,borderTopWidth:1,borderTopColor:'#EEE8DF'}}><View style={{width:46,height:46,borderRadius:10,backgroundColor:bg,alignItems:'center',justifyContent:'center',marginBottom:2}}><Icon size={24} color={color}/></View><Text style={{fontSize:13,color:'#7C869B'}}>{label}</Text><Text className="result-summary-value" style={{fontFamily:displayFont,fontSize:29,lineHeight:36,fontWeight:'700',color:'#101521'}}>{value}</Text></View>)}
+   </View>
+   <View className="result-review-toolbar" style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:16,flexWrap:'wrap'}}><Text className="result-review-title" style={{fontFamily:displayFont,fontSize:28,lineHeight:35,fontWeight:'700',color:'#101521'}}>Жауаптарды талдау</Text><TouchableOpacity accessibilityRole="switch" accessibilityLabel="Тек қателер" accessibilityState={{checked:errorsOnly,disabled:!review.length}} disabled={!review.length} onPress={()=>setErrorsOnly(!errorsOnly)} style={{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:7,opacity:review.length?1:.5}}><View style={{width:40,height:23,borderRadius:12,backgroundColor:errorsOnly?'#990F2E':'#DADADA',padding:3,alignItems:errorsOnly?'flex-end':'flex-start'}}><View style={{width:17,height:17,borderRadius:9,backgroundColor:'#FFF'}}/></View><Text style={{fontSize:13,color:'#7C869B'}}>Тек қателер</Text></TouchableOpacity></View>
+   {!review.length&&<View style={{flexDirection:'row',alignItems:'flex-start',gap:13,padding:20,borderWidth:1,borderColor:'#E9DFCE',borderRadius:10,backgroundColor:'#FFFDF8'}}>{result.review_locked?<LockKeyhole size={22} color="#A27126"/>:<Info size={22} color="#A27126"/>}<Text style={{flex:1,fontSize:14,color:'#7C869B',lineHeight:23}}>{result.review_locked?'Жауаптар емтихан барлығына аяқталғаннан кейін ашылады.':'Бұл бұрынғы нәтиже үшін жауаптар сақталмаған. Жаңа әрекеттерде толық талдау көрсетіледі.'}</Text></View>}
+   {!!review.length&&errorsOnly&&wrongCount===0&&<View style={{flexDirection:'row',gap:10,padding:20,backgroundColor:'#E8F8F0',borderRadius:10}}><CheckCircle2 size={20} color="#00885D"/><Text style={{fontSize:14,color:'#00885D'}}>Барлық жауап дұрыс.</Text></View>}
+   {wrongCount>0&&<View className="result-repeat-plan" style={{flexDirection:'row',alignItems:'center',gap:20,borderWidth:1,borderColor:'#EFE0C9',borderRadius:9,padding:16,backgroundColor:'#FEFBF5',marginBottom:13}}><View style={{width:46,height:46,borderRadius:10,backgroundColor:'#FFF1D5',alignItems:'center',justifyContent:'center'}}><BookOpen size={27} color="#9D6615"/></View><View style={{flex:1}}><Text style={{fontFamily:displayFont,fontSize:19,fontWeight:'700',color:'#101521',marginBottom:3}}>Қайталау жоспары</Text><Text style={{fontSize:13,lineHeight:21,color:'#7C869B'}}>Қайта қарау қажет: {wrongCount} сұрақ. Қате жауаптарды салыстырып, түсіндірмені қараңыз.</Text></View></View>}
+   {review.map((q:any,i:number)=>{
+    if(errorsOnly&&q.is_correct)return null;
+    const key=String(q.question_id),open=!!expanded[key];
+    return <View key={key} className="result-review-card" style={{backgroundColor:'#FFF',padding:20,borderWidth:1,borderColor:'#E6DED3',borderLeftWidth:5,borderLeftColor:q.is_correct?'#009767':'#CD901F',borderRadius:10,marginBottom:14}}>
+      <Text style={{alignSelf:'flex-start',color:q.is_correct?'#00885D':'#9D6615',backgroundColor:q.is_correct?'#E8F8F0':'#FFF4DF',borderRadius:20,paddingHorizontal:13,paddingVertical:6,fontWeight:'600',fontSize:12,marginBottom:10}}>{i+1} · {q.is_correct?'Дұрыс':'Қайталау қажет'}</Text>
+      <Text style={{fontFamily:displayFont,fontSize:23,lineHeight:31,color:'#101521',marginBottom:12}}>{q.text}</Text>
+      {!!q.image_url&&<Image source={{uri:q.image_url}} resizeMode="contain" style={{width:'100%',height:180,marginBottom:15}}/>}
+      <View className="result-answer-pair" style={{gap:12}}>
+        <View style={{flex:1,minWidth:0,flexDirection:'row',alignItems:'center',gap:18,padding:15,borderWidth:1,borderColor:q.is_correct?'#C5EBDD':'#F5D9DF',borderRadius:9,backgroundColor:q.is_correct?'#F0FBF6':'#FFF5F6'}}>{q.is_correct?<CheckCircle2 size={28} color="#00885D"/>:<MinusCircle size={28} color="#990F2E"/>}<View style={{flex:1}}><Text style={{fontSize:12,color:q.is_correct?'#60A58B':'#B16D7B',marginBottom:4}}>Сіздің жауабыңыз</Text><Text selectable style={{fontFamily:q.type==='CODE'?'monospace':undefined,fontSize:15,lineHeight:22,fontWeight:'600',color:q.is_correct?'#00885D':'#990F2E'}}>{q.selected||'Жауап берілмеген'}</Text></View></View>
+        <View style={{flex:1,minWidth:0,flexDirection:'row',alignItems:'center',gap:18,padding:15,borderWidth:1,borderColor:'#C5EBDD',borderRadius:9,backgroundColor:'#F0FBF7'}}><CheckCircle2 size={28} color="#00885D"/><View style={{flex:1}}><Text style={{fontSize:12,color:'#60A58B',marginBottom:4}}>Дұрыс жауап</Text><Text selectable style={{fontSize:15,lineHeight:22,fontWeight:'600',color:'#00885D'}}>{q.correct||'—'}</Text></View></View>
+      </View>
+      {!q.is_correct&&<View style={{borderTopWidth:1,borderTopColor:'#EAE3DA',marginTop:14,paddingTop:9}}><TouchableOpacity accessibilityRole="button" accessibilityLabel={`Сұрақ ${i+1}: түсіндірме және қайталау тақырыбы`} accessibilityState={{expanded:open}} onPress={()=>setExpanded(prev=>({...prev,[key]:!prev[key]}))} style={{flexDirection:'row',alignItems:'center',gap:14,paddingVertical:5}}><ChevronDown size={20} color="#990F2E" style={{transform:[{rotate:open?'180deg':'0deg'}]}}/><Text style={{flex:1,color:'#990F2E',fontSize:14,lineHeight:21}}>Түсіндірме және қайталау тақырыбы</Text></TouchableOpacity>{open&&<View style={{paddingTop:12,gap:12}}>{!!explanationErrors[key]&&<Text accessibilityRole="alert" style={{fontSize:13,color:'#990F2E',lineHeight:21}}>{explanationErrors[key]}</Text>}{!!explanations[key]&&<View style={{backgroundColor:'#FAF7F2',padding:15,borderRadius:9}}><Text selectable style={{fontSize:14,lineHeight:24,color:'#354158'}}>{explanations[key]}</Text><Text style={{fontSize:11,lineHeight:18,color:'#8992A1',marginTop:10}}>ЖИ түсіндірмесі · күмән болса мұғаліммен тексеріңіз</Text></View>}{!explanations[key]&&<Text style={{fontSize:13,lineHeight:21,color:'#7C869B'}}>Сұрақтың шешу жолы мен қайталау тақырыбы бойынша ЖИ түсіндірмесін алыңыз.</Text>}<TouchableOpacity accessibilityRole="button" disabled={!!explaining} onPress={()=>explain(key)} style={{paddingVertical:10,paddingHorizontal:14,alignSelf:'flex-start',borderWidth:1,borderColor:'#DACDBE',borderRadius:8,opacity:explaining&&explaining!==key ? .5 : 1}}><Text style={{fontSize:13,color:'#990F2E',fontWeight:'500'}}>{explaining===key?'Түсіндірме дайындалуда…':explanations[key]?'Қайта түсіндіру':'Түсіндірме алу'}</Text></TouchableOpacity></View>}</View>}
+    </View>;
+   })}
+  </>}
+ </ScrollView></SafeAreaView>;
 }

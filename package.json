@@ -7,7 +7,6 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/pg": "^8.18.0",
-    "@vercel/node": "^5.6.12",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
@@ -24,5 +23,8 @@
   },
   "scripts": {
     "preview": "tsx server/preview.ts"
+  },
+  "overrides": {
+    "argparse": "2.0.1"
   }
 }

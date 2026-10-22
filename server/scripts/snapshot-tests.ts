@@ -1,0 +1,3 @@
+import dotenv from 'dotenv';dotenv.config({path:'.env.local',quiet:true});
+import {Pool} from '../../api/_lib/db';import {snapshot} from '../../api/_lib/history';
+async function main(){const pool=new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:true}});const c=await pool.connect();try{await c.query('BEGIN');const tests=(await c.query('SELECT id FROM tests ORDER BY id')).rows;for(const t of tests)await snapshot(c,t.id,{id:null,name:'System'},'backup.manual');await c.query('COMMIT');console.log(`Saved ${tests.length} initial test snapshots.`);}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();await pool.end();}}main().catch(()=>{console.error('Snapshot failed');process.exitCode=1;});

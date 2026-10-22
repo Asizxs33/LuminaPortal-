@@ -1,8 +1,8 @@
 import { displayFont } from '../../../theme';
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ImageBackground, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShieldCheck, HelpCircle, Timer, AlertTriangle, CheckCircle2, Info, ArrowLeft } from 'lucide-react-native';
+import { ShieldCheck, HelpCircle, Timer, AlertTriangle, CheckCircle2, Info, ArrowLeft, ArrowRight, FileText, Target, Monitor, Wifi } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -15,6 +15,8 @@ interface TestDetail {
   duration_minutes: number;
   passing_score: number;
   questions: any[];
+  exam_mode?:boolean;
+  question_count?:number;
 }
 
 export default function TestStart() {
@@ -22,6 +24,7 @@ export default function TestStart() {
   const router = useRouter();
   const [test, setTest] = useState<TestDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,7 +41,7 @@ export default function TestStart() {
       try {
         const token = await AsyncStorage.getItem('lumina_token');
         // This also creates/reuses the student's persistent random set of 50 questions.
-        const res = await fetch(`${API}/api/tests/${id}?forAttempt=true`, {
+        const res = await fetch(`${API}/api/tests/${id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           signal: controller.signal,
         });
@@ -48,7 +51,7 @@ export default function TestStart() {
         }
 
         const data = await res.json();
-        if (!Array.isArray(data.questions) || data.questions.length === 0) {
+        if (!Array.isArray(data.questions) || data.questions.length === 0 && !data.question_count) {
           throw new Error('Тестте сұрақтар табылмады.');
         }
         setTest(data);
@@ -94,103 +97,37 @@ export default function TestStart() {
     );
   }
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#DFD2C3', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: 'white' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <TouchableOpacity onPress={() => router.back()} style={{ padding: 6 }}>
-            <ArrowLeft size={24} color="#10131B" />
-          </TouchableOpacity>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <ShieldCheck size={24} color="#800F1D" />
-            <Text style={{ color: '#10131B', fontSize: 17, fontWeight: '800' }}>Бағалау порталы</Text>
-          </View>
+  const stats = [
+    {label:'Уақыт',value:`${test.duration_minutes} минут`,Icon:Timer},
+    {label:'Сұрақтар',value:String(test.question_count ?? test.questions.length),Icon:FileText},
+    {label:'Өту ұпайы',value:`${test.passing_score}%`,Icon:Target},
+  ];
+  const rules = [
+    {title:'Уақыт шектеуі',text:test.exam_mode?'Таймер тест басталғанда іске қосылады. Бетті жабу уақытты тоқтатпайды. Уақыт серверде есептеледі.':'Таймер тест басталғанда іске қосылады. Бетті жабу уақытты тоқтатпайды.',Icon:Timer,color:'#990F2E',bg:'#FCEEF1'},
+    {title:test.exam_mode?'Емтихан тәртібі':'Тест тәртібі',text:test.exam_mode?'Толық экран қажет. Терезе ауыстыру және толық экраннан шығу тіркеледі. 3 бұзушылықтан кейін тест аяқталады.':'Басқа терезеге ауысу тіркеледі. 3 ескертуден кейін тест автоматты түрде аяқталады.',Icon:Monitor,color:'#BC7B13',bg:'#FFF5DC'},
+    {title:'Интернет байланысы',text:'Бастамас бұрын интернет байланысын тексеріңіз. Жауаптарды жіберу үшін байланыс қажет.',Icon:Wifi,color:'#009866',bg:'#E5FAED'},
+  ];
+  return <SafeAreaView className="test-start-page" style={{flex:1,backgroundColor:'#FCFAF7'}}>
+    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12,borderBottomWidth:1,borderBottomColor:'#E6E0D8',paddingHorizontal:20,paddingVertical:12,backgroundColor:'#FFF'}}>
+      <View style={{flexDirection:'row',alignItems:'center',gap:17}}><TouchableOpacity accessibilityRole="button" accessibilityLabel="Артқа қайту" onPress={()=>router.back()} style={{padding:4}}><ArrowLeft size={24} color="#152033"/></TouchableOpacity><View style={{flexDirection:'row',alignItems:'center',gap:9}}><ShieldCheck size={25} color="#990F2E"/><Text style={{fontSize:17,fontWeight:'700',color:'#101521'}}>Бағалау порталы</Text></View></View>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Тест ережелері туралы көмек" accessibilityState={{expanded:helpOpen}} onPress={()=>setHelpOpen(!helpOpen)} style={{padding:7,backgroundColor:'#F3EEE6',borderRadius:10}}><HelpCircle size={21} color="#62574B"/></TouchableOpacity>
+    </View>
+    <ScrollView contentContainerStyle={{paddingBottom:24}}>
+      <View className="start-campus" pointerEvents="none" style={{display:'none',position:'absolute',top:0,right:0,width:'78%',height:235,overflow:'hidden'}}><Image source={require('../../../assets/campus-header.png')} resizeMode="cover" style={{width:'100%',height:'100%'}}/>{Platform.OS==='web'&&<View style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(90deg,#FCFAF7 0%,rgba(252,250,247,.68) 27%,rgba(252,250,247,.04) 75%),linear-gradient(0deg,#FCFAF7 0%,rgba(252,250,247,0) 70%)'} as any}/>}</View>
+      <View className="start-content" style={{padding:20}}>
+        <Text style={{fontSize:13,color:'#7A8191',marginBottom:9}}>Бағалау  /  <Text style={{color:'#5E5149'}}>{test.title}</Text></Text>
+        <Text className="start-title" style={{fontFamily:displayFont,fontSize:39,lineHeight:47,fontWeight:'700',color:'#101521'}}>{test.title}</Text>
+        <Text className="start-subtitle" style={{fontFamily:displayFont,fontSize:19,lineHeight:27,color:'#7A8191',marginTop:3,marginBottom:18}}>Бастамас бұрын ережелермен танысыңыз.</Text>
+        <View className="start-stats" style={{flexDirection:'row',gap:0,backgroundColor:'#FFF',borderWidth:1,borderColor:'#E4DCD0',borderRadius:12,marginBottom:15,paddingVertical:14}}>{stats.map(({label,value,Icon},i)=><View key={label} className="start-stat" style={{flex:1,minWidth:0,alignItems:'center',gap:9,paddingHorizontal:10,borderLeftWidth:i?1:0,borderLeftColor:'#E6DFD4'}}><View className="start-stat-icon" style={{width:45,height:45,borderRadius:12,backgroundColor:'#FCEEF1',alignItems:'center',justifyContent:'center'}}><Icon size={27} color="#990F2E"/></View><View style={{gap:4,minWidth:0}}><Text className="start-stat-label" style={{fontSize:12,color:'#7A8191',fontWeight:'600',textAlign:'center'}}>{label}</Text><Text className="start-stat-value" style={{fontFamily:displayFont,fontSize:22,lineHeight:28,fontWeight:'700',color:'#101521',textAlign:'center'}}>{value}</Text></View></View>)}</View>
+        <View className="start-rules" style={{backgroundColor:'#FFF',borderWidth:1,borderColor:'#E4DCD0',borderRadius:13,paddingHorizontal:20,paddingTop:15,paddingBottom:12,marginBottom:10}}>
+          <Text className="start-rules-title" style={{fontFamily:displayFont,fontSize:29,lineHeight:36,fontWeight:'700',color:'#101521',marginBottom:12}}>Тест ережелері</Text>
+          {rules.map(({title,text,Icon,color,bg})=><View key={title} className="start-rule" style={{flexDirection:'row',alignItems:'center',gap:20,paddingVertical:12,borderTopWidth:1,borderTopColor:'#EAE4DC'}}><View className="start-rule-icon" style={{width:54,height:52,borderRadius:12,backgroundColor:bg,alignItems:'center',justifyContent:'center'}}><Icon size={29} color={color}/></View><View style={{flex:1,minWidth:0}}><Text style={{fontSize:16,fontWeight:'700',color:'#172034',marginBottom:4}}>{title}</Text><Text style={{fontSize:13,lineHeight:20,color:'#7A8191'}}>{text}</Text></View></View>)}
+          <View style={{flexDirection:'row',alignItems:'flex-start',gap:10,borderTopWidth:1,borderTopColor:'#EAE4DC',paddingTop:11}}><Info size={17} color="#9A8C79"/><Text style={{flex:1,fontSize:13,lineHeight:20,color:'#7A8191'}}>{test.exam_mode?'ЖИ кеңестері өшірулі. Жауаптар емтихан барлығына аяқталғаннан кейін ашылады.':'Жаттығу режимі: ЖИ кеңестері мен жауаптарды талдау қолжетімді.'}</Text></View>
+          {helpOpen&&<View accessibilityLiveRegion="polite" style={{marginTop:13,padding:13,borderRadius:9,backgroundColor:'#F9F5ED',gap:6}}><Text style={{fontSize:14,fontWeight:'600',color:'#62574B'}}>Бастамас бұрын</Text><Text style={{fontSize:13,lineHeight:21,color:'#7A8191'}}>Қажет емес терезелерді жауып, құрылғыны қуат көзіне қосыңыз. Браузер оқиғалары өздігінен көшірудің дәлелі емес.{test.exam_mode?' Толық экран қолжетімсіз болса, бұл бұзушылық ретінде саналмайды.':''}</Text></View>}
         </View>
-        <TouchableOpacity style={{ padding: 6, backgroundColor: '#F3EDE4', borderRadius: 10 }}>
-          <HelpCircle size={20} color="#46393D" />
-        </TouchableOpacity>
+        <TouchableOpacity accessibilityRole="button" onPress={()=>router.push(`/test/${test.id}/take`)} style={{backgroundColor:'#990F2E',minHeight:51,paddingVertical:13,borderRadius:11,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:12,marginBottom:9}}><Text style={{fontSize:19,fontWeight:'700',color:'#FFF'}}>Тестті бастау</Text><ArrowRight size={23} color="#FFF"/></TouchableOpacity>
+        <View style={{flexDirection:'row',alignItems:'flex-start',gap:9}}><Info size={16} color="#9A8C79"/><Text style={{flex:1,fontSize:11,lineHeight:17,color:'#9A8C79'}}>Бастау түймесін басу арқылы бағалау шарттарымен келісесіз.</Text></View>
       </View>
-
-      <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 40 }}>
-        <View style={{ marginBottom: 24, marginTop: 12, alignItems: 'center' }}>
-          <Text style={{ color: '#10131B', fontFamily: displayFont, fontSize: 26, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>{test.title}</Text>
-          <Text style={{ color: '#756D70', textAlign: 'center', fontSize: 14 }}>Бастамас бұрын ережелермен танысып алыңыз.</Text>
-        </View>
-
-        <View style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#DFD2C3', overflow: 'hidden', marginBottom: 24 }}>
-          {/* Rules */}
-          <View style={{ padding: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 24 }}>
-              <View style={{ backgroundColor: '#F4E6E6', padding: 10, borderRadius: 14 }}>
-                <Timer size={24} color="#800F1D" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: '#10131B', marginBottom: 4 }}>Уақыт шектеуі</Text>
-                <Text style={{ color: '#756D70', fontSize: 14, lineHeight: 20 }}>
-                  Барлығы <Text style={{ fontWeight: '800', color: '#10131B' }}>{test.duration_minutes} минут.</Text> Төмендегі түймені басқан бойда таймер іске қосылады.
-                </Text>
-              </View>
-            </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 24 }}>
-              <View style={{ backgroundColor: '#fef3c7', padding: 10, borderRadius: 14 }}>
-                <AlertTriangle size={24} color="#d97706" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: '#10131B', marginBottom: 4 }}>Анти-читерлік саясат</Text>
-                <Text style={{ color: '#756D70', fontSize: 14, lineHeight: 20 }}>
-                  <Text style={{ fontWeight: '800', color: '#b45309' }}>Қолданбадан шықпаңыз!</Text> Егер тест кезінде басқа қосымшаға немесе фонға өтсеңіз, тест <Text style={{ fontWeight: '800' }}>автоматты түрде</Text> аяқталып нәтиже жіберіледі.
-                </Text>
-              </View>
-            </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-              <View style={{ backgroundColor: '#dcfce7', padding: 10, borderRadius: 14 }}>
-                <CheckCircle2 size={24} color="#059669" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: '#10131B', marginBottom: 4 }}>Интернет байланысы</Text>
-                <Text style={{ color: '#756D70', fontSize: 14, lineHeight: 20 }}>
-                  Интернет қосылып тұрғанына көз жеткізіңіз. Үзіліс болса, нәтиже сақталмауы мүмкін.
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          onPress={() => router.push(`/test/${test.id}/take`)} 
-          style={{ backgroundColor: '#800F1D', paddingVertical: 16, borderRadius: 16, alignItems: 'center', marginBottom: 16 }}
-        >
-          <Text style={{ color: 'white', fontSize: 16, fontWeight: '800', letterSpacing: 1 }}>Тестті бастау</Text>
-        </TouchableOpacity>
-        
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24 }}>
-          <Info size={16} color="#A29792" />
-          <Text style={{ color: '#756D70', fontSize: 12, flex: 1 }}>Бастау түймесін басу арқылы бағалау шарттарымен келісесіз.</Text>
-        </View>
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#DFD2C3', paddingTop: 24 }}>
-          <View style={{ width: '47%', marginBottom: 16, backgroundColor: 'white', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#DFD2C3', alignItems: 'center' }}>
-            <Text style={{ color: '#A29792', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Сұрақтар</Text>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#10131B' }}>{test.questions.length}</Text>
-          </View>
-          <View style={{ width: '47%', marginBottom: 16, backgroundColor: 'white', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#DFD2C3', alignItems: 'center' }}>
-            <Text style={{ color: '#A29792', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Өту ұпайы</Text>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#10131B' }}>{test.passing_score}%</Text>
-          </View>
-          <View style={{ width: '47%', backgroundColor: 'white', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#DFD2C3', alignItems: 'center' }}>
-            <Text style={{ color: '#A29792', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Мүмкіндік</Text>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#10131B' }}>1 / 1</Text>
-          </View>
-          <View style={{ width: '47%', backgroundColor: 'white', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#DFD2C3', alignItems: 'center' }}>
-            <Text style={{ color: '#A29792', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Формат</Text>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: '#10131B', textAlign: 'center', marginTop: 4 }}>Бірнеше таңдау</Text>
-          </View>
-        </View>
-
-      </ScrollView>
-    </SafeAreaView>
-  );
+    </ScrollView>
+  </SafeAreaView>;
 }

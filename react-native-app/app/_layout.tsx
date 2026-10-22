@@ -1,3 +1,4 @@
+import AppToaster from '../components/AppToaster';
 import '../global.css';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -85,6 +86,7 @@ export default function RootLayout() {
           </View>
         </View>
 
+        <AppToaster />
         <StatusBar style="auto" />
       </AuthProvider>
     </SafeAreaProvider>
