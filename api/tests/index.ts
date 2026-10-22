@@ -1,3 +1,4 @@
+import {isStaff} from '../_lib/permissions';
 import { history, snapshot } from '../_lib/history';
 import { secure } from '../_lib/secure';
 import { session } from '../_lib/session';
@@ -82,7 +83,7 @@ async function importWordTest(req: VercelRequest, res: VercelResponse) {
     } catch {
         return res.status(401).json({ error: 'Session expired. Please sign in again.' });
     }
-    if (user.role !== 'admin') return res.status(403).json({ error: 'Only administrators can import tests' });
+    if (!isStaff(user.role)) return res.status(403).json({ error: 'Teacher access required' });
     const { fileBase64, fileName, title, subject, duration_minutes, passing_score } = req.body || {};
     if (!fileBase64 || !fileName || !title || !subject) return res.status(400).json({ error: 'File, title and subject are required' });
     if (!/\.docx$/i.test(fileName)) return res.status(400).json({ error: 'Only .docx Word files are supported' });
@@ -101,8 +102,8 @@ async function importWordTest(req: VercelRequest, res: VercelResponse) {
         await client.query('BEGIN');
         const testId = crypto.randomUUID();
         const test = await client.query(
-            'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published) VALUES ($1,$2,$3,$4,$5,$6,false) RETURNING *',
-            [testId, title.trim(), subject.trim(), `Imported from ${fileName}`, Number(duration_minutes) || 30, Number(passing_score ?? 70)],
+            'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published, created_by) VALUES ($1,$2,$3,$4,$5,$6,false,$7) RETURNING *',
+            [testId, title.trim(), subject.trim(), `Imported from ${fileName}`, Number(duration_minutes) || 30, Number(passing_score ?? 70), session(req)!.id],
         );
         for (const [index, question] of questions.entries()) {
             const inserted = await client.query('INSERT INTO questions (test_id, text, type, order_index) VALUES ($1,$2,$3,$4) RETURNING id', [testId, question.text, 'MULTIPLE_CHOICE', index]);
@@ -125,7 +126,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     const user = session(req);
     if(req.query.history==='true') return history(pool,req,res,user);
-    if ((req.method !== 'GET' || req.query.all === 'true') && user?.role !== 'admin') return res.status(user ? 403 : 401).json({error:'Мұғалім ретінде кіріңіз.'});
+    if ((req.method !== 'GET' || req.query.all === 'true') && !isStaff(user?.role)) return res.status(user ? 403 : 401).json({error:'Мұғалім ретінде кіріңіз.'});
     try {
         if (req.method === 'GET') {
             const { all } = req.query;
@@ -143,7 +144,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
                     GROUP BY t.id ORDER BY t.created_at DESC
                 `;
             }
-            const { rows } = await pool.query(queryStr);
+            if(user?.role==='teacher'&&all==='true')queryStr=queryStr.replace('GROUP BY t.id','WHERE t.created_by=$1 GROUP BY t.id');
+            const { rows } = await pool.query(queryStr,user?.role==='teacher'&&all==='true'?[user.id]:[]);
             return res.json(rows);
         }
         if (req.method === 'POST') {
@@ -154,8 +156,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
             const testId = crypto.randomUUID();
             const { rows } = await pool.query(
-                'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
-                [testId, title, subject || 'General', description || '', duration_minutes || 30, passing_score ?? 70, is_published]
+                'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',
+                [testId, title, subject || 'General', description || '', duration_minutes || 30, passing_score ?? 70, is_published, user!.id]
             );
             return res.status(201).json(rows[0]);
         }

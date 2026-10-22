@@ -1,3 +1,4 @@
+import {isStaff} from '../_lib/permissions';
 import { snapshot } from '../_lib/history';
 import { secure } from '../_lib/secure';
 import type { VercelRequest, VercelResponse } from '../_lib/http';
@@ -8,7 +9,7 @@ async function handler(req:VercelRequest,res:VercelResponse) {
   if(req.method==='OPTIONS') return res.status(200).end();
   const user=session(req);
   if(!user) return res.status(401).json({error:'Кіру қажет.'});
-  if(user.role!=='admin') return res.status(403).json({error:'Мұғалім рұқсаты қажет.'});
+  if(!isStaff(user.role)) return res.status(403).json({error:'Мұғалім рұқсаты қажет.'});
   const client=await pool.connect();
   try {
     if(req.method==='DELETE') {

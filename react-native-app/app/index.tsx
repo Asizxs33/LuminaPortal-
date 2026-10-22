@@ -24,7 +24,7 @@ const features = [
 
 export default function LandingPage() {
   const { isAuthenticated, user } = useAuth();
-  const dashboard = user?.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard';
+  const dashboard = ['admin','teacher'].includes(user?.role || '') ? '/(admin)/dashboard' : '/(student)/dashboard';
   const scroll = useRef<ScrollView>(null);
   const [featuresY, setFeaturesY] = useState(0);
   const [lowerY, setLowerY] = useState(0);

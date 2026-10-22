@@ -1,10 +1,11 @@
+import { displayFont } from '../../../theme';
 import { confirmAction } from '../../../lib/confirmAction';
 import { usePreventRemove } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, AppState, TextInput, KeyboardAvoidingView, Platform, Image, Modal, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, AppState, TextInput, KeyboardAvoidingView, Platform, Image, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle2, Code2, Terminal, Play, Copy, Flag } from 'lucide-react-native';
+import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle2, Code2, Terminal, Play, Copy, Flag, CloudCheck, CloudOff, ShieldCheck, ChevronDown } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -44,8 +45,8 @@ export default function TestTake() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const navigation = useNavigation();
-  const compact = useWindowDimensions().width < 700;
   const questionScroll = useRef<ScrollView>(null);
+  const [navigationOpen,setNavigationOpen]=useState(false);
   const [finishReview, setFinishReview] = useState(false);
   const [syncState, setSyncState] = useState('Жауаптар сақталуда…');
   const [online, setOnline] = useState(true);
@@ -351,7 +352,7 @@ export default function TestTake() {
     : answers[i] !== undefined && answers[i] !== null;
   const missing = (test?.questions || []).map((_,i)=>i).filter(i=>!isAnswered(i));
   const confirmFinish = () => setFinishReview(true);
-  const goToQuestion = (i:number) => {setCurrentQuestionIndex(i);setMentorHint(null);questionScroll.current?.scrollTo({y:0,animated:false});};
+  const goToQuestion = (i:number) => {setNavigationOpen(false);setCurrentQuestionIndex(i);setMentorHint(null);questionScroll.current?.scrollTo({y:0,animated:false});};
   useEffect(()=>{setVisited(v=>v.includes(currentQuestionIndex)?v:[...v,currentQuestionIndex]);},[currentQuestionIndex]);
   useEffect(()=>{
     if(Platform.OS!=='web')return;
@@ -394,48 +395,26 @@ export default function TestTake() {
   const currentQuestion = test.questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === test.questions.length - 1;
   const isCodeQuestion = currentQuestion.type === 'CODE';
+  const saveFailed=!online||(test.exam_mode?syncState.includes('сақталмады'):saveNotice.includes('мүмкін болмады'));
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }} edges={['top', 'left', 'right']}>
-      {/* Header */}
-      <View style={{ borderBottomWidth: 1, borderBottomColor: '#DFD2C3', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'white', zIndex: 50 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-            <View style={{ backgroundColor: '#F4E6E6', padding: 8, borderRadius: 10 }}>
-              <BookOpen size={20} color="#800F1D" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: '#10131B' }} numberOfLines={1}>{test.title}</Text>
-              <Text style={{ fontSize: 12, color: '#756D70' }}>{test.subject}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ 
-            flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, 
-            borderRadius: 10, borderWidth: 1, 
-            backgroundColor: timeLeft < 300 ? '#fef2f2' : '#FCFAF6',
-            borderColor: timeLeft < 300 ? '#fca5a5' : '#DFD2C3'
-          }}>
-            <Clock size={16} color={timeLeft < 300 ? '#dc2626' : '#756D70'} />
-            <Text style={{ fontWeight: '800', color: timeLeft < 300 ? '#dc2626' : '#756D70' }}>{formatTime(timeLeft)}</Text>
-          </View>
-          <TouchableOpacity onPress={confirmFinish} style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#ef4444', borderRadius: 10 }}>
-            <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>Ерте аяқтау</Text>
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView className="test-take-page" style={{ flex: 1, backgroundColor: '#FCFAF7' }} edges={['top', 'left', 'right']}>
+      <View className="take-header" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:14,borderBottomWidth:1,borderBottomColor:'#E5DDD3',paddingHorizontal:20,paddingVertical:12,backgroundColor:'#FFF'}}>
+        <View style={{flexDirection:'row',alignItems:'center',gap:13,flex:1,minWidth:110}}><View style={{width:43,height:43,borderRadius:10,backgroundColor:'#FAE9EC',alignItems:'center',justifyContent:'center'}}><BookOpen size={25} color="#990F2E"/></View><View style={{flex:1}}><Text style={{fontSize:16,fontWeight:'700',color:'#142034'}} numberOfLines={1}>{test.title}</Text><Text style={{fontSize:12,color:'#7C879D',marginTop:3}}>{test.subject}</Text></View></View>
+        <View className="take-sync" accessibilityLiveRegion="polite" style={{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,maxWidth:360}}>{!saveFailed?<CloudCheck size={21} color="#3E9153"/>:<CloudOff size={21} color="#AD741B"/>}<Text style={{fontSize:12,lineHeight:19,color:'#7C879D',flexShrink:1}}>{restored?'Сессия қалпына келтірілді. ':''}{!online?'Байланыс жоқ. Жауаптар құрылғыда сақталады.':test.exam_mode?syncState:saveNotice}</Text></View>
+        <View style={{flex:1,alignItems:'flex-end'}}><TouchableOpacity accessibilityRole="button" onPress={confirmFinish} style={{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,borderWidth:1,borderColor:'#990F2E',borderRadius:9,paddingHorizontal:17,minHeight:39}}><Flag size={18} color="#990F2E"/><Text style={{fontSize:12,color:'#990F2E',fontWeight:'600'}}>Ерте аяқтау</Text></TouchableOpacity></View>
       </View>
-
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-      <ScrollView ref={questionScroll} style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 40, width:'100%', maxWidth:1000, alignSelf:'center' }} keyboardShouldPersistTaps="handled">
-        
-        <Text style={{color:'#707B90',fontSize:12,marginBottom:10}}>{restored?'Сессия қалпына келтірілді. ':''}{!online?'Байланыс жоқ. Жауаптар құрылғыда сақталады.':test.exam_mode?syncState:saveNotice}</Text>
+      <View className="take-mobile-toolbar" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10,padding:12,borderBottomWidth:1,borderBottomColor:'#E5DDD3',backgroundColor:'#FFF'}}><View style={{flexDirection:'row',alignItems:'center',gap:8}}><Clock size={18} color="#AA741B"/><Text style={{fontSize:20,fontWeight:'700',color:timeLeft<300?'#B42336':'#990F2E'}}>{formatTime(timeLeft)}</Text></View><TouchableOpacity accessibilityRole="button" accessibilityState={{expanded:navigationOpen}} onPress={()=>setNavigationOpen(!navigationOpen)} style={{flexDirection:'row',alignItems:'center',gap:8,padding:7}}><Text style={{fontSize:12,color:'#7C879D'}}>Сұрақтар · {currentQuestionIndex+1}/{test.questions.length}</Text><ChevronDown size={18} color="#990F2E"/></TouchableOpacity></View>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex:1}}>
+      <ScrollView ref={questionScroll} style={{flex:1}} contentContainerStyle={{padding:20,paddingBottom:24}} keyboardShouldPersistTaps="handled">
+       <View className="take-columns" style={{gap:20}}>
+        <View className="take-main" style={{minWidth:0}}>
+        <Text style={{fontSize:12,color:'#7C879D',marginBottom:9}}>Бағалау  /  {test.title}</Text><Text className="take-page-title" style={{fontFamily:displayFont,fontSize:32,lineHeight:40,fontWeight:'700',color:'#101521',marginBottom:7}}>Тест тапсыру</Text>
         {!!submitError && <View style={{backgroundColor:'#FFF0F2',padding:14,borderRadius:10,marginBottom:14}}><Text accessibilityRole="alert" style={{color:'#990F2E'}}>{submitError}</Text><TouchableOpacity accessibilityRole="button" onPress={()=>handleFinish(true)} style={{paddingVertical:12}}><Text style={{color:'#990F2E',fontWeight:'600'}}>Қайта жіберу</Text></TouchableOpacity></View>}
         <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:14,gap:12}}><Text style={{color:'#707B90'}}>Сұрақ {currentQuestionIndex+1} / {test.questions.length}</Text><TouchableOpacity accessibilityRole="button" accessibilityState={{selected:flagged.includes(currentQuestionIndex)}} onPress={()=>setFlagged(old=>old.includes(currentQuestionIndex)?old.filter(i=>i!==currentQuestionIndex):[...old,currentQuestionIndex])} style={{flexDirection:'row',alignItems:'center',gap:6,padding:10}}><Flag size={17} color="#990F2E"/><Text style={{color:'#990F2E'}}>{flagged.includes(currentQuestionIndex)?'Белгіленді':'Кейін қарау'}</Text></TouchableOpacity></View>
-        {(test.exam_mode || !!examNotice) && <View style={{padding:14,backgroundColor:'#FAEAF0',borderRadius:10,marginBottom:14}}><Text style={{color:'#990F2E',lineHeight:21}}>{examNotice || 'Емтихан · уақыт серверде бақыланады'}</Text>{!fullScreen&&Platform.OS==='web'&&<TouchableOpacity onPress={()=>enterFullscreen().catch(()=>setExamNotice('Толық экран бұл браузерде қолжетімсіз.'))} style={{paddingVertical:12}}><Text style={{color:'#990F2E',fontWeight:'600'}}>Толық экранға оралу</Text></TouchableOpacity>}</View>}
+        {(test.exam_mode || !!examNotice) && <View style={{padding:14,backgroundColor:'#F8F1E6',borderRadius:10,marginBottom:12,flexDirection:'row',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}><ShieldCheck size={21} color="#AA741B"/><Text style={{color:'#990F2E',lineHeight:21,flex:1,fontSize:13}}>{examNotice || 'Емтихан · уақыт серверде бақыланады'}</Text>{!fullScreen&&Platform.OS==='web'&&<TouchableOpacity onPress={()=>enterFullscreen().catch(()=>setExamNotice('Толық экран бұл браузерде қолжетімсіз.'))} style={{paddingVertical:8,width:'100%'}}><Text style={{color:'#990F2E',fontWeight:'600'}}>Толық экранға оралу</Text></TouchableOpacity>}</View>}
         {/* Question Card */}
-        <View style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#DFD2C3', padding: 18, marginBottom: 18 }}>
+        <View className="take-question-card" style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#E4D9CB', padding: 20, marginBottom: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <View style={{ backgroundColor: isCodeQuestion ? '#fef3c7' : '#F4E6E6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
               <Text style={{ color: isCodeQuestion ? '#d97706' : '#800F1D', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' }}>{currentQuestionIndex + 1}-СҰРАҚ</Text>
@@ -445,7 +424,7 @@ export default function TestTake() {
             </Text>
           </View>
 
-          <Text style={{ fontSize: 18, fontWeight: '800', color: '#10131B', marginBottom: currentQuestion.image_url ? 16 : (isCodeQuestion ? 16 : 24), lineHeight: 28 }}>
+          <Text className="take-question-text" style={{ fontSize: 21, fontWeight: '800', color: '#10131B', marginBottom: currentQuestion.image_url ? 16 : (isCodeQuestion ? 16 : 24), lineHeight: 28 }}>
             {currentQuestion.text}
           </Text>
 
@@ -605,50 +584,20 @@ export default function TestTake() {
               </View>
           ) : (
             // MULTIPLE CHOICE UI
-            <View style={{ gap: 12 }}>
-                {currentQuestion.options?.map((option, idx) => {
-                const isSelected = answers[currentQuestionIndex] === option.id;
-                const letter = String.fromCharCode(65 + idx);
-                return (
-                    <TouchableOpacity
-                    key={option.id}
-                    accessibilityRole="radio" accessibilityState={{checked:isSelected}}
-                    onPress={() => setAnswers(prev => ({ ...prev, [currentQuestionIndex]: option.id }))}
-                    style={{
-                        minHeight: 56, flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2,
-                        borderColor: isSelected ? '#800F1D' : '#DFD2C3',
-                        backgroundColor: isSelected ? '#F4E6E6' : 'white'
-                    }}
-                    >
-                    <View style={{ 
-                        alignItems: 'center', justifyContent: 'center', height: 24, width: 24, borderRadius: 12, borderWidth: 2, marginRight: 14,
-                        borderColor: isSelected ? '#800F1D' : '#DFD2C3', backgroundColor: isSelected ? '#800F1D' : 'transparent'
-                    }}>
-                        {isSelected && <View style={{ height: 8, width: 8, backgroundColor: 'white', borderRadius: 4 }} />}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: '800', color: '#10131B', fontSize: 15 }}>{option.text}</Text>
-                        <Text style={{ color: '#756D70', fontSize: 11, marginTop: 2 }}>{letter} нұсқасы</Text>
-                    </View>
-                    </TouchableOpacity>
-                );
-                })}
-            </View>
+            <View accessibilityRole="radiogroup" accessibilityLabel="Жауап нұсқалары" style={{gap:10}}>{currentQuestion.options?.map((option,idx)=>{
+              const selected=answers[currentQuestionIndex]===option.id;const letter=String.fromCharCode(65+idx);
+              return <TouchableOpacity className="take-option" key={option.id} accessibilityRole="radio" accessibilityLabel={`${letter}. ${option.text}`} accessibilityState={{checked:selected}} onPress={()=>setAnswers(prev=>({...prev,[currentQuestionIndex]:option.id}))} style={{flexDirection:'row',alignItems:'center',minHeight:51,paddingHorizontal:15,paddingVertical:12,borderWidth:1,borderColor:selected?'#990F2E':'#E0D3C3',borderRadius:9,backgroundColor:selected?'#FBEEF1':'#FFF',gap:16}}>
+                <View style={{width:22,height:22,borderWidth:1.5,borderColor:selected?'#990F2E':'#CBBAA5',borderRadius:11,alignItems:'center',justifyContent:'center'}}>{selected&&<View style={{width:12,height:12,borderRadius:6,backgroundColor:'#990F2E'}}/>}</View><Text style={{fontSize:15,color:'#182238',paddingRight:16,borderRightWidth:1,borderRightColor:'#E0D3C3'}}>{letter}</Text><Text style={{flex:1,minWidth:0,fontSize:16,lineHeight:23,fontWeight:'600',color:'#182238'}}>{option.text}</Text>
+              </TouchableOpacity>;
+            })}</View>
           )}
 
         </View>
 
-        <Text style={{color:'#756D70',fontSize:12,lineHeight:20,marginBottom:12}}>Ағымдағы — бордо · ✓ жауап берілді · – өткізіліп кетті · ⚑ кейін қарау</Text>
-        <View style={{flexDirection:'row',flexWrap:'wrap',gap:8,marginBottom:20}}>{test.questions.map((q,i)=><TouchableOpacity key={q.id} accessibilityRole="button" accessibilityState={{selected:i===currentQuestionIndex}} accessibilityLabel={`Сұрақ ${i+1}, ${isAnswered(i)?'жауап берілді':visited.includes(i)?'өткізіліп кетті':'жауап берілмеген'}${flagged.includes(i)?', кейін қарау':''}`} onPress={()=>goToQuestion(i)} style={{width:46,height:46,borderRadius:8,borderWidth:flagged.includes(i)?2:1,borderColor:flagged.includes(i)?'#B2770C':'#E0E5ED',backgroundColor:i===currentQuestionIndex?'#990F2E':isAnswered(i)?'#E3FAEF':'white',alignItems:'center',justifyContent:'center'}}><Text style={{color:i===currentQuestionIndex?'white':'#101827'}}>{i+1}{flagged.includes(i)?' ⚑':isAnswered(i)?' ✓':visited.includes(i)?' –':''}</Text></TouchableOpacity>)}</View>
         {/* Navigation Buttons */}
-        <View style={{ display:compact?'none':'flex', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <TouchableOpacity
-            onPress={() => { 
-                if (currentQuestionIndex > 0) {
-                    setCurrentQuestionIndex(prev => prev - 1);
-                    setMentorHint(null);
-                }
-            }}
+        <View className="take-desktop-navigation" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Алдыңғы сұрақ"
+            onPress={()=>goToQuestion(currentQuestionIndex-1)}
             disabled={currentQuestionIndex === 0}
             style={{
               flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
@@ -668,13 +617,8 @@ export default function TestTake() {
               <CheckCircle2 size={18} color="white" />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity 
-              onPress={() => { 
-                  if (currentQuestionIndex < test.questions.length - 1) {
-                      setCurrentQuestionIndex(prev => prev + 1);
-                      setMentorHint(null);
-                  }
-              }} 
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Келесі сұрақ"
+              onPress={()=>goToQuestion(currentQuestionIndex+1)}
               style={{ flex: 1, paddingVertical: 16, backgroundColor: '#800F1D', borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
             >
               <Text style={{ fontWeight: '800', color: 'white' }}>Келесі</Text>
@@ -683,17 +627,17 @@ export default function TestTake() {
           )}
         </View>
 
-        <View style={{ marginTop: 24, alignItems: 'center' }}>
-            <Text style={{ color: '#A29792', fontSize: 11, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase' }}>
-              Жауап берілді: {test.questions.length-missing.length} / {test.questions.length}
-            </Text>
-            <View style={{ height: 6, width: '100%', backgroundColor: '#DFD2C3', borderRadius: 3, overflow: 'hidden' }}>
-                <View style={{ height: '100%', backgroundColor: '#800F1D', borderRadius: 3, width: `${((test.questions.length-missing.length) / test.questions.length) * 100}%` }} />
-            </View>
         </View>
-
+        <View className={`take-rail ${navigationOpen?'take-rail-open':''}`} style={{backgroundColor:'#FFF',borderWidth:1,borderColor:'#E6E0D8',borderRadius:12,padding:17,minWidth:0}}>
+          <View className="take-rail-timer" style={{flexDirection:'row',alignItems:'center',gap:17,paddingBottom:18,marginBottom:18,borderBottomWidth:1,borderBottomColor:'#E3D8CA'}}><View style={{width:64,height:64,borderRadius:32,backgroundColor:'#FFF3DE',alignItems:'center',justifyContent:'center'}}><Clock size={39} color="#B07B21" strokeWidth={1.6}/></View><View style={{flex:1}}><Text style={{fontSize:13,color:'#7C879D',fontWeight:'600'}}>Қалған уақыт</Text><Text className="take-timer-value" style={{fontFamily:displayFont,fontSize:44,lineHeight:51,fontWeight:'700',color:timeLeft<300?'#C02B38':'#990F2E'}}>{formatTime(timeLeft)}</Text></View></View>
+          <Text style={{fontFamily:displayFont,fontSize:21,lineHeight:28,fontWeight:'700',color:'#101521',marginBottom:14}}>Сұрақтар навигациясы</Text>
+          <View className="take-number-grid" style={{flexDirection:'row',flexWrap:'wrap',gap:5}}>{test.questions.map((q,i)=><TouchableOpacity className="take-number" key={q.id} accessibilityRole="button" accessibilityState={{selected:i===currentQuestionIndex}} accessibilityLabel={`Сұрақ ${i+1}, ${isAnswered(i)?'жауап берілді':visited.includes(i)?'өткізіліп кетті':'жауап берілмеген'}${flagged.includes(i)?', кейін қарау':''}`} onPress={()=>goToQuestion(i)} style={{flexBasis:'18%',flexGrow:1,minHeight:34,borderRadius:7,borderWidth:flagged.includes(i)?2:1,borderColor:flagged.includes(i)?'#990F2E':'#E0D3C3',backgroundColor:i===currentQuestionIndex?'#990F2E':isAnswered(i)?'#E6F7EF':'#FFF',alignItems:'center',justifyContent:'center',paddingVertical:5}}><Text style={{fontSize:12,color:i===currentQuestionIndex?'#FFF':'#172034'}}>{i+1}{flagged.includes(i)?' ⚑':isAnswered(i)?' ✓':visited.includes(i)?' –':''}</Text></TouchableOpacity>)}</View>
+          <View style={{gap:7,marginTop:15}}>{[{label:'Ағымдағы',bg:'#990F2E',border:'#990F2E'},{label:'Жауап берілген',bg:'#E6F7EF',border:'#97C9B0'},{label:'Жауап берілмеген',bg:'#FFF',border:'#CBBAA5'}].map(item=><View key={item.label} style={{flexDirection:'row',alignItems:'center',gap:12}}><View style={{width:15,height:15,borderRadius:4,borderWidth:1,borderColor:item.border,backgroundColor:item.bg}}/><Text style={{fontSize:11,color:'#7C879D'}}>{item.label}</Text></View>)}<View style={{flexDirection:'row',alignItems:'center',gap:10}}><Flag size={17} color="#990F2E"/><Text style={{fontSize:11,color:'#7C879D'}}>Кейін қарау</Text></View></View>
+          <Text style={{fontSize:11,color:'#7C879D',marginTop:14}}>Жауап берілді: {test.questions.length-missing.length} / {test.questions.length}</Text><View style={{height:5,backgroundColor:'#EEEAE4',borderRadius:3,marginTop:8,overflow:'hidden'}}><View style={{height:'100%',backgroundColor:'#990F2E',width:`${((test.questions.length-missing.length)/test.questions.length)*100}%`}}/></View>
+        </View>
+       </View>
       </ScrollView>
-      {compact && <View style={{flexDirection:'row',gap:12,padding:12,paddingBottom:20,backgroundColor:'white',borderTopWidth:1,borderColor:'#DFD2C3'}}><TouchableOpacity accessibilityRole="button" disabled={currentQuestionIndex===0} onPress={()=>goToQuestion(currentQuestionIndex-1)} style={{flex:1,padding:16,borderRadius:16,alignItems:'center',backgroundColor:'#F3EDE4',opacity:currentQuestionIndex===0?.5:1}}><Text style={{color:'#756D70',fontWeight:'800'}}>Артқа</Text></TouchableOpacity><TouchableOpacity accessibilityRole="button" onPress={()=>isLastQuestion?confirmFinish():goToQuestion(currentQuestionIndex+1)} style={{flex:1,padding:16,borderRadius:16,alignItems:'center',backgroundColor:isLastQuestion?'#059669':'#800F1D'}}><Text style={{color:'white',fontWeight:'800'}}>{isLastQuestion?'Аяқтау':'Келесі'}</Text></TouchableOpacity></View>}
+      <View className="take-mobile-navigation" style={{flexDirection:'row',gap:12,padding:12,paddingBottom:18,backgroundColor:'#FFF',borderTopWidth:1,borderColor:'#E5DDD3'}}><TouchableOpacity accessibilityRole="button" disabled={currentQuestionIndex===0} onPress={()=>goToQuestion(currentQuestionIndex-1)} style={{flex:1,minHeight:44,borderRadius:10,alignItems:'center',justifyContent:'center',backgroundColor:'#F1EEEA',opacity:currentQuestionIndex===0 ? .5 : 1}}><Text style={{color:'#7C879D',fontWeight:'600'}}>Артқа</Text></TouchableOpacity><TouchableOpacity accessibilityRole="button" onPress={()=>isLastQuestion?confirmFinish():goToQuestion(currentQuestionIndex+1)} style={{flex:1,minHeight:44,borderRadius:10,alignItems:'center',justifyContent:'center',backgroundColor:'#990F2E'}}><Text style={{color:'#FFF',fontWeight:'600'}}>{isLastQuestion?'Аяқтау':'Келесі'}</Text></TouchableOpacity></View>
       </KeyboardAvoidingView>
       <Modal visible={finishReview && !submitting} transparent animationType="fade" onRequestClose={()=>setFinishReview(false)}>
         <View style={{flex:1,justifyContent:'center',alignItems:'center',padding:20,backgroundColor:'rgba(23,28,39,.36)'}}><View accessibilityViewIsModal style={{width:'100%',maxWidth:440,maxHeight:'85%',backgroundColor:'white',borderRadius:16,padding:24,gap:16}}>

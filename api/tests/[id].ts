@@ -1,3 +1,4 @@
+import {isStaff} from '../_lib/permissions';
 import { secure } from '../_lib/secure';
 import { examAction } from '../_lib/exams';
 import { session } from '../_lib/session';
@@ -37,7 +38,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     const { id } = req.query;
     const actor = session(req);
     if (!actor) return res.status(401).json({error:'Кіру қажет.'});
-    if (req.method !== 'GET' && req.method !== 'POST' && actor.role !== 'admin') return res.status(403).json({error:'Мұғалім рұқсаты қажет.'});
+    if (req.method !== 'GET' && req.method !== 'POST' && !isStaff(actor.role)) return res.status(403).json({error:'Мұғалім рұқсаты қажет.'});
 
     try {
         if (req.method === 'POST') return await examAction(pool,req,res,actor);
@@ -45,7 +46,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
             const testRes = await pool.query('SELECT * FROM tests WHERE id = $1', [id]);
             if (!testRes.rows[0]) return res.status(404).json({ error: 'Test not found' });
 
-            if (!testRes.rows[0].is_published && !testRes.rows[0].answers_released && actor.role !== 'admin') return res.status(403).json({error:'Тест жабық.'});
+            if (!testRes.rows[0].is_published && !testRes.rows[0].answers_released && !isStaff(actor.role)) return res.status(403).json({error:'Тест жабық.'});
             if(req.query.summary==='true')return res.json(testRes.rows[0]);
             // A student keeps the same random set after refreshing or reopening a test.
             // Tests with fewer than 50 questions simply use every available question.
@@ -91,7 +92,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
             // The test-taking screen always requests a 50-question attempt. The
             // editor intentionally omits this flag and continues to show the full bank.
-            if(testRes.rows[0].exam_mode && actor.role !== 'admin') return res.json({...testRes.rows[0],questions:[],question_count:Math.min(50,Number((await pool.query('SELECT COUNT(*) FROM questions WHERE test_id=$1',[id])).rows[0].count))});
+            if(testRes.rows[0].exam_mode && !isStaff(actor.role)) return res.json({...testRes.rows[0],questions:[],question_count:Math.min(50,Number((await pool.query('SELECT COUNT(*) FROM questions WHERE test_id=$1',[id])).rows[0].count))});
             const isAttempt = req.query.forAttempt === 'true';
             const questions = questionIds
                 ? await pool.query('SELECT * FROM questions WHERE id = ANY($1::int[])', [questionIds])
@@ -111,7 +112,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
             const ordered = (questionIds || isAttempt) ? shuffled(questionsWithOptions) : questionsWithOptions;
             const attempt = isAttempt ? jwt.sign({ purpose:'attempt', user_id:actor.id, test_id:id, question_ids:ordered.map(q=>q.id) }, process.env.JWT_SECRET!, {expiresIn:'7d'}) : undefined;
-            const visible = (actor.role !== 'admin' || isAttempt) ? ordered.map(q=>({...q,options:q.options.map(({is_correct,...option})=>option)})) : ordered;
+            const visible = (!isStaff(actor.role) || isAttempt) ? ordered.map(q=>({...q,options:q.options.map(({is_correct,...option})=>option)})) : ordered;
             return res.json({ ...testRes.rows[0], questions:visible, attempt_token:attempt });
         }
 

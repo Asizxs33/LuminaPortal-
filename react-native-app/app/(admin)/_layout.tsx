@@ -1,22 +1,19 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, useRouter, useSegments, Redirect } from 'expo-router';
 import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { LayoutDashboard, BarChart3, Users, User, Plus, Sparkles } from 'lucide-react-native';
-import { View, Platform } from 'react-native';
+import { View, Platform, ActivityIndicator } from 'react-native';
 import { BottomTabBar } from '@react-navigation/bottom-tabs';
 
 export default function AdminLayout() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (!isAuthenticated) {
-      router.replace('/login');
-    } else if (user?.role !== 'admin') {
-      router.replace('/(student)/dashboard');
-    }
-  }, [isAuthenticated, isLoading, user]);
+  const segments=useSegments();
+  if(isLoading)return <View style={{flex:1,alignItems:'center',justifyContent:'center'}}><ActivityIndicator color="#990F2E"/></View>;
+  if(!isAuthenticated)return <Redirect href="/login"/>;
+  if(!['admin','teacher'].includes(user?.role||''))return <Redirect href="/(student)/dashboard"/>;
+  if(user?.role==='teacher'&&segments.some(segment=>['students','history'].includes(segment)))return <Redirect href="/(admin)/dashboard"/>;
 
   return (
     <Tabs 
@@ -58,7 +55,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="students"
         options={{
-          title: 'Студенттер',
+          title: 'Студенттер', href: user?.role==='admin'?undefined:null,
           tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
         }}
       />

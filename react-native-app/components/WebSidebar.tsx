@@ -17,7 +17,7 @@ export default function WebSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const segments = useSegments();
-  const studentView = user?.role !== 'admin' || segments[0] === '(student)';
+  const studentView = !['admin','teacher'].includes(user?.role || '') || segments[0] === '(student)';
 
   // Hide sidebar on login/register/landing pages or if not logged in
   const authRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
@@ -46,7 +46,7 @@ export default function WebSidebar() {
     { label: 'Профиль', path: '/(student)/profile', icon: User },
   ];
 
-  const navItems = studentView ? studentNavItems : adminNavItems;
+  const navItems = studentView ? studentNavItems : adminNavItems.filter(item=>user.role==='admin'||!['/(admin)/students','/(admin)/history'].includes(item.path));
 
   const initials = (user.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 

@@ -14,7 +14,7 @@ interface Student {
   id: number;
   name: string;
   email: string;
-  role: 'student' | 'admin';
+  role: 'student' | 'teacher' | 'admin';
   group_name: string | null;
   tests_completed: number;
   avg_score: number;
@@ -27,6 +27,9 @@ export default function AdminStudents() {
   const {user}=useAuth();
   const [loadError,setLoadError]=useState('');
   const [coinStudent,setCoinStudent]=useState<Student|null>(null);
+  const [roleStudent,setRoleStudent]=useState<Student|null>(null);
+  const [roleBusy,setRoleBusy]=useState(false);
+  const roleNames={student:'Студент',teacher:'Мұғалім',admin:'Әкімші'};
   const [amount,setAmount]=useState('100');
   const [coinBusy,setCoinBusy]=useState(false);
   const [amountError,setAmountError]=useState('');
@@ -51,7 +54,7 @@ export default function AdminStudents() {
     }
   };
 
-  const changeRole = async (id: number, role: 'student' | 'admin') => {
+  const changeRole = async (id: number, role: 'student' | 'teacher' | 'admin') => {
     try {
       const token = await AsyncStorage.getItem('lumina_token');
       const res = await fetch(`${API}/api/students/${id}`, {
@@ -61,7 +64,7 @@ export default function AdminStudents() {
       });
       if (res.ok) {
         setStudents(prev => prev.map(s => s.id === id ? { ...s, role } : s));
-        notify.success(`Рөл өзгерті: ${role === 'admin' ? 'Әкімші' : 'Студент'}`);
+        notify.success(`Рөл өзгерті: ${roleNames[role]}`);setRoleStudent(null);
       } else {
         const errData = await res.json().catch(() => ({}));
         notify.error(errData.error || 'Рөл өзгерту сәтсіз болды (Сервер қатесі)');
@@ -174,11 +177,11 @@ export default function AdminStudents() {
               return <View className="students-row" key={s.id} style={{padding:14,gap:12,borderTopWidth:i?1:0,borderTopColor:'#EFEBE7'}}>
                 <View className="students-identity" style={{flexDirection:'row',alignItems:'center',gap:16,flex:1,minWidth:0}}><View style={{width:46,height:46,borderRadius:24,backgroundColor:avatarById.get(s.id),alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:16,fontWeight:'700',color:'#FFF'}}>{getInitials(s.name)}</Text></View><View style={{flex:1,minWidth:0}}><Text style={{fontSize:16,lineHeight:22,fontWeight:'600',color:'#151B28'}}>{s.name}</Text><Text selectable style={{fontSize:13,lineHeight:19,color:'#748097',marginTop:2}}>{s.email}</Text>{s.group_name&&<Text style={{fontSize:12,color:'#8992A3',marginTop:2}}>{s.group_name}</Text>}</View></View>
                 <View className="students-row-bottom" style={{flexDirection:'row',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:12}}>
-                  <View className="students-role-column" style={{width:130}}><View style={{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:8,paddingHorizontal:12,paddingVertical:7,borderRadius:8,backgroundColor:s.role==='admin'?'#F9E8EC':'#F7F2EA'}}><RoleIcon size={18} color={s.role==='admin'?'#990E2C':'#756D70'}/><Text style={{fontSize:12,color:s.role==='admin'?'#990E2C':'#756D70'}}>{s.role==='admin'?'Әкімші':'Студент'}</Text></View></View>
+                  <View className="students-role-column" style={{width:130}}><View style={{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:8,paddingHorizontal:12,paddingVertical:7,borderRadius:8,backgroundColor:s.role==='admin'?'#F9E8EC':'#F7F2EA'}}><RoleIcon size={18} color={s.role==='admin'?'#990E2C':'#756D70'}/><Text style={{fontSize:12,color:s.role==='admin'?'#990E2C':'#756D70'}}>{roleNames[s.role]}</Text></View></View>
                   <View style={{flexDirection:'row',gap:9}}>
-                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${s.name}: рөлін өзгерту`} disabled={own} onPress={async()=>{if(await confirmAction(`${s.name} — ${s.role==='admin'?'студент етуді':'әкімші етуді'} растайсыз ба?`))changeRole(s.id,s.role==='admin'?'student':'admin');}} style={{width:40,height:40,borderRadius:10,backgroundColor:'#F7F4EF',alignItems:'center',justifyContent:'center',opacity:own?0.4:1}}><RoleIcon size={21} color={s.role==='admin'?'#990E2C':'#6C6D78'}/></TouchableOpacity>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${s.name}: рөлін өзгерту`} disabled={own} onPress={()=>setRoleStudent(s)} style={{width:40,height:40,borderRadius:10,backgroundColor:'#F7F4EF',alignItems:'center',justifyContent:'center',opacity:own?0.4:1}}><RoleIcon size={21} color={s.role==='admin'?'#990E2C':'#6C6D78'}/></TouchableOpacity>
                     <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${s.name}: ұпай қосу`} onPress={()=>{setAmount('100');setAmountError('');setCoinStudent(s);}} style={{width:40,height:40,borderRadius:10,backgroundColor:'#FFF3D3',alignItems:'center',justifyContent:'center'}}><Coins size={21} color="#C38000"/></TouchableOpacity>
-                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${s.name}: аккаунтын бұғаттау`} disabled={s.role==='admin'} onPress={()=>deleteStudent(s)} style={{width:40,height:40,borderRadius:10,backgroundColor:'#FFEDF1',alignItems:'center',justifyContent:'center',opacity:s.role==='admin'?0.4:1}}><Trash2 size={21} color="#D91440"/></TouchableOpacity>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${s.name}: аккаунтын бұғаттау`} disabled={s.role!=='student'} onPress={()=>deleteStudent(s)} style={{width:40,height:40,borderRadius:10,backgroundColor:'#FFEDF1',alignItems:'center',justifyContent:'center',opacity:s.role!=='student'?0.4:1}}><Trash2 size={21} color="#D91440"/></TouchableOpacity>
                   </View>
                 </View>
               </View>;
@@ -191,5 +194,6 @@ export default function AdminStudents() {
     <Modal visible={!!coinStudent} transparent animationType="fade" onRequestClose={()=>{if(!coinBusy)setCoinStudent(null);}}>
       <View style={{flex:1,backgroundColor:'rgba(30,13,19,.38)',alignItems:'center',justifyContent:'center',padding:24}}><View accessibilityViewIsModal style={{width:'100%',maxWidth:420,backgroundColor:'#FFFDF9',borderRadius:18,padding:24,borderWidth:1,borderColor:'#E5DAD2'}}><View style={{width:46,height:46,borderRadius:12,backgroundColor:'#FFF3D3',alignItems:'center',justifyContent:'center',marginBottom:16}}><Coins size={26} color="#BC7C12"/></View><Text style={{fontFamily:displayFont,fontSize:28,fontWeight:'700',color:'#340B13'}}>Ұпай қосу</Text><Text style={{fontSize:14,lineHeight:21,color:'#768093',marginTop:8,marginBottom:18}}>{coinStudent?.name} · Оқу тапсырмаларына арналған ішкі ұпайлар.</Text><Text style={{fontSize:13,color:'#555D6D',marginBottom:8}}>Ұпай саны</Text><TextInput accessibilityLabel="Ұпай саны" keyboardType="numeric" value={amount} onChangeText={v=>{setAmount(v);setAmountError('');}} editable={!coinBusy} onSubmitEditing={submitCoins} style={{borderWidth:1,borderColor:'#D6D8E0',borderRadius:9,padding:12,fontSize:18,color:'#1B2434'}}/>{!!amountError&&<Text accessibilityRole="alert" style={{fontSize:13,color:'#940B27',marginTop:10}}>{amountError}</Text>}<View style={{flexDirection:'row',gap:12,marginTop:24}}><TouchableOpacity accessibilityRole="button" disabled={coinBusy} onPress={()=>setCoinStudent(null)} style={{flex:1,minHeight:44,borderWidth:1,borderColor:'#D6D8E0',borderRadius:9,alignItems:'center',justifyContent:'center'}}><Text style={{color:'#657086'}}>Бас тарту</Text></TouchableOpacity><TouchableOpacity accessibilityRole="button" disabled={coinBusy} onPress={submitCoins} style={{flex:1,minHeight:44,backgroundColor:'#940B27',borderRadius:9,alignItems:'center',justifyContent:'center'}}>{coinBusy?<ActivityIndicator color="white"/>:<Text style={{color:'white',fontWeight:'600'}}>Қосу</Text>}</TouchableOpacity></View></View></View>
     </Modal>
+    <Modal visible={!!roleStudent} transparent animationType="fade" onRequestClose={()=>{if(!roleBusy)setRoleStudent(null);}}><View style={{flex:1,backgroundColor:'rgba(30,13,19,.38)',alignItems:'center',justifyContent:'center',padding:24}}><View accessibilityViewIsModal style={{width:'100%',maxWidth:440,backgroundColor:'#FFFDF9',borderRadius:16,padding:24,gap:12}}><Text style={{fontFamily:displayFont,fontSize:27,fontWeight:'700',color:'#340B13'}}>Рөлді өзгерту</Text><Text style={{color:'#768093',lineHeight:21}}>{roleStudent?.name} · Жаңа рөлмен кіру үшін аккаунтқа қайта кіру керек.</Text>{(['student','teacher','admin'] as const).map(role=><TouchableOpacity key={role} accessibilityRole="button" disabled={roleBusy||roleStudent?.role===role} onPress={async()=>{if(!roleStudent)return;if(!await confirmAction(`${roleStudent.name} — ${roleNames[role]} рөлін тағайындауды растайсыз ба?`))return;setRoleBusy(true);try{await changeRole(roleStudent.id,role);}finally{setRoleBusy(false);}}} style={{padding:14,borderRadius:9,borderWidth:1,borderColor:'#E4D9D1',backgroundColor:roleStudent?.role===role?'#FAEBEF':'#FFF',opacity:roleBusy ? .5 : 1}}><Text style={{fontWeight:'600',color:'#990F2E'}}>{roleNames[role]}{roleStudent?.role===role?' · Қазіргі рөл':''}</Text><Text style={{fontSize:12,lineHeight:19,color:'#7C879D',marginTop:4}}>{role==='teacher'?'Өз тесттерін құру, өңдеу, нәтижелерін қарау және жою.':role==='admin'?'Пайдаланушылар, рөлдер және барлық деректерді басқару.':'Тест тапсыру және өз нәтижелерін қарау.'}</Text></TouchableOpacity>)}<TouchableOpacity accessibilityRole="button" disabled={roleBusy} onPress={()=>setRoleStudent(null)} style={{padding:12,alignItems:'center'}}><Text style={{color:'#768093'}}>Бас тарту</Text></TouchableOpacity></View></View></Modal>
   </SafeAreaView>;
 }

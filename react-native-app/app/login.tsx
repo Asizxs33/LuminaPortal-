@@ -40,7 +40,7 @@ export default function Login() {
       setError(result.error || 'Жүйеге кіру мүмкін болмады.');
       return;
     }
-    router.replace(result.role === 'admin' ? '/(admin)/dashboard' : '/(student)/dashboard');
+    router.replace(['admin','teacher'].includes(result.role || '') ? '/(admin)/dashboard' : '/(student)/dashboard');
   };
 
   return (

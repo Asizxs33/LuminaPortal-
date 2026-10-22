@@ -1,3 +1,5 @@
+import {snapshot} from '../_lib/history';
+import {isStaff} from '../_lib/permissions';
 import { secure } from '../_lib/secure';
 import { hideReview } from '../_lib/exams';
 import { submitExam } from '../_lib/submit-exam';
@@ -37,17 +39,17 @@ async function handler(req:VercelRequest,res:VercelResponse) {
    return res.status(201).json(result.rows[0]);
   }
   if(req.method==='GET') {
-   if(req.query.audit_test && user.role==='admin')return res.json((await pool.query('SELECT a.id,a.user_id,u.name,a.started_at,a.deadline,a.finished,a.events FROM exam_attempts a JOIN users u ON u.id=a.user_id WHERE a.test_id=$1 ORDER BY a.started_at DESC',[req.query.audit_test])).rows);
+   if(req.query.audit_test && isStaff(user.role))return res.json((await pool.query('SELECT a.id,a.user_id,u.name,a.started_at,a.deadline,a.finished,a.events FROM exam_attempts a JOIN users u ON u.id=a.user_id WHERE a.test_id=$1 ORDER BY a.started_at DESC',[req.query.audit_test])).rows);
    if(req.query.id) {
-    const result=await pool.query('SELECT r.*,t.title AS test_title,t.subject,t.passing_score,t.exam_mode,t.answers_released FROM results r JOIN tests t ON t.id=r.test_id WHERE r.id=$1 AND (r.user_id=$2 OR $3)',[req.query.id,user.id,user.role==='admin']);
-    return res.status(result.rows[0]?200:404).json(result.rows[0]?hideReview(result.rows[0],user.role!=='admin'&&result.rows[0].exam_mode&&!result.rows[0].answers_released):{error:'Нәтиже табылмады.'});
+    const result=await pool.query('SELECT r.*,t.title AS test_title,t.subject,t.passing_score,t.exam_mode,t.answers_released FROM results r JOIN tests t ON t.id=r.test_id WHERE r.id=$1 AND (r.user_id=$2 OR $3 OR (t.created_by=$2 AND $4))',[req.query.id,user.id,user.role==='admin',user.role==='teacher']);
+    return res.status(result.rows[0]?200:404).json(result.rows[0]?hideReview(result.rows[0],!isStaff(user.role)&&result.rows[0].exam_mode&&!result.rows[0].answers_released):{error:'Нәтиже табылмады.'});
    }
-   if(user.role!=='admin')return res.status(403).end();
-   return res.json((await pool.query('SELECT r.id,r.user_id,r.test_id,r.score,r.total,r.time_spent,r.completed_at,u.name AS student_name,u.email,t.title AS test_title,t.subject,t.passing_score FROM results r JOIN users u ON r.user_id=u.id JOIN tests t ON r.test_id=t.id ORDER BY r.completed_at DESC')).rows);
+   if(!isStaff(user.role))return res.status(403).end();
+   return res.json((await pool.query('SELECT r.id,r.user_id,r.test_id,r.score,r.total,r.time_spent,r.completed_at,u.name AS student_name,u.email,t.title AS test_title,t.subject,t.passing_score FROM results r JOIN users u ON r.user_id=u.id JOIN tests t ON r.test_id=t.id WHERE ($1::boolean OR t.created_by=$2) ORDER BY r.completed_at DESC',[user.role==='admin',user.id])).rows);
   }
-  if(req.method==='DELETE' && user.role==='admin') {
+  if(req.method==='DELETE' && isStaff(user.role)) {
    const {ids}=req.body||{};if(!Array.isArray(ids)||!ids.length)return res.status(400).end();
-   const result=await pool.query('DELETE FROM results WHERE id=ANY($1::int[]) RETURNING id',[ids]);return res.json({success:true,deleted_count:result.rowCount});
+   const c=await pool.connect();try{await c.query('BEGIN');const affected=(await c.query('SELECT DISTINCT r.test_id FROM results r JOIN tests t ON t.id=r.test_id WHERE r.id=ANY($1::int[]) AND ($2::boolean OR t.created_by=$3)',[ids,user.role==='admin',user.id])).rows;for(const row of affected)await snapshot(c,row.test_id,user,'results.delete');const deleted=await c.query('DELETE FROM results r USING tests t WHERE r.test_id=t.id AND r.id=ANY($1::int[]) AND ($2::boolean OR t.created_by=$3) RETURNING r.id',[ids,user.role==='admin',user.id]);await c.query('COMMIT');return res.json({success:true,deleted_count:deleted.rowCount});}catch{await c.query('ROLLBACK');throw Error('Delete failed');}finally{c.release();}
   }
   return res.status(405).end();
  }catch{return res.status(500).json({error:'Нәтижені сақтау немесе оқу мүмкін болмады. Жауаптарыңыз құрылғыда сақталған.'});}

@@ -73,11 +73,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         }
     } else if (req.method === 'PATCH') {
         const { role } = req.body || {};
-        if (!['student', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+        if (!['student', 'teacher', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
 
         try {
             const { rows } = await pool.query(
-                'UPDATE users SET role = $1 WHERE id = $2 AND deleted_at IS NULL RETURNING id, name, email, role',
+                'UPDATE users SET role = $1, tokens_valid_after=now() WHERE id = $2 AND deleted_at IS NULL RETURNING id, name, email, role',
                 [role, id]
             );
             if (!rows[0]) return res.status(404).json({ error: 'Active student not found or action not allowed' });

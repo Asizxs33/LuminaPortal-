@@ -19,6 +19,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+    let debitClient: Awaited<ReturnType<typeof pool.connect>> | undefined;
+    let debitCommitted = false;
     try {
         const actor=session(req);if(!actor)return res.status(401).end();
         // Review explanations use only the authenticated learner's stored, released result.
@@ -49,7 +51,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         const ongoing=await pool.query('SELECT 1 FROM exam_attempts a JOIN tests t ON t.id=a.test_id WHERE a.user_id=$1 AND t.answers_released=false AND a.finished=false',[userId]);
         if(!test || test.exam_mode || ongoing.rowCount) return res.status(403).json({error:'Емтихан кезінде ЖИ кеңестері өшірілген.'});
 
-        if (!questionText || !userId) {
+        if (typeof questionText !== 'string' || !questionText.trim() || questionText.length > 20000 || (userCode != null && (typeof userCode !== 'string' || userCode.length > 50000))) {
             return res.status(400).json({ error: 'Сұрақ мәтіні немесе қолданушы ID берілмеді' });
         }
 
@@ -58,14 +60,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Сервер конфигурациясында қате (OPENAI_API_KEY жоқ)' });
         }
 
-        // Check user coin balance
-        const userRes = await pool.query('SELECT coins FROM users WHERE id = $1', [userId]);
-        if (userRes.rows.length === 0) {
-            return res.status(404).json({ error: 'Қолданушы табылмады' });
-        }
-
-        const coins = userRes.rows[0].coins;
-        if (coins < 10) {
+        // Keep the debit and provider result in one transaction. Concurrent
+        // requests cannot spend the same coins; failures roll back the debit.
+        debitClient = await pool.connect();
+        await debitClient.query('BEGIN');
+        await debitClient.query("SET LOCAL lock_timeout = '5s'");
+        const debit = await debitClient.query('UPDATE users SET coins = coins - 10 WHERE id = $1 AND coins >= 10 AND deleted_at IS NULL RETURNING coins', [userId]);
+        if (!debit.rowCount) {
             return res.status(403).json({ error: 'Жеткілікті биткоин жоқ (10 қажет)' });
         }
 
@@ -80,6 +81,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
         const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
+            signal: AbortSignal.timeout(20000),
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`
@@ -98,19 +100,22 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         const data = await openaiRes.json();
 
         if (!openaiRes.ok) {
-            console.error('OpenAI API error:', JSON.stringify(data));
             return res.status(500).json({ error: 'Түсіндірме қызметі уақытша қолжетімсіз.' });
         }
 
-        const hint = data?.choices?.[0]?.message?.content || 'Кеңес алу мүмкін болмады.';
+        const hint = data?.choices?.[0]?.message?.content;
+        if (typeof hint !== 'string' || !hint.trim()) return res.status(502).json({error:'Кеңес алу мүмкін болмады.'});
+        await debitClient.query('COMMIT');
+        debitCommitted = true;
 
-        // Deduct 10 coins after successful response
-        await pool.query('UPDATE users SET coins = coins - 10 WHERE id = $1', [userId]);
-
-        return res.status(200).json({ hint, coinsRemaining: coins - 10 });
+        return res.status(200).json({ hint, coinsRemaining: debit.rows[0].coins });
     } catch (error: any) {
         console.error('Mentor API error:', error.message);
         res.status(500).json({ error: 'ИИ-менторға қосылу мүмкін болмады немесе серверде қате шықты.' });
+    } finally {
+        if (debitClient) {
+            try { if (!debitCommitted) await debitClient.query('ROLLBACK'); } finally { debitClient.release(); }
+        }
     }
 }
 
