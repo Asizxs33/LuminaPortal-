@@ -50,7 +50,7 @@ export default function RootLayout() {
       <AuthProvider>
         {/* On Web, we wrap the whole app in a flex-row View to put Sidebar next to Stack */}
         <View
-          className={isWeb ? "flex-1 min-h-screen w-full bg-[#F5F7FB] flex-col md:flex-row items-center md:items-stretch" : "flex-1 bg-white flex-col items-stretch"}
+          className={isWeb ? "flex-1 min-h-screen w-full bg-[#FCFAF6] flex-col md:flex-row items-center md:items-stretch" : "flex-1 bg-white flex-col items-stretch"}
         >
 
           {/* Sidebar conditionally renders visually on web desktop. Wait for mount to avoid SSR hydration crash. */}
@@ -65,10 +65,10 @@ export default function RootLayout() {
           )}
 
           {/* Main Content Area Wrapper */}
-          <View className={isWeb ? "flex-[1] flex-col items-center bg-[#F5F7FB] w-full" : "flex-[1] items-center bg-white w-full"}>
+          <View className={isWeb ? "flex-[1] flex-col items-center bg-[#FCFAF6] w-full" : "flex-[1] items-center bg-white w-full"}>
 
             <View
-              className={isWeb ? "flex-[1] w-full overflow-hidden bg-white md:bg-transparent max-w-[500px] md:max-w-none shadow-[0_0_40px_rgba(0,0,0,0.08)] md:shadow-none" : "flex-[1] w-full overflow-hidden bg-white"}
+              className={isWeb ? "flex-[1] w-full overflow-hidden bg-white md:bg-transparent max-w-[500px] md:max-w-none  " : "flex-[1] w-full overflow-hidden bg-white"}
             >
               <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent', flex: 1 } }}>
                 <Stack.Screen name="index" />

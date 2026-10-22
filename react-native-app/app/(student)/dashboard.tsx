@@ -1,3 +1,4 @@
+import { displayFont } from '../../theme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,15 +9,15 @@ import { useAuth } from '../../context/AuthContext';
 import { API } from '../constants/api';
 import LearningRoute from '../../components/LearningRoute';
 
-const COLORS = { ink: '#16213E', muted: '#69758B', border: '#D9E0EC', blue: '#315CF5', canvas: '#F5F7FB' };
+const COLORS = { ink: '#10131B', muted: '#756D70', border: '#DFD2C3', primary: '#800F1D', canvas: '#FCFAF6' };
 
 const SUBJECT_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
-  'Математика': { bg: '#EEF1FF', text: '#315CF5', accent: '#315CF5' },
+  'Математика': { bg: '#F4E6E6', text: '#800F1D', accent: '#800F1D' },
   'Физика': { bg: '#DDF6EA', text: '#16845B', accent: '#16845B' },
   'Химия': { bg: '#FFF2D9', text: '#A65B09', accent: '#E29A35' },
   'Биология': { bg: '#EAF7D0', text: '#4E7411', accent: '#85B52C' },
   'Тарих': { bg: '#FFE8EE', text: '#A92E4C', accent: '#D65A78' },
-  default: { bg: '#E6F7FA', text: '#277986', accent: '#4BAFBC' },
+  default: { bg: '#F5EDDF', text: '#96602E', accent: '#B67B43' },
 };
 
 interface Test {
@@ -85,29 +86,29 @@ export default function StudentDashboard() {
 
   if (loading) {
     return <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.canvas, alignItems: 'center', justifyContent: 'center' }}>
-      <ActivityIndicator size="large" color={COLORS.blue} />
+      <ActivityIndicator size="large" color={COLORS.primary} />
       <Text style={{ color: COLORS.muted, fontWeight: '700', marginTop: 12 }}>Оқу бағыты жүктелуде…</Text>
     </SafeAreaView>;
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.canvas }}>
-      <ScrollView contentContainerStyle={{ width: '100%', maxWidth: 1240, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 26, paddingBottom: 72 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.blue} />} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ width: '100%', maxWidth: 1240, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 26, paddingBottom: 72 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: COLORS.muted, fontSize: 14, fontWeight: '700' }}>Қайырлы күн, {firstName}</Text>
-            <Text style={{ color: COLORS.ink, fontSize: 30, lineHeight: 37, fontWeight: '900', letterSpacing: -0.8, marginTop: 3 }}>Бүгінгі оқу бағыты</Text>
+            <Text style={{ color: COLORS.ink, fontFamily: displayFont, fontSize: 30, lineHeight: 37, fontWeight: '700', letterSpacing: -0.8, marginTop: 3 }}>Бүгінгі оқу бағыты</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFF2D9', borderWidth: 1, borderColor: '#F4D69C', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 }}><Coins size={17} color="#A65B09" /><Text style={{ color: '#8B4C08', fontWeight: '900' }}>{coins ?? '—'}</Text></View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFF2D9', borderWidth: 1, borderColor: '#F4D69C', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 }}><Coins size={17} color="#A65B09" /><Text style={{ color: '#8B4C08', fontWeight: '700' }}>{coins ?? '—'}</Text></View>
             <TouchableOpacity accessibilityLabel="Профильді ашу" onPress={() => router.push('/(student)/profile')} style={{ width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border }}><UserRound size={20} color={COLORS.ink} /></TouchableOpacity>
           </View>
         </View>
 
-        <View style={{ backgroundColor: 'white', borderRadius: 24, borderWidth: 1, borderColor: COLORS.border, padding: 22, marginBottom: 18 }}>
+        <View style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, padding: 22, marginBottom: 18 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
-            <View style={{ flex: 1, minWidth: 220 }}><Text style={{ color: COLORS.ink, fontSize: 20, fontWeight: '900' }}>Сіздің ілгерілеуіңіз</Text><Text style={{ color: COLORS.muted, lineHeight: 21, marginTop: 5 }}>Тестті таңдаңыз, орындаңыз және нәтижеден келесі қадамды көріңіз.</Text></View>
-            <TouchableOpacity onPress={() => router.push('/(student)/results')} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 }}><Text style={{ color: COLORS.blue, fontWeight: '800' }}>Барлық нәтижелер</Text><ArrowRight size={16} color={COLORS.blue} /></TouchableOpacity>
+            <View style={{ flex: 1, minWidth: 220 }}><Text style={{ color: COLORS.ink, fontSize: 20, fontWeight: '700' }}>Сіздің ілгерілеуіңіз</Text><Text style={{ color: COLORS.muted, lineHeight: 21, marginTop: 5 }}>Тестті таңдаңыз, орындаңыз және нәтижеден келесі қадамды көріңіз.</Text></View>
+            <TouchableOpacity onPress={() => router.push('/(student)/results')} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 }}><Text style={{ color: COLORS.primary, fontWeight: '800' }}>Барлық нәтижелер</Text><ArrowRight size={16} color={COLORS.primary} /></TouchableOpacity>
           </View>
           <LearningRoute steps={[
             { label: 'Тестті таңдау', state: completedIds.size ? 'done' : 'current' },
@@ -118,27 +119,18 @@ export default function StudentDashboard() {
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 22 }}>
-          {[{ value: tests.length, label: 'Қолжетімді тест', icon: BookOpen, color: COLORS.blue, bg: '#EEF1FF' }, { value: completedIds.size, label: 'Аяқталған', icon: CheckCircle2, color: '#16845B', bg: '#DDF6EA' }, { value: remaining, label: 'Кезекте', icon: Clock3, color: '#A65B09', bg: '#FFF2D9' }].map((item) => {
+          {[{ value: tests.length, label: 'Қолжетімді тест', icon: BookOpen, color: COLORS.primary, bg: '#F4E6E6' }, { value: completedIds.size, label: 'Аяқталған', icon: CheckCircle2, color: '#16845B', bg: '#DDF6EA' }, { value: remaining, label: 'Кезекте', icon: Clock3, color: '#A65B09', bg: '#FFF2D9' }].map((item) => {
             const Icon = item.icon;
-            return <View key={item.label} style={{ flexGrow: 1, flexBasis: 210, flexDirection: 'row', alignItems: 'center', gap: 13, backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 18, padding: 17 }}><View style={{ width: 43, height: 43, borderRadius: 13, backgroundColor: item.bg, alignItems: 'center', justifyContent: 'center' }}><Icon size={21} color={item.color} /></View><View><Text style={{ color: COLORS.ink, fontSize: 22, fontWeight: '900' }}>{item.value}</Text><Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '700' }}>{item.label}</Text></View></View>;
+            return <View key={item.label} style={{ flexGrow: 1, flexBasis: 210, flexDirection: 'row', alignItems: 'center', gap: 13, backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 18, padding: 17 }}><View style={{ width: 43, height: 43, borderRadius: 13, backgroundColor: item.bg, alignItems: 'center', justifyContent: 'center' }}><Icon size={21} color={item.color} /></View><View><Text style={{ color: COLORS.ink, fontFamily: displayFont, fontSize: 22, fontWeight: '700' }}>{item.value}</Text><Text style={{ color: COLORS.muted, fontSize: 13, fontWeight: '700' }}>{item.label}</Text></View></View>;
           })}
         </View>
 
-        <Text style={{ color: COLORS.ink, fontSize: 22, fontWeight: '900', marginBottom: 12 }}>Құжаттан жасалған тесттер</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 28 }}>
-          {[{ set: '1', count: 48, color: '#315CF5', bg: '#EEF1FF' }, { set: '2', count: 47, color: '#277986', bg: '#E6F7FA' }].map((item) => (
-            <TouchableOpacity key={item.set} onPress={() => router.push((item.set === '1' ? '/informatics' : '/informatics?set=2') as any)} style={{ flexGrow: 1, flexBasis: 300, backgroundColor: item.bg, borderRadius: 20, borderWidth: 1, borderColor: item.set === '1' ? '#C9D3FF' : '#BFE6EB', padding: 20 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}><View style={{ flex: 1 }}><Text style={{ color: item.color, fontSize: 13, fontWeight: '800' }}>Информатика</Text><Text style={{ color: COLORS.ink, fontSize: 20, lineHeight: 26, fontWeight: '900', marginTop: 5 }}>Тест {item.set}</Text><Text style={{ color: COLORS.muted, marginTop: 5 }}>{item.count} сұрақ · 50 минут</Text></View><View style={{ width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'white' }}><ArrowRight size={20} color={item.color} /></View></View>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
-          <Text style={{ color: COLORS.ink, fontSize: 22, fontWeight: '900' }}>Барлық тесттер</Text>
-          <View style={{ flexDirection: 'row', backgroundColor: '#E9EDF4', borderRadius: 12, padding: 3 }}>{[{ key: 'all', label: 'Барлығы' }, { key: 'completed', label: 'Аяқталған' }].map((filter) => <TouchableOpacity key={filter.key} onPress={() => setActiveFilter(filter.key as 'all' | 'completed')} style={{ borderRadius: 9, paddingHorizontal: 15, paddingVertical: 9, backgroundColor: activeFilter === filter.key ? 'white' : 'transparent' }}><Text style={{ color: activeFilter === filter.key ? COLORS.ink : COLORS.muted, fontWeight: '800', fontSize: 13 }}>{filter.label}</Text></TouchableOpacity>)}</View>
+          <Text style={{ color: COLORS.ink, fontFamily: displayFont, fontSize: 22, fontWeight: '700' }}>Барлық тесттер</Text>
+          <View style={{ flexDirection: 'row', backgroundColor: '#F3EDE4', borderRadius: 12, padding: 3 }}>{[{ key: 'all', label: 'Барлығы' }, { key: 'completed', label: 'Аяқталған' }].map((filter) => <TouchableOpacity key={filter.key} onPress={() => setActiveFilter(filter.key as 'all' | 'completed')} style={{ borderRadius: 9, paddingHorizontal: 15, paddingVertical: 9, backgroundColor: activeFilter === filter.key ? 'white' : 'transparent' }}><Text style={{ color: activeFilter === filter.key ? COLORS.ink : COLORS.muted, fontWeight: '800', fontSize: 13 }}>{filter.label}</Text></TouchableOpacity>)}</View>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 14, paddingHorizontal: 14, marginBottom: 16 }}><Search size={19} color="#8A94A6" /><TextInput value={search} onChangeText={setSearch} placeholder="Тест немесе пән атауын іздеу" placeholderTextColor="#8A94A6" accessibilityLabel="Тесттерді іздеу" style={{ flex: 1, color: COLORS.ink, fontSize: 15, paddingVertical: 14, outlineStyle: 'none' } as any} /></View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 14, paddingHorizontal: 14, marginBottom: 16 }}><Search size={19} color="#A29792" /><TextInput value={search} onChangeText={setSearch} placeholder="Тест немесе пән атауын іздеу" placeholderTextColor="#A29792" accessibilityLabel="Тесттерді іздеу" style={{ flex: 1, color: COLORS.ink, fontSize: 15, paddingVertical: 14, outlineStyle: 'none' } as any} /></View>
 
         {!!error && <View style={{ alignItems: 'flex-start', backgroundColor: '#FFF0F2', borderWidth: 1, borderColor: '#F3B7C1', borderRadius: 16, padding: 18, marginBottom: 16 }}><Text style={{ color: '#9D2D43', lineHeight: 21, fontWeight: '700' }}>{error}</Text><TouchableOpacity onPress={onRefresh} style={{ marginTop: 12, backgroundColor: '#C73D4D', borderRadius: 10, paddingHorizontal: 15, paddingVertical: 10 }}><Text style={{ color: 'white', fontWeight: '800' }}>Қайта жүктеу</Text></TouchableOpacity></View>}
 
@@ -146,9 +138,9 @@ export default function StudentDashboard() {
           {filtered.map((test) => {
             const palette = SUBJECT_COLORS[test.subject] || SUBJECT_COLORS.default;
             const done = completedIds.has(test.id);
-            return <View key={test.id} style={{ flexGrow: 1, flexBasis: 320, maxWidth: 580, backgroundColor: 'white', borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' }}><View style={{ height: 5, backgroundColor: palette.accent }} /><View style={{ padding: 19 }}><View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}><View style={{ backgroundColor: palette.bg, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6 }}><Text style={{ color: palette.text, fontSize: 12, fontWeight: '900' }}>{test.subject}</Text></View>{done && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><CheckCircle2 size={15} color="#16845B" /><Text style={{ color: '#16845B', fontSize: 12, fontWeight: '800' }}>Аяқталды</Text></View>}</View><Text style={{ color: COLORS.ink, fontSize: 18, lineHeight: 24, fontWeight: '900', marginTop: 15 }}>{test.title}</Text>{!!test.description && <Text numberOfLines={2} style={{ color: COLORS.muted, lineHeight: 20, marginTop: 7 }}>{test.description}</Text>}<View style={{ flexDirection: 'row', gap: 14, marginTop: 16, marginBottom: 17 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Clock3 size={16} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>{test.duration_minutes} мин</Text></View><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><HelpCircle size={16} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>{test.question_count} сұрақ</Text></View></View><TouchableOpacity onPress={() => done ? router.push('/(student)/results') : router.push(`/test/${test.id}/start` as any)} style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, backgroundColor: done ? '#EEF1F6' : palette.accent }}><Text style={{ color: done ? COLORS.ink : 'white', fontWeight: '900' }}>{done ? 'Нәтижені көру' : 'Тестті бастау'}</Text><ArrowRight size={17} color={done ? COLORS.ink : 'white'} /></TouchableOpacity></View></View>;
+            return <View key={test.id} style={{ flexGrow: 1, flexBasis: 320, maxWidth: 580, backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' }}><View style={{ height: 5, backgroundColor: palette.accent }} /><View style={{ padding: 19 }}><View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}><View style={{ backgroundColor: palette.bg, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6 }}><Text style={{ color: palette.text, fontSize: 12, fontWeight: '700' }}>{test.subject}</Text></View>{done && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><CheckCircle2 size={15} color="#16845B" /><Text style={{ color: '#16845B', fontSize: 12, fontWeight: '800' }}>Аяқталды</Text></View>}</View><Text style={{ color: COLORS.ink, fontSize: 18, lineHeight: 24, fontWeight: '700', marginTop: 15 }}>{test.title}</Text>{!!test.description && <Text numberOfLines={2} style={{ color: COLORS.muted, lineHeight: 20, marginTop: 7 }}>{test.description}</Text>}<View style={{ flexDirection: 'row', gap: 14, marginTop: 16, marginBottom: 17 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Clock3 size={16} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>{test.duration_minutes} мин</Text></View><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><HelpCircle size={16} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '700', fontSize: 13 }}>{test.question_count} сұрақ</Text></View></View><TouchableOpacity onPress={() => done ? router.push('/(student)/results') : router.push(`/test/${test.id}/start` as any)} style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, backgroundColor: done ? '#F3EDE4' : palette.accent }}><Text style={{ color: done ? COLORS.ink : 'white', fontWeight: '700' }}>{done ? 'Нәтижені көру' : 'Тестті бастау'}</Text><ArrowRight size={17} color={done ? COLORS.ink : 'white'} /></TouchableOpacity></View></View>;
           })}
-          {!filtered.length && !error && <View style={{ width: '100%', alignItems: 'center', backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 20, padding: 34 }}><BookOpen size={34} color="#AAB4C5" /><Text style={{ color: COLORS.ink, fontWeight: '900', fontSize: 17, marginTop: 12 }}>Тесттер табылмады</Text><Text style={{ color: COLORS.muted, marginTop: 5 }}>Іздеу сөзін немесе сүзгіні өзгертіп көріңіз.</Text></View>}
+          {!filtered.length && !error && <View style={{ width: '100%', alignItems: 'center', backgroundColor: 'white', borderWidth: 1, borderColor: COLORS.border, borderRadius: 12, padding: 34 }}><BookOpen size={34} color="#AAB4C5" /><Text style={{ color: COLORS.ink, fontWeight: '700', fontSize: 17, marginTop: 12 }}>Тесттер табылмады</Text><Text style={{ color: COLORS.muted, marginTop: 5 }}>Іздеу сөзін немесе сүзгіні өзгертіп көріңіз.</Text></View>}
         </View>
       </ScrollView>
     </SafeAreaView>

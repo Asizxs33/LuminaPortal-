@@ -27,8 +27,8 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png",
       "display": "standalone",
-      "themeColor": "#4848e5",
-      "backgroundColor": "#f6f6f8",
+      "themeColor": "#800F1D",
+      "backgroundColor": "#FCFAF6",
       "shortName": "Lumina",
       "name": "LuminaPortal Exam App",
       "description": "LuminaPortal exam testing app"

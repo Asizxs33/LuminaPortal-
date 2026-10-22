@@ -1,3 +1,4 @@
+import { displayFont } from '../../../theme';
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,9 +11,9 @@ export default function TestResult() {
 
   if (!scoreStr || !totalStr || !passScoreStr) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: '#0f172a', marginBottom: 16 }}>Нәтиже табылмады</Text>
-        <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#4848e5', borderRadius: 12 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: '#10131B', marginBottom: 16 }}>Нәтиже табылмады</Text>
+        <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#800F1D', borderRadius: 12 }}>
           <Text style={{ color: 'white', fontWeight: '700' }}>Тақтаға оралу</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -27,9 +28,9 @@ export default function TestResult() {
   const passed = percentage >= passScorePercentage;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 16 }}>
-        <View style={{ backgroundColor: 'white', borderRadius: 24, borderWidth: 1, borderColor: '#e2e8f0', overflow: 'hidden' }}>
+        <View style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#DFD2C3', overflow: 'hidden' }}>
           
           <View style={{ height: 140, alignItems: 'center', justifyContent: 'center', backgroundColor: passed ? '#10b981' : '#ef4444' }}>
             {passed ? (
@@ -40,44 +41,44 @@ export default function TestResult() {
           </View>
 
           <View style={{ padding: 24, paddingTop: 32, alignItems: 'center' }}>
-            <Text style={{ fontSize: 28, fontWeight: '900', color: '#0f172a', marginBottom: 8, textAlign: 'center' }}>
+            <Text style={{ fontFamily: displayFont, fontSize: 28, fontWeight: '700', color: '#10131B', marginBottom: 8, textAlign: 'center' }}>
               {passed ? 'Құттықтаймыз! 🎉' : 'Өкінішке орай...'}
             </Text>
-            <Text style={{ fontSize: 15, color: '#475569', marginBottom: 32, textAlign: 'center', lineHeight: 22 }}>
-              Сіз <Text style={{ fontWeight: '800', color: '#0f172a' }}>{title || 'тестті'}</Text> аяқтадыңыз. Нақты нәтижелер төменде көрсетілген:
+            <Text style={{ fontSize: 15, color: '#756D70', marginBottom: 32, textAlign: 'center', lineHeight: 22 }}>
+              Сіз <Text style={{ fontWeight: '800', color: '#10131B' }}>{title || 'тестті'}</Text> аяқтадыңыз. Нақты нәтижелер төменде көрсетілген:
             </Text>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%', marginBottom: 32 }}>
-              <View style={{ width: '31%', backgroundColor: '#f8fafc', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Ұпай</Text>
-                <Text style={{ fontSize: 22, fontWeight: '900', color: passed ? '#059669' : '#dc2626' }}>
-                  {score} <Text style={{ fontSize: 12, color: '#94a3b8' }}>/ {total}</Text>
+              <View style={{ width: '31%', backgroundColor: '#FCFAF6', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
+                <Text style={{ color: '#756D70', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Ұпай</Text>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: passed ? '#059669' : '#dc2626' }}>
+                  {score} <Text style={{ fontSize: 12, color: '#A29792' }}>/ {total}</Text>
                 </Text>
               </View>
 
-              <View style={{ width: '31%', backgroundColor: '#f8fafc', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Пайыз</Text>
-                <Text style={{ fontSize: 22, fontWeight: '900', color: passed ? '#059669' : '#dc2626' }}>
+              <View style={{ width: '31%', backgroundColor: '#FCFAF6', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
+                <Text style={{ color: '#756D70', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Пайыз</Text>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: passed ? '#059669' : '#dc2626' }}>
                   {percentage}%
                 </Text>
               </View>
 
-              <View style={{ width: '31%', backgroundColor: '#f8fafc', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-                <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Өту шегі</Text>
-                <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a' }}>
+              <View style={{ width: '31%', backgroundColor: '#FCFAF6', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
+                <Text style={{ color: '#756D70', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Өту шегі</Text>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: '#10131B' }}>
                   {passScorePercentage}%
                 </Text>
               </View>
             </View>
 
             <View style={{ width: '100%', gap: 12 }}>
-              <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, backgroundColor: '#f1f5f9', borderRadius: 16 }}>
-                <ArrowLeft size={20} color="#475569" />
-                <Text style={{ fontWeight: '800', color: '#475569', fontSize: 15 }}>Тақтаға оралу</Text>
+              <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, backgroundColor: '#F3EDE4', borderRadius: 16 }}>
+                <ArrowLeft size={20} color="#756D70" />
+                <Text style={{ fontWeight: '800', color: '#756D70', fontSize: 15 }}>Тақтаға оралу</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity onPress={() => router.replace('/(student)/results')} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderWidth: 2, borderColor: '#e2e8f0', borderRadius: 16 }}>
-                <Text style={{ fontWeight: '800', color: '#334155', fontSize: 15 }}>Барлық нәтижелер</Text>
+              <TouchableOpacity onPress={() => router.replace('/(student)/results')} style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, borderWidth: 2, borderColor: '#DFD2C3', borderRadius: 16 }}>
+                <Text style={{ fontWeight: '800', color: '#46393D', fontSize: 15 }}>Барлық нәтижелер</Text>
               </TouchableOpacity>
             </View>
           </View>

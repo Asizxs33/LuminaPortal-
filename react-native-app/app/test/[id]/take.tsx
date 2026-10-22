@@ -359,9 +359,9 @@ export default function TestTake() {
 
   if (loading || submitting) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#4848e5" />
-        <Text style={{ marginTop: 12, color: '#64748b', fontWeight: '600' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#800F1D" />
+        <Text style={{ marginTop: 12, color: '#756D70', fontWeight: '600' }}>
           {submitting ? 'Тексерілуде...' : 'Сұрақтар жүктелуде...'}
         </Text>
       </SafeAreaView>
@@ -370,9 +370,9 @@ export default function TestTake() {
 
   if (!test || !test.questions?.length) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: '#0f172a', marginBottom: 16 }}>Сұрақтар жоқ</Text>
-        <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#4848e5', borderRadius: 12 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: '#10131B', marginBottom: 16 }}>Сұрақтар жоқ</Text>
+        <TouchableOpacity onPress={() => router.replace('/(student)/dashboard')} style={{ paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#800F1D', borderRadius: 12 }}>
           <Text style={{ color: 'white', fontWeight: '700' }}>Тақтаға оралу</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -384,17 +384,17 @@ export default function TestTake() {
   const isCodeQuestion = currentQuestion.type === 'CODE';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }} edges={['top', 'left', 'right']}>
       {/* Header */}
-      <View style={{ borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'white', zIndex: 50 }}>
+      <View style={{ borderBottomWidth: 1, borderBottomColor: '#DFD2C3', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'white', zIndex: 50 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-            <View style={{ backgroundColor: '#e0e7ff', padding: 8, borderRadius: 10 }}>
-              <BookOpen size={20} color="#4848e5" />
+            <View style={{ backgroundColor: '#F4E6E6', padding: 8, borderRadius: 10 }}>
+              <BookOpen size={20} color="#800F1D" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: '#0f172a' }} numberOfLines={1}>{test.title}</Text>
-              <Text style={{ fontSize: 12, color: '#64748b' }}>{test.subject}</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: '#10131B' }} numberOfLines={1}>{test.title}</Text>
+              <Text style={{ fontSize: 12, color: '#756D70' }}>{test.subject}</Text>
             </View>
           </View>
         </View>
@@ -403,11 +403,11 @@ export default function TestTake() {
           <View style={{ 
             flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, 
             borderRadius: 10, borderWidth: 1, 
-            backgroundColor: timeLeft < 300 ? '#fef2f2' : '#f8fafc',
-            borderColor: timeLeft < 300 ? '#fca5a5' : '#e2e8f0'
+            backgroundColor: timeLeft < 300 ? '#fef2f2' : '#FCFAF6',
+            borderColor: timeLeft < 300 ? '#fca5a5' : '#DFD2C3'
           }}>
-            <Clock size={16} color={timeLeft < 300 ? '#dc2626' : '#475569'} />
-            <Text style={{ fontWeight: '800', color: timeLeft < 300 ? '#dc2626' : '#475569' }}>{formatTime(timeLeft)}</Text>
+            <Clock size={16} color={timeLeft < 300 ? '#dc2626' : '#756D70'} />
+            <Text style={{ fontWeight: '800', color: timeLeft < 300 ? '#dc2626' : '#756D70' }}>{formatTime(timeLeft)}</Text>
           </View>
           <TouchableOpacity onPress={confirmFinish} style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#ef4444', borderRadius: 10 }}>
             <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>Ерте аяқтау</Text>
@@ -419,17 +419,17 @@ export default function TestTake() {
       <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         
         {/* Question Card */}
-        <View style={{ backgroundColor: 'white', borderRadius: 20, borderWidth: 1, borderColor: '#e2e8f0', padding: 24, marginBottom: 24 }}>
+        <View style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#DFD2C3', padding: 24, marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <View style={{ backgroundColor: isCodeQuestion ? '#fef3c7' : '#e0e7ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
-              <Text style={{ color: isCodeQuestion ? '#d97706' : '#4848e5', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' }}>{currentQuestionIndex + 1}-СҰРАҚ</Text>
+            <View style={{ backgroundColor: isCodeQuestion ? '#fef3c7' : '#F4E6E6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
+              <Text style={{ color: isCodeQuestion ? '#d97706' : '#800F1D', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' }}>{currentQuestionIndex + 1}-СҰРАҚ</Text>
             </View>
-            <Text style={{ color: '#94a3b8', fontSize: 12, fontWeight: '700' }}>
+            <Text style={{ color: '#A29792', fontSize: 12, fontWeight: '700' }}>
               {isCodeQuestion ? 'Код жазу (Олимпиада)' : 'Бірнеше таңдау'}
             </Text>
           </View>
 
-          <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a', marginBottom: currentQuestion.image_url ? 16 : (isCodeQuestion ? 16 : 24), lineHeight: 28 }}>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: '#10131B', marginBottom: currentQuestion.image_url ? 16 : (isCodeQuestion ? 16 : 24), lineHeight: 28 }}>
             {currentQuestion.text}
           </Text>
 
@@ -458,13 +458,13 @@ export default function TestTake() {
                                      <Text style={{ color: '#166534', fontSize: 13, fontWeight: '600' }}>{idx + 1}</Text>
                                  </View>
                                  <View style={{ flex: 1, padding: 8, borderRightWidth: 1, borderRightColor: '#16a34a', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                     <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 13, color: '#0f172a' }}>{tc.input}</Text>
+                                     <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 13, color: '#10131B' }}>{tc.input}</Text>
                                      <TouchableOpacity onPress={() => copyToClipboard(tc.input)} style={{ padding: 4 }}>
                                          <Copy size={14} color="#166534" />
                                      </TouchableOpacity>
                                  </View>
                                  <View style={{ flex: 1, padding: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                     <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 13, color: '#0f172a' }}>{tc.expected_output}</Text>
+                                     <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 13, color: '#10131B' }}>{tc.expected_output}</Text>
                                      <TouchableOpacity onPress={() => copyToClipboard(tc.expected_output)} style={{ padding: 4 }}>
                                          <Copy size={14} color="#166534" />
                                      </TouchableOpacity>
@@ -474,10 +474,10 @@ export default function TestTake() {
                      </View>
                  )}
 
-                 <View style={{ backgroundColor: '#1e293b', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#334155' }}>
-                    <View style={{ backgroundColor: '#0f172a', paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                       <Code2 size={16} color="#94a3b8" />
-                       <Text style={{ color: '#94a3b8', fontSize: 12, fontWeight: '800', flex: 1 }}>Python 3.10</Text>
+                 <View style={{ backgroundColor: '#10131B', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#46393D' }}>
+                    <View style={{ backgroundColor: '#10131B', paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                       <Code2 size={16} color="#A29792" />
+                       <Text style={{ color: '#A29792', fontSize: 12, fontWeight: '800', flex: 1 }}>Python 3.10</Text>
                     </View>
                     <TextInput
                         multiline
@@ -485,7 +485,7 @@ export default function TestTake() {
                         autoCorrect={false}
                         spellCheck={false}
                         style={{
-                            color: '#e2e8f0',
+                            color: '#DFD2C3',
                             fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
                             fontSize: 14,
                             minHeight: 180,
@@ -517,7 +517,7 @@ export default function TestTake() {
                             setCodeAnswers(prev => ({ ...prev, [currentQuestionIndex]: text }));
                         }}
                         placeholder="# Кодты осы жерге жазыңыз"
-                        placeholderTextColor="#475569"
+                        placeholderTextColor="#756D70"
                     />
                  </View>
 
@@ -525,7 +525,7 @@ export default function TestTake() {
                      <TouchableOpacity 
                         onPress={handleRunCode}
                         disabled={runningCode}
-                        style={{ flex: 1, backgroundColor: runningCode ? '#94a3b8' : '#0ea5e9', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                        style={{ flex: 1, backgroundColor: runningCode ? '#A29792' : '#800F1D', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
                      >
                         {runningCode ? <ActivityIndicator size="small" color="white" /> : <Play size={18} color="white" />}
                         <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>{runningCode ? 'Орындалуда...' : 'Кодты тексеру'}</Text>
@@ -534,7 +534,7 @@ export default function TestTake() {
                      <TouchableOpacity 
                         onPress={handleAskMentor}
                         disabled={mentorLoading}
-                        style={{ flex: 1, backgroundColor: mentorLoading ? '#c4b5fd' : '#8b5cf6', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+                        style={{ flex: 1, backgroundColor: mentorLoading ? '#c4b5fd' : '#800F1D', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
                      >
                         {mentorLoading ? <ActivityIndicator size="small" color="white" /> : <BookOpen size={18} color="white" />}
                         <Text style={{ color: 'white', fontWeight: '800', fontSize: 13 }}>
@@ -544,17 +544,17 @@ export default function TestTake() {
                  </View>
                  
                  {coins !== null && (
-                     <Text style={{ color: '#64748b', fontSize: 12, textAlign: 'center', marginTop: 4 }}>
+                     <Text style={{ color: '#756D70', fontSize: 12, textAlign: 'center', marginTop: 4 }}>
                          Сіздің балансыңыз: <Text style={{ fontWeight: '800', color: '#d97706' }}>{coins} ₿</Text>
                      </Text>
                  )}
 
                  {/* Mentor Hint Output */}
                  {mentorHint && (
-                     <View style={{ backgroundColor: '#f5f3ff', borderRadius: 16, borderWidth: 1, borderColor: '#ddd6fe', overflow: 'hidden', marginTop: 8 }}>
-                         <View style={{ backgroundColor: '#ede9fe', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#ddd6fe', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <Code2 size={14} color="#8b5cf6" />
-                            <Text style={{ color: '#8b5cf6', fontSize: 12, fontWeight: '800' }}>AI МЕНТОР</Text>
+                     <View style={{ backgroundColor: '#f5f3ff', borderRadius: 16, borderWidth: 1, borderColor: '#DFD2C3', overflow: 'hidden', marginTop: 8 }}>
+                         <View style={{ backgroundColor: '#F4E6E6', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#DFD2C3', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Code2 size={14} color="#800F1D" />
+                            <Text style={{ color: '#800F1D', fontSize: 12, fontWeight: '800' }}>AI МЕНТОР</Text>
                          </View>
                          <View style={{ padding: 16 }}>
                              <Text style={{ fontSize: 14, color: '#4c1d95', lineHeight: 22 }}>
@@ -566,10 +566,10 @@ export default function TestTake() {
 
                  {/* Console Output */}
                  {codeStatuses[currentQuestionIndex] && (
-                     <View style={{ backgroundColor: '#f8fafc', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', overflow: 'hidden', marginTop: 8 }}>
-                         <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#e2e8f0', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <Terminal size={14} color="#64748b" />
-                            <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '800' }}>ТЕСТ НӘТИЖЕСІ</Text>
+                     <View style={{ backgroundColor: '#FCFAF6', borderRadius: 16, borderWidth: 1, borderColor: '#DFD2C3', overflow: 'hidden', marginTop: 8 }}>
+                         <View style={{ backgroundColor: '#F3EDE4', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#DFD2C3', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Terminal size={14} color="#756D70" />
+                            <Text style={{ color: '#756D70', fontSize: 12, fontWeight: '800' }}>ТЕСТ НӘТИЖЕСІ</Text>
                          </View>
                          <View style={{ padding: 16 }}>
                              <Text style={{
@@ -579,7 +579,7 @@ export default function TestTake() {
                                  {codeStatuses[currentQuestionIndex]?.status === 'PASSED' ? '✅ Барлық тесттерден өтті!' : '❌ Қателік табылды'}
                              </Text>
                              {!codeStatuses[currentQuestionIndex]?.status?.includes('PASSED') && (
-                                <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 12, color: '#475569', backgroundColor: 'white', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                                <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 12, color: '#756D70', backgroundColor: 'white', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#DFD2C3' }}>
                                     {codeStatuses[currentQuestionIndex]?.output}
                                 </Text>
                              )}
@@ -599,19 +599,19 @@ export default function TestTake() {
                     onPress={() => setAnswers(prev => ({ ...prev, [currentQuestionIndex]: option.id }))}
                     style={{
                         flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2,
-                        borderColor: isSelected ? '#4848e5' : '#e2e8f0',
-                        backgroundColor: isSelected ? '#e0e7ff' : 'white'
+                        borderColor: isSelected ? '#800F1D' : '#DFD2C3',
+                        backgroundColor: isSelected ? '#F4E6E6' : 'white'
                     }}
                     >
                     <View style={{ 
                         alignItems: 'center', justifyContent: 'center', height: 24, width: 24, borderRadius: 12, borderWidth: 2, marginRight: 14,
-                        borderColor: isSelected ? '#4848e5' : '#cbd5e1', backgroundColor: isSelected ? '#4848e5' : 'transparent'
+                        borderColor: isSelected ? '#800F1D' : '#DFD2C3', backgroundColor: isSelected ? '#800F1D' : 'transparent'
                     }}>
                         {isSelected && <View style={{ height: 8, width: 8, backgroundColor: 'white', borderRadius: 4 }} />}
                     </View>
                     <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: '800', color: '#0f172a', fontSize: 15 }}>{option.text}</Text>
-                        <Text style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{letter} нұсқасы</Text>
+                        <Text style={{ fontWeight: '800', color: '#10131B', fontSize: 15 }}>{option.text}</Text>
+                        <Text style={{ color: '#756D70', fontSize: 11, marginTop: 2 }}>{letter} нұсқасы</Text>
                     </View>
                     </TouchableOpacity>
                 );
@@ -633,11 +633,11 @@ export default function TestTake() {
             disabled={currentQuestionIndex === 0}
             style={{
               flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
-              backgroundColor: '#f1f5f9', opacity: currentQuestionIndex === 0 ? 0.5 : 1
+              backgroundColor: '#F3EDE4', opacity: currentQuestionIndex === 0 ? 0.5 : 1
             }}
           >
-            <ArrowLeft size={18} color="#475569" />
-            <Text style={{ fontWeight: '800', color: '#475569' }}>Артқа</Text>
+            <ArrowLeft size={18} color="#756D70" />
+            <Text style={{ fontWeight: '800', color: '#756D70' }}>Артқа</Text>
           </TouchableOpacity>
 
           {isLastQuestion ? (
@@ -656,7 +656,7 @@ export default function TestTake() {
                       setMentorHint(null);
                   }
               }} 
-              style={{ flex: 1, paddingVertical: 16, backgroundColor: '#4848e5', borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+              style={{ flex: 1, paddingVertical: 16, backgroundColor: '#800F1D', borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
             >
               <Text style={{ fontWeight: '800', color: 'white' }}>Келесі</Text>
               <ArrowRight size={18} color="white" />
@@ -665,11 +665,11 @@ export default function TestTake() {
         </View>
 
         <View style={{ marginTop: 24, alignItems: 'center' }}>
-            <Text style={{ color: '#94a3b8', fontSize: 11, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase' }}>
+            <Text style={{ color: '#A29792', fontSize: 11, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase' }}>
               Барлығы {test.questions.length} сұрақтың {currentQuestionIndex + 1}-шісі
             </Text>
-            <View style={{ height: 6, width: '100%', backgroundColor: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                <View style={{ height: '100%', backgroundColor: '#4848e5', borderRadius: 3, width: `${((currentQuestionIndex + 1) / test.questions.length) * 100}%` }} />
+            <View style={{ height: 6, width: '100%', backgroundColor: '#DFD2C3', borderRadius: 3, overflow: 'hidden' }}>
+                <View style={{ height: '100%', backgroundColor: '#800F1D', borderRadius: 3, width: `${((currentQuestionIndex + 1) / test.questions.length) * 100}%` }} />
             </View>
         </View>
 

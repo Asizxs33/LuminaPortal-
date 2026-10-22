@@ -26,8 +26,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <link rel="manifest" href="/manifest.json" />
 
         {/* ===== Theme color (browser toolbar color on Android Chrome) ===== */}
-        <meta name="theme-color" content="#4848e5" />
-        <meta name="msapplication-TileColor" content="#4848e5" />
+        <meta name="theme-color" content="#800F1D" />
+        <meta name="msapplication-TileColor" content="#800F1D" />
         <meta name="msapplication-TileImage" content="/assets/images/icon.png" />
 
         {/* ===== App metadata ===== */}

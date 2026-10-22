@@ -55,19 +55,19 @@ export default function WebSidebar() {
   };
 
   return (
-    <View className="w-[260px] bg-white border-r border-[#D9E0EC] flex-col flex-1 z-50">
+    <View className="w-[260px] bg-white border-r border-[#DFD2C3] flex-col flex-1 z-50">
       
       {/* Brand Header */}
-      <View className="p-5 pb-5 border-b border-[#E7EBF2]">
+      <View className="p-5 pb-5 border-b border-[#EAE1D6]">
         <BrandMark compact />
-        <Text className="text-[12px] text-[#69758B] font-bold mt-3 ml-1">
+        <Text className="text-[12px] text-[#756D70] font-bold mt-3 ml-1">
           {user.role === 'admin' ? 'Мұғалім кабинеті' : 'Оқушы кабинеті'}
         </Text>
       </View>
 
       {/* Navigation Links */}
       <View className="flex-1 p-4 gap-1.5 overflow-hidden">
-        <Text className="text-[12px] font-bold text-[#8A94A6] px-3 mb-2">
+        <Text className="text-[12px] font-bold text-[#A29792] px-3 mb-2">
           Бөлімдер
         </Text>
         
@@ -81,20 +81,20 @@ export default function WebSidebar() {
               onPress={() => router.push(item.path as any)}
               className={`flex-row items-center gap-3 px-3.5 py-3 rounded-xl transition-all ${
                 active 
-                  ? 'bg-[#EEF1FF] border border-[#D5DCFF]'
-                  : 'bg-transparent border border-transparent hover:bg-[#F5F7FB]'
+                  ? 'bg-[#F4E6E6] border border-[#DFD2C3]'
+                  : 'bg-transparent border border-transparent hover:bg-[#FCFAF6]'
               }`}
             >
               <IconComponent 
                 size={20} 
-                color={active ? '#315CF5' : '#69758B'}
+                color={active ? '#800F1D' : '#756D70'}
                 strokeWidth={active ? 2.5 : 2}
               />
-              <Text className={`text-[14px] ${active ? 'font-black text-[#315CF5]' : 'font-bold text-[#536078]'}`}>
+              <Text className={`text-[14px] ${active ? 'font-bold text-[#800F1D]' : 'font-bold text-[#756D70]'}`}>
                 {item.label}
               </Text>
               {active && (
-                <View className="ml-auto w-1.5 h-1.5 rounded-full bg-[#315CF5]" />
+                <View className="ml-auto w-1.5 h-1.5 rounded-full bg-[#800F1D]" />
               )}
             </TouchableOpacity>
           );
@@ -102,14 +102,14 @@ export default function WebSidebar() {
       </View>
 
       {/* User Footer Profile */}
-      <View className="p-4 border-t border-[#E7EBF2] bg-white">
+      <View className="p-4 border-t border-[#EAE1D6] bg-white">
         <View className="flex-row items-center gap-3 mb-3 p-2">
-          <View className="w-10 h-10 rounded-[13px] bg-[#EEF1FF] items-center justify-center border border-[#D5DCFF]">
-            <Text className="text-[#315CF5] font-black text-[13px]">{initials}</Text>
+          <View className="w-10 h-10 rounded-[13px] bg-[#F4E6E6] items-center justify-center border border-[#DFD2C3]">
+            <Text className="text-[#800F1D] font-bold text-[13px]">{initials}</Text>
           </View>
           <View className="flex-[1] overflow-hidden">
-            <Text className="font-bold text-slate-900 text-[13px]" numberOfLines={1}>{user.name}</Text>
-            <Text className="text-slate-500 text-[11px] font-medium" numberOfLines={1}>{user.email}</Text>
+            <Text className="font-bold text-parchment-900 text-[13px]" numberOfLines={1}>{user.name}</Text>
+            <Text className="text-parchment-500 text-[11px] font-medium" numberOfLines={1}>{user.email}</Text>
           </View>
         </View>
         
@@ -118,7 +118,7 @@ export default function WebSidebar() {
           className="flex-row items-center justify-center gap-2 py-2.5 rounded-xl bg-[#FFF0F2] hover:bg-[#FFE4E8] border border-[#F6CDD4]"
         >
           <LogOut size={16} color="#C73D4D" />
-          <Text className="text-[#C73D4D] font-black text-[13px]">Жүйеден шығу</Text>
+          <Text className="text-[#C73D4D] font-bold text-[13px]">Жүйеден шығу</Text>
         </TouchableOpacity>
       </View>
     </View>

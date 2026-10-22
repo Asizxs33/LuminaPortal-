@@ -82,31 +82,31 @@ export default function TestGroupResults() {
     return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const avatarColors = ['#4848e5', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0ea5e9'];
+  const avatarColors = ['#800F1D', '#800F1D', '#059669', '#d97706', '#dc2626', '#800F1D'];
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#4848e5" />
-        <Text style={{ marginTop: 12, color: '#64748b', fontWeight: '600' }}>Нәтижелер жүктелуде...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#800F1D" />
+        <Text style={{ marginTop: 12, color: '#756D70', fontWeight: '600' }}>Нәтижелер жүктелуде...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }} edges={['top', 'left', 'right']}>
       
       {/* Header */}
-      <View className="bg-white px-4 md:px-8 py-4 border-b border-slate-200 z-10 hidden md:flex">
+      <View className="bg-white px-4 md:px-8 py-4 border-b border-parchment-200 z-10 hidden md:flex">
         <TouchableOpacity 
           onPress={() => router.back()}
           className="flex-row items-center gap-2 mb-2"
         >
-          <ArrowLeft size={20} color="#64748b" />
-          <Text className="text-slate-500 font-bold hover:text-slate-700">Артқа қайту</Text>
+          <ArrowLeft size={20} color="#756D70" />
+          <Text className="text-parchment-500 font-bold hover:text-parchment-700">Артқа қайту</Text>
         </TouchableOpacity>
-        <Text className="text-2xl font-black text-slate-900">{testInfo?.title || 'Тест аналитикасы'}</Text>
-        {testInfo?.subject && <Text className="text-indigo-600 font-bold mt-1">{testInfo.subject}</Text>}
+        <Text className="font-display text-2xl font-bold text-parchment-900">{testInfo?.title || 'Тест аналитикасы'}</Text>
+        {testInfo?.subject && <Text className="text-academic-600 font-bold mt-1">{testInfo.subject}</Text>}
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 60, maxWidth: 1000, marginHorizontal: 'auto', width: '100%' }}>
@@ -115,64 +115,64 @@ export default function TestGroupResults() {
         <View className="md:hidden mb-6">
           <TouchableOpacity 
             onPress={() => router.back()}
-            className="flex-row items-center gap-2 mb-4 bg-white self-start py-2 px-3 rounded-xl border border-slate-200 shadow-sm"
+            className="flex-row items-center gap-2 mb-4 bg-white self-start py-2 px-3 rounded-xl border border-parchment-200 "
           >
-            <ArrowLeft size={18} color="#475569" />
-            <Text className="text-slate-700 font-bold text-sm">Артқа</Text>
+            <ArrowLeft size={18} color="#756D70" />
+            <Text className="text-parchment-700 font-bold text-sm">Артқа</Text>
           </TouchableOpacity>
-          <Text className="text-2xl font-black text-slate-900 leading-tight">{testInfo?.title || 'Тест аналитикасы'}</Text>
-          {testInfo?.subject && <Text className="text-indigo-600 font-bold mt-1">{testInfo.subject}</Text>}
+          <Text className="font-display text-2xl font-bold text-parchment-900 leading-tight">{testInfo?.title || 'Тест аналитикасы'}</Text>
+          {testInfo?.subject && <Text className="text-academic-600 font-bold mt-1">{testInfo.subject}</Text>}
         </View>
 
         {/* Stats Grid */}
         <View className="flex-row flex-wrap gap-3 md:gap-5 mb-8">
-          <View className="flex-[1] min-w-[45%] md:min-w-[150px] bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm shadow-slate-200/50 border border-slate-100">
-            <View className="w-10 h-10 md:w-12 md:h-12 bg-indigo-50 rounded-xl md:rounded-2xl items-center justify-center mb-3">
-              <Users size={20} color="#4f46e5" />
+          <View className="flex-[1] min-w-[45%] md:min-w-[150px] bg-white p-4 md:p-6 rounded-xl md:rounded-xl   border border-parchment-100">
+            <View className="w-10 h-10 md:w-12 md:h-12 bg-academic-50 rounded-xl md:rounded-xl items-center justify-center mb-3">
+              <Users size={20} color="#800F1D" />
             </View>
-            <Text className="text-2xl md:text-3xl font-black text-slate-900">{results.length}</Text>
-            <Text className="text-xs md:text-sm font-bold text-slate-500 mt-1 uppercase tracking-wider">Тапсырулар</Text>
+            <Text className="font-display text-2xl md:text-3xl font-bold text-parchment-900">{results.length}</Text>
+            <Text className="text-xs md:text-sm font-bold text-parchment-500 mt-1 uppercase tracking-wider">Тапсырулар</Text>
           </View>
           
-          <View className="flex-[1] min-w-[45%] md:min-w-[150px] bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm shadow-slate-200/50 border border-slate-100">
-            <View className="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 rounded-xl md:rounded-2xl items-center justify-center mb-3">
+          <View className="flex-[1] min-w-[45%] md:min-w-[150px] bg-white p-4 md:p-6 rounded-xl md:rounded-xl   border border-parchment-100">
+            <View className="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 rounded-xl md:rounded-xl items-center justify-center mb-3">
               <CheckCircle2 size={20} color="#10b981" />
             </View>
-            <Text className="text-2xl md:text-3xl font-black text-slate-900">{passRate}%</Text>
-            <Text className="text-xs md:text-sm font-bold text-slate-500 mt-1 uppercase tracking-wider">Өту көрсеткіші</Text>
+            <Text className="font-display text-2xl md:text-3xl font-bold text-parchment-900">{passRate}%</Text>
+            <Text className="text-xs md:text-sm font-bold text-parchment-500 mt-1 uppercase tracking-wider">Өту көрсеткіші</Text>
           </View>
 
-          <View className="flex-[1] min-w-[45%] md:min-w-[150px] bg-white p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm shadow-slate-200/50 border border-slate-100">
-            <View className="w-10 h-10 md:w-12 md:h-12 bg-amber-50 rounded-xl md:rounded-2xl items-center justify-center mb-3">
+          <View className="flex-[1] min-w-[45%] md:min-w-[150px] bg-white p-4 md:p-6 rounded-xl md:rounded-xl   border border-parchment-100">
+            <View className="w-10 h-10 md:w-12 md:h-12 bg-amber-50 rounded-xl md:rounded-xl items-center justify-center mb-3">
               <BarChart3 size={20} color="#d97706" />
             </View>
-            <Text className="text-2xl md:text-3xl font-black text-slate-900">{avgScore}%</Text>
-            <Text className="text-xs md:text-sm font-bold text-slate-500 mt-1 uppercase tracking-wider">Орташа балл</Text>
+            <Text className="font-display text-2xl md:text-3xl font-bold text-parchment-900">{avgScore}%</Text>
+            <Text className="text-xs md:text-sm font-bold text-parchment-500 mt-1 uppercase tracking-wider">Орташа балл</Text>
           </View>
         </View>
 
         {/* Search */}
-        <View className="bg-white flex-row items-center border border-slate-200 rounded-2xl px-4 mb-6 shadow-sm shadow-slate-100/50">
-          <Search size={18} color="#94a3b8" />
+        <View className="bg-white flex-row items-center border border-parchment-200 rounded-xl px-4 mb-6  ">
+          <Search size={18} color="#A29792" />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder="Студенттің аты-жөні арқылы іздеу..."
-            placeholderTextColor="#94a3b8"
-            style={{ flex: 1, paddingVertical: Platform.OS === 'web' ? 16 : 14, paddingHorizontal: 12, fontSize: 15, color: '#0f172a' }}
+            placeholderTextColor="#A29792"
+            style={{ flex: 1, paddingVertical: Platform.OS === 'web' ? 16 : 14, paddingHorizontal: 12, fontSize: 15, color: '#10131B' }}
           />
         </View>
 
         {/* Results List */}
-        <View className="bg-white rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
-          <View className="px-5 md:px-6 py-4 md:py-5 border-b border-slate-100 bg-slate-50/50">
-             <Text className="text-lg font-black text-slate-900">Барлық нәтижелер ({filtered.length})</Text>
+        <View className="bg-white rounded-xl border border-parchment-100   overflow-hidden">
+          <View className="px-5 md:px-6 py-4 md:py-5 border-b border-parchment-100 bg-parchment-50/50">
+             <Text className="text-lg font-bold text-parchment-900">Барлық нәтижелер ({filtered.length})</Text>
           </View>
 
           {filtered.length === 0 ? (
             <View className="py-16 items-center">
-              <BarChart3 size={48} color="#cbd5e1" />
-              <Text className="text-slate-500 font-bold mt-4">Әзірге ешкім тапсырмаған немесе табылмады</Text>
+              <BarChart3 size={48} color="#DFD2C3" />
+              <Text className="text-parchment-500 font-bold mt-4">Әзірге ешкім тапсырмаған немесе табылмады</Text>
             </View>
           ) : (
             filtered.map((r, i) => {
@@ -182,28 +182,28 @@ export default function TestGroupResults() {
               return (
                 <View 
                   key={r.id} 
-                  className={`p-4 md:p-5 flex-row items-center justify-between ${i !== 0 ? 'border-t border-slate-100' : ''}`}
+                  className={`p-4 md:p-5 flex-row items-center justify-between ${i !== 0 ? 'border-t border-parchment-100' : ''}`}
                 >
                   <View className="flex-row items-center flex-1">
                     <View className="w-10 h-10 md:w-12 md:h-12 rounded-full items-center justify-center mr-3 md:mr-4" style={{ backgroundColor: avatarColors[r.user_id % avatarColors.length] }}>
-                       <Text className="text-white font-black text-sm">{getInitials(r.student_name || '?')}</Text>
+                       <Text className="text-white font-bold text-sm">{getInitials(r.student_name || '?')}</Text>
                     </View>
                     
                     <View className="flex-1 pr-4">
                       <View className="flex-row items-center gap-2">
-                         <Text className="font-black text-slate-900 text-[14px] md:text-base leading-tight" numberOfLines={2}>{r.student_name || 'Белгісіз'}</Text>
+                         <Text className="font-bold text-parchment-900 text-[14px] md:text-base leading-tight" numberOfLines={2}>{r.student_name || 'Белгісіз'}</Text>
                          {pct >= 90 && <Crown size={14} color="#eab308" />}
                       </View>
-                      <Text className="text-slate-500 text-[11px] md:text-[13px] font-bold mt-1">
+                      <Text className="text-parchment-500 text-[11px] md:text-[13px] font-bold mt-1">
                         {new Date(r.completed_at).toLocaleDateString('kk-KZ', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </Text>
                     </View>
                   </View>
 
                   <View className="items-end min-w-[70px]">
-                    <Text className="text-slate-400 font-bold text-[11px] md:text-xs mb-1.5">{r.score} / {r.total} балл</Text>
+                    <Text className="text-parchment-400 font-bold text-[11px] md:text-xs mb-1.5">{r.score} / {r.total} балл</Text>
                     <View style={{ backgroundColor: colors.bg }} className="px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-black/5">
-                      <Text style={{ color: colors.text }} className="font-black text-[12px] md:text-sm">{pct}%</Text>
+                      <Text style={{ color: colors.text }} className="font-bold text-[12px] md:text-sm">{pct}%</Text>
                     </View>
                   </View>
                 </View>

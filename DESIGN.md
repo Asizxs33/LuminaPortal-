@@ -2,6 +2,14 @@
 
 ## Direction
 
+### Public pages: academic reference (October 2026)
+
+The user supplied an ivory and burgundy library reference. The landing page and authentication forms follow this direction: ivory `#FCFAF6`, burgundy `#800F1D`, ink `#10131B`, and fine gold rules `#B67B43`. Georgia serif headings and italic emphasis pair with readable sans-serif body text. The landing hero uses an arched library illustration, followed by three numbered feature columns and subject links. On mobile, columns stack and controls remain touch sized. Existing assessment and dashboard flows retain their functional layout.
+
+The academic identity also applies to teacher and student dashboards, the sidebar and mobile tabs, profiles, student lists, test creation and editing, analytics, and all assessment states. Shared Tailwind scales (`academic`, `parchment`) and `theme.ts` provide the core colors and display face. Green and red remain semantic feedback colors. Cards use restrained borders and 12 px corners, without decorative glow or glass effects.
+
+### Original workspace foundation (historical)
+
 **Learning Route** translates contemporary campus wayfinding into a calm assessment workspace. Familiar web controls remain standard. The distinctive move is a route line that makes progress and the next action visible.
 
 ## Color

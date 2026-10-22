@@ -25,7 +25,7 @@ export default function AdminLayout() {
           <BottomTabBar {...props} />
         </View>
       )}
-      screenOptions={{ headerShown: false, tabBarActiveTintColor: '#4848e5' }}
+      screenOptions={{ headerShown: false, tabBarActiveTintColor: '#800F1D', tabBarInactiveTintColor: '#756D70', tabBarStyle: { backgroundColor: '#FCFAF6', borderTopColor: '#DFD2C3' } }}
     >
       <Tabs.Screen
         name="dashboard"

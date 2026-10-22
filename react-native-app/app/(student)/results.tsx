@@ -1,3 +1,4 @@
+import { displayFont } from '../../theme';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -68,59 +69,59 @@ export default function StudentResults() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#4848e5" />
-        <Text style={{ marginTop: 12, color: '#64748b', fontWeight: '600' }}>Жүктелуде...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#800F1D" />
+        <Text style={{ marginTop: 12, color: '#756D70', fontWeight: '600' }}>Жүктелуде...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }}>
       <ScrollView contentContainerStyle={{ paddingTop: 24, paddingHorizontal: 16, paddingBottom: 40 }}>
 
         {/* Header */}
         <View style={{ marginBottom: 20 }}>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: '#0f172a' }}>Нәтижелерім</Text>
-          <Text style={{ color: '#64748b', marginTop: 4, fontSize: 13 }}>Академиялық жетістіктеріңіз</Text>
+          <Text style={{ fontFamily: displayFont, fontSize: 24, fontWeight: '800', color: '#10131B' }}>Нәтижелерім</Text>
+          <Text style={{ color: '#756D70', marginTop: 4, fontSize: 13 }}>Академиялық жетістіктеріңіз</Text>
         </View>
 
         {/* KPI Cards */}
         <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
-          <View style={{ flex: 1, backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
+          <View style={{ flex: 1, backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
               <Trophy size={22} color="#15803d" />
             </View>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a' }}>{avgScore}%</Text>
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 2, textAlign: 'center' }}>Орташа ұпай</Text>
+            <Text style={{ fontSize: 22, fontWeight: '700', color: '#10131B' }}>{avgScore}%</Text>
+            <Text style={{ fontSize: 11, color: '#756D70', marginTop: 2, textAlign: 'center' }}>Орташа ұпай</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#dbeafe', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-              <CheckCircle2 size={22} color="#2563eb" />
+          <View style={{ flex: 1, backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F4E6E6', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <CheckCircle2 size={22} color="#800F1D" />
             </View>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a' }}>{validResults.length}</Text>
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 2, textAlign: 'center' }}>Аяқталған</Text>
+            <Text style={{ fontSize: 22, fontWeight: '700', color: '#10131B' }}>{validResults.length}</Text>
+            <Text style={{ fontSize: 11, color: '#756D70', marginTop: 2, textAlign: 'center' }}>Аяқталған</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#ede9fe', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-              <Target size={22} color="#7c3aed" />
+          <View style={{ flex: 1, backgroundColor: 'white', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F4E6E6', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <Target size={22} color="#800F1D" />
             </View>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a' }}>{passCount}</Text>
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 2, textAlign: 'center' }}>Өтті</Text>
+            <Text style={{ fontSize: 22, fontWeight: '700', color: '#10131B' }}>{passCount}</Text>
+            <Text style={{ fontSize: 11, color: '#756D70', marginTop: 2, textAlign: 'center' }}>Өтті</Text>
           </View>
         </View>
 
         {/* Results List */}
-        <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', overflow: 'hidden' }}>
-          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#f8fafc' }}>
-            <Text style={{ fontSize: 17, fontWeight: '800', color: '#0f172a' }}>Соңғы нәтижелер</Text>
+        <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', overflow: 'hidden' }}>
+          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#FCFAF6' }}>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: '#10131B' }}>Соңғы нәтижелер</Text>
           </View>
 
           {validResults.length === 0 ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
-              <Trophy size={40} color="#cbd5e1" />
-              <Text style={{ color: '#94a3b8', marginTop: 12, fontWeight: '700', fontSize: 15 }}>Нәтиже жоқ</Text>
-              <Text style={{ color: '#cbd5e1', marginTop: 6, fontSize: 13, textAlign: 'center' }}>
+              <Trophy size={40} color="#DFD2C3" />
+              <Text style={{ color: '#A29792', marginTop: 12, fontWeight: '700', fontSize: 15 }}>Нәтиже жоқ</Text>
+              <Text style={{ color: '#DFD2C3', marginTop: 6, fontSize: 13, textAlign: 'center' }}>
                 Тестті тапсырғаннан кейін нәтижелеріңіз осы жерде шығады
               </Text>
             </View>
@@ -132,21 +133,21 @@ export default function StudentResults() {
               return (
                 <View key={r.id} style={{
                   padding: 16, flexDirection: 'row', alignItems: 'center',
-                  borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#f8fafc'
+                  borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#FCFAF6'
                 }}>
-                  <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: '#ede9fe', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                    <Award size={20} color="#7c3aed" />
+                  <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: '#F4E6E6', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                    <Award size={20} color="#800F1D" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: '800', color: '#0f172a', fontSize: 14 }} numberOfLines={1}>{r.test_title}</Text>
+                    <Text style={{ fontWeight: '800', color: '#10131B', fontSize: 14 }} numberOfLines={1}>{r.test_title}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 3 }}>
-                      <Clock size={11} color="#94a3b8" />
-                      <Text style={{ color: '#94a3b8', fontSize: 11 }}>{formatDate(r.completed_at)}</Text>
-                      <Text style={{ color: '#94a3b8', fontSize: 11 }}>· {r.score}/{r.total} ұпай</Text>
+                      <Clock size={11} color="#A29792" />
+                      <Text style={{ color: '#A29792', fontSize: 11 }}>{formatDate(r.completed_at)}</Text>
+                      <Text style={{ color: '#A29792', fontSize: 11 }}>· {r.score}/{r.total} ұпай</Text>
                     </View>
                   </View>
                   <View style={{ backgroundColor: s.bg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, alignItems: 'center' }}>
-                    <Text style={{ color: s.color, fontWeight: '900', fontSize: 15 }}>{pct}%</Text>
+                    <Text style={{ color: s.color, fontWeight: '700', fontSize: 15 }}>{pct}%</Text>
                     <Text style={{ color: s.color, fontSize: 10, fontWeight: '700' }}>{isPassed ? 'ӨТТІ' : 'ӨТПЕДІ'}</Text>
                   </View>
                 </View>

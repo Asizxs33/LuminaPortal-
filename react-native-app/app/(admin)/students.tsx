@@ -1,3 +1,4 @@
+import { displayFont } from '../../theme';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -124,91 +125,91 @@ export default function AdminStudents() {
     ? Math.round(students.filter(s => s.avg_score > 0).reduce((a, s) => a + s.avg_score, 0) / students.filter(s => s.avg_score > 0).length)
     : 0;
 
-  const avatarColors = ['#4848e5', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0284c7'];
+  const avatarColors = ['#800F1D', '#800F1D', '#059669', '#d97706', '#dc2626', '#800F1D'];
 
   const getInitials = (name: string) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#4848e5" />
-        <Text style={{ marginTop: 12, color: '#64748b', fontWeight: '600' }}>Жүктелуде...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#800F1D" />
+        <Text style={{ marginTop: 12, color: '#756D70', fontWeight: '600' }}>Жүктелуде...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f8' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 24, paddingHorizontal: 16, paddingBottom: 40 }}>
 
         {/* Header */}
         <View style={{ marginBottom: 20 }}>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: '#0f172a' }}>Студенттер</Text>
-          <Text style={{ color: '#64748b', marginTop: 4 }}>Жүйеге тіркелген пайдаланушылар</Text>
+          <Text style={{ fontFamily: displayFont, fontSize: 24, fontWeight: '800', color: '#10131B' }}>Студенттер</Text>
+          <Text style={{ color: '#756D70', marginTop: 4 }}>Жүйеге тіркелген пайдаланушылар</Text>
         </View>
 
         {/* Stats */}
         <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
-          <View style={{ flex: 1, backgroundColor: 'white', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
+          <View style={{ flex: 1, backgroundColor: 'white', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
             <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
               <Users size={20} color="#15803d" />
             </View>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a' }}>{students.length}</Text>
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Барлық қолданушы</Text>
+            <Text style={{ fontSize: 22, fontWeight: '700', color: '#10131B' }}>{students.length}</Text>
+            <Text style={{ fontSize: 11, color: '#756D70', marginTop: 2 }}>Барлық қолданушы</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: 'white', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#dbeafe', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-              <FileText size={20} color="#2563eb" />
+          <View style={{ flex: 1, backgroundColor: 'white', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
+            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#F4E6E6', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <FileText size={20} color="#800F1D" />
             </View>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a' }}>{totalTests}</Text>
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Аяқталған тесттер</Text>
+            <Text style={{ fontSize: 22, fontWeight: '700', color: '#10131B' }}>{totalTests}</Text>
+            <Text style={{ fontSize: 11, color: '#756D70', marginTop: 2 }}>Аяқталған тесттер</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: 'white', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
-            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#ede9fe', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-              <BarChart3 size={20} color="#7c3aed" />
+          <View style={{ flex: 1, backgroundColor: 'white', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#F3EDE4', alignItems: 'center' }}>
+            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#F4E6E6', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <BarChart3 size={20} color="#800F1D" />
             </View>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: '#0f172a' }}>{avgAll}%</Text>
-            <Text style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Орташа балл</Text>
+            <Text style={{ fontSize: 22, fontWeight: '700', color: '#10131B' }}>{avgAll}%</Text>
+            <Text style={{ fontSize: 11, color: '#756D70', marginTop: 2 }}>Орташа балл</Text>
           </View>
         </View>
 
         {/* Search */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, paddingHorizontal: 12, marginBottom: 16 }}>
-          <Search size={16} color="#94a3b8" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', borderWidth: 1, borderColor: '#DFD2C3', borderRadius: 12, paddingHorizontal: 12, marginBottom: 16 }}>
+          <Search size={16} color="#A29792" />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder="Аты, email немесе топ..."
-            placeholderTextColor="#94a3b8"
-            style={{ flex: 1, marginLeft: 8, paddingVertical: 12, color: '#0f172a', fontSize: 14 }}
+            placeholderTextColor="#A29792"
+            style={{ flex: 1, marginLeft: 8, paddingVertical: 12, color: '#10131B', fontSize: 14 }}
           />
         </View>
 
         {/* Students List */}
-        <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9', overflow: 'hidden' }}>
+        <View style={{ backgroundColor: 'white', borderRadius: 16, borderWidth: 1, borderColor: '#F3EDE4', overflow: 'hidden' }}>
           {filtered.length === 0 ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
-              <Users size={40} color="#cbd5e1" />
-              <Text style={{ color: '#94a3b8', marginTop: 12, fontWeight: '600' }}>Студент табылмады</Text>
+              <Users size={40} color="#DFD2C3" />
+              <Text style={{ color: '#A29792', marginTop: 12, fontWeight: '600' }}>Студент табылмады</Text>
             </View>
           ) : (
             filtered.map((s, i) => (
-              <View key={s.id} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#f1f5f9' }}>
+              <View key={s.id} style={{ padding: 14, flexDirection: 'row', alignItems: 'center', borderTopWidth: i === 0 ? 0 : 1, borderTopColor: '#F3EDE4' }}>
                 <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: avatarColors[s.id % avatarColors.length], alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                   <Text style={{ color: 'white', fontWeight: '800', fontSize: 14 }}>{getInitials(s.name)}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ fontWeight: '700', color: '#0f172a', fontSize: 14 }}>{s.name}</Text>
+                    <Text style={{ fontWeight: '700', color: '#10131B', fontSize: 14 }}>{s.name}</Text>
                     {s.role === 'admin' && (
-                      <View style={{ backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                        <Text style={{ color: '#7c3aed', fontSize: 10, fontWeight: '700' }}>Әкімші</Text>
+                      <View style={{ backgroundColor: '#F4E6E6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                        <Text style={{ color: '#800F1D', fontSize: 10, fontWeight: '700' }}>Әкімші</Text>
                       </View>
                     )}
                   </View>
-                  <Text style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>{s.email}</Text>
+                  <Text style={{ color: '#756D70', fontSize: 12, marginTop: 2 }}>{s.email}</Text>
                   {s.group_name && (
-                    <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 1 }}>📚 {s.group_name}</Text>
+                    <Text style={{ color: '#A29792', fontSize: 11, marginTop: 1 }}>📚 {s.group_name}</Text>
                   )}
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -233,11 +234,11 @@ export default function AdminStudents() {
                         );
                       }
                     }}
-                    style={{ padding: 8, backgroundColor: '#f1f5f9', borderRadius: 10 }}
+                    style={{ padding: 8, backgroundColor: '#F3EDE4', borderRadius: 10 }}
                   >
                     {s.role === 'admin'
-                      ? <ShieldCheck size={18} color="#4848e5" />
-                      : <GraduationCap size={18} color="#64748b" />}
+                      ? <ShieldCheck size={18} color="#800F1D" />
+                      : <GraduationCap size={18} color="#756D70" />}
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -292,7 +293,7 @@ export default function AdminStudents() {
           )}
         </View>
 
-        <Text style={{ textAlign: 'center', color: '#94a3b8', fontSize: 12, marginTop: 12 }}>
+        <Text style={{ textAlign: 'center', color: '#A29792', fontSize: 12, marginTop: 12 }}>
           {filtered.length} / {students.length} қолданушы
         </Text>
       </ScrollView>

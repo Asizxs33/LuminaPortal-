@@ -104,78 +104,78 @@ export default function CreateTest() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
+    <SafeAreaView className="flex-1 bg-parchment-50">
       <ScrollView className="flex-1" contentContainerClassName="p-6 md:p-10">
         
         <TouchableOpacity 
           onPress={() => router.back()} 
           className="flex-row items-center gap-2 mb-8"
         >
-          <ArrowLeft size={20} color="#64748b" />
-          <Text className="text-slate-500 font-bold">Артқа</Text>
+          <ArrowLeft size={20} color="#756D70" />
+          <Text className="text-parchment-500 font-bold">Артқа</Text>
         </TouchableOpacity>
 
         <View className="max-w-[800px] w-full mx-auto">
           <View className="mb-8">
-            <Text className="text-3xl font-black text-slate-900 tracking-tight">Жаңа Тест</Text>
-            <Text className="text-slate-500 mt-2">Базадан нөлден бастап жаңа сұрақтар мен материалдар дайындаңыз.</Text>
+            <Text className="font-display text-3xl font-bold text-parchment-900 tracking-tight">Жаңа Тест</Text>
+            <Text className="text-parchment-500 mt-2">Базадан нөлден бастап жаңа сұрақтар мен материалдар дайындаңыз.</Text>
           </View>
 
-          <View className="bg-white/80 backdrop-blur-xl border border-white p-7 md:p-10 rounded-[32px] shadow-2xl shadow-indigo-900/5 gap-6">
+          <View className="bg-white border border-parchment-200 p-7 md:p-10 rounded-xl   gap-6">
             <View>
-              <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Тест атауы *</Text>
+              <Text className="font-bold text-parchment-700 mb-2 ml-1 text-[13px]">Тест атауы *</Text>
               <TextInput
                 value={newTitle}
                 onChangeText={setNewTitle}
                 placeholder="Мысалы: Жоғары математика"
-                placeholderTextColor="#94a3b8"
-                className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
+                placeholderTextColor="#A29792"
+                className="w-full px-5 py-4 border border-parchment-200/60 rounded-xl bg-white focus:bg-white focus:border-academic-400  text-parchment-900 text-base outline-none transition-all"
               />
             </View>
             <View>
-              <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Пән *</Text>
+              <Text className="font-bold text-parchment-700 mb-2 ml-1 text-[13px]">Пән *</Text>
               <TextInput
                 value={newSubject}
                 onChangeText={setNewSubject}
                 placeholder="Мысалы: Математика"
-                placeholderTextColor="#94a3b8"
-                className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
+                placeholderTextColor="#A29792"
+                className="w-full px-5 py-4 border border-parchment-200/60 rounded-xl bg-white focus:bg-white focus:border-academic-400  text-parchment-900 text-base outline-none transition-all"
               />
             </View>
             <View className="flex-row gap-4">
               <View className="flex-1">
-                <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Уақыт (мин)</Text>
+                <Text className="font-bold text-parchment-700 mb-2 ml-1 text-[13px]">Уақыт (мин)</Text>
                 <TextInput
                   value={newDuration}
                   onChangeText={setNewDuration}
                   keyboardType="numeric"
                   placeholder="30"
-                  placeholderTextColor="#94a3b8"
-                  className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
+                  placeholderTextColor="#A29792"
+                  className="w-full px-5 py-4 border border-parchment-200/60 rounded-xl bg-white focus:bg-white focus:border-academic-400  text-parchment-900 text-base outline-none transition-all"
                 />
               </View>
               <View className="flex-1">
-                <Text className="font-bold text-slate-700 mb-2 ml-1 text-[13px]">Өту баллы (%)</Text>
+                <Text className="font-bold text-parchment-700 mb-2 ml-1 text-[13px]">Өту баллы (%)</Text>
                 <TextInput
                   value={newPassing}
                   onChangeText={setNewPassing}
                   keyboardType="numeric"
                   placeholder="70"
-                  placeholderTextColor="#94a3b8"
-                  className="w-full px-5 py-4 border border-slate-200/60 rounded-2xl bg-white/50 focus:bg-white focus:border-indigo-400 focus:shadow-sm text-slate-900 text-base outline-none transition-all"
+                  placeholderTextColor="#A29792"
+                  className="w-full px-5 py-4 border border-parchment-200/60 rounded-xl bg-white focus:bg-white focus:border-academic-400  text-parchment-900 text-base outline-none transition-all"
                 />
               </View>
             </View>
 
             {Platform.OS === 'web' && (
               <View className="mt-2 gap-3">
-                <Text className="font-bold text-slate-700 ml-1 text-[13px]">Word файлынан импорттау</Text>
+                <Text className="font-bold text-parchment-700 ml-1 text-[13px]">Word файлынан импорттау</Text>
                 <TouchableOpacity
                   onPress={() => wordInputRef.current?.click()}
-                  className="w-full py-4 rounded-2xl flex-row justify-center items-center border border-indigo-200 bg-indigo-50"
+                  className="w-full py-4 rounded-xl flex-row justify-center items-center border border-academic-200 bg-academic-50"
                 >
-                  <Upload size={20} color="#4f46e5" />
-                  <Text className="text-indigo-700 font-black text-base ml-2">
+                  <Upload size={20} color="#800F1D" />
+                  <Text className="text-academic-700 font-bold text-base ml-2">
                     {wordFile ? wordFile.name : 'Word (.docx) файлын таңдау'}
                   </Text>
                 </TouchableOpacity>
@@ -187,15 +187,15 @@ export default function CreateTest() {
                   style={{ display: 'none' }}
                   onChange={(event: any) => setWordFile(event.target.files?.[0] || null)}
                 />
-                <Text className="text-slate-500 text-xs leading-5">
+                <Text className="text-parchment-500 text-xs leading-5">
                   Формат: 1. Сұрақ; A) жауап ... D) жауап. Дұрыс жауапты *, +, ✓ белгісімен не «Жауап: A» жолымен белгілеңіз.
                 </Text>
                 <TouchableOpacity
                   onPress={importWordTest}
                   disabled={importing || !wordFile}
-                  className={`w-full py-4 rounded-2xl flex-row justify-center items-center ${importing || !wordFile ? 'bg-emerald-300' : 'bg-emerald-600'} shadow-lg shadow-emerald-600/20`}
+                  className={`w-full py-4 rounded-xl flex-row justify-center items-center ${importing || !wordFile ? 'bg-emerald-300' : 'bg-emerald-600'}  `}
                 >
-                  <Text className="text-white font-black text-lg">{importing ? 'Импортталуда...' : 'Word файлынан тест жасау'}</Text>
+                  <Text className="text-white font-bold text-lg">{importing ? 'Импортталуда...' : 'Word файлынан тест жасау'}</Text>
                   {!importing && <Upload size={20} color="white" style={{ marginLeft: 8 }} />}
                 </TouchableOpacity>
               </View>
@@ -204,9 +204,9 @@ export default function CreateTest() {
             <TouchableOpacity
               onPress={createTest}
               disabled={creating || importing}
-              className={`w-full py-4 rounded-2xl flex-row justify-center items-center mt-4 ${creating || importing ? 'bg-indigo-400' : 'bg-indigo-600'} shadow-lg shadow-indigo-600/20`}
+              className={`w-full py-4 rounded-xl flex-row justify-center items-center mt-4 ${creating || importing ? 'bg-academic-400' : 'bg-academic-600'}  `}
             >
-              <Text className="text-white font-black text-lg">{creating ? 'Жасалуда...' : 'Тестті қолмен жасау'}</Text>
+              <Text className="text-white font-bold text-lg">{creating ? 'Жасалуда...' : 'Тестті қолмен жасау'}</Text>
               {!creating && <Plus size={20} color="white" style={{ marginLeft: 8 }} />}
             </TouchableOpacity>
           </View>
