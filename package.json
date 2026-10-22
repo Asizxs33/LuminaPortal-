@@ -14,7 +14,7 @@
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.11.0",
     "pg": "^8.20.0",
-    "undici": "^7.24.0",
+    "undici": "^8.12.3",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
