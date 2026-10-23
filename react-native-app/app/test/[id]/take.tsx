@@ -1,3 +1,4 @@
+import {fullscreenState,requestPageFullscreen} from '../../../lib/fullscreen';
 import { displayFont } from '../../../theme';
 import { confirmAction } from '../../../lib/confirmAction';
 import { usePreventRemove } from '@react-navigation/native';
@@ -73,6 +74,15 @@ export default function TestTake() {
   const [examGate,setExamGate]=useState(false);
   const [examNotice,setExamNotice]=useState('');
   const [fullScreen,setFullScreen]=useState(false);
+  const [fullscreenAvailable,setFullscreenAvailable]=useState(false);
+  const [standalone,setStandalone]=useState(false);
+  const wasFullscreen=useRef(false);
+  const unavailableRecorded=useRef<string|null>(null);
+  useEffect(()=>{
+    if(Platform.OS!=='web')return;
+    const state=fullscreenState(document,window);
+    setFullscreenAvailable(state.supported);setFullScreen(state.active);setStandalone(state.standalone);wasFullscreen.current=state.active;
+  },[]);
   const examQueue=useRef<Promise<any>>(Promise.resolve());
   const mono=()=>typeof performance!=='undefined'?performance.now():Date.now();
   const [restored, setRestored] = useState(false);
@@ -193,7 +203,7 @@ export default function TestTake() {
       if(body.action==='save' && body.revision===answerRevision.current) setSyncState('Жауаптар серверде сақталды');
       if(body.action==='event') {
         const reasons:Record<string,string>={window_blur:'Басқа терезеге ауысу',hidden:'Бетті жасыру',fullscreen_exit:'Толық экраннан шығу',fullscreen_unavailable:'Толық экран қолжетімсіз'};
-        setExamNotice(`${reasons[body.kind] || 'Оқиға тіркелді'} · ${count}/3. Уақыт тоқтамайды.`);
+        setExamNotice(body.kind==='fullscreen_unavailable'?'Мобильді режим · уақыт пен терезе ауыстыру бақыланады.':`${reasons[body.kind] || 'Оқиға тіркелді'} · ${count}/3. Уақыт тоқтамайды.`);
       }
       if(data.deadline<=data.server_now&&!hasFinished.current)finishRef.current();
     }).catch(()=>setSyncState('Серверге сақталмады. Байланысты тексеріңіз; уақыт тоқтамайды.'));
@@ -212,12 +222,23 @@ export default function TestTake() {
     const record=(kind:string)=>sendExam({action:'event',kind,event_id:`${Date.now()}-${Math.random()}`});
     const blur=()=>record('window_blur');
     const hidden=()=>{if(document.hidden)record('hidden');};
-    const fullscreen=()=>{setFullScreen(!!document.fullscreenElement);if(!document.fullscreenElement)record('fullscreen_exit');};
-    window.addEventListener('blur',blur);document.addEventListener('visibilitychange',hidden);document.addEventListener('fullscreenchange',fullscreen);
-    if(!document.fullscreenEnabled)record('fullscreen_unavailable');
-    return()=>{window.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',hidden);document.removeEventListener('fullscreenchange',fullscreen);};
-  },[test?.exam_attempt_id,loading,submitting]);
-  const enterFullscreen=async()=>{if(Platform.OS==='web'&&document.fullscreenEnabled){await document.documentElement.requestFullscreen();setFullScreen(true);}};
+    const fullscreen=()=>{const state=fullscreenState(document,window);setFullScreen(state.active);if(wasFullscreen.current&&!state.active)record('fullscreen_exit');wasFullscreen.current=state.active;};
+    window.addEventListener('blur',blur);document.addEventListener('visibilitychange',hidden);document.addEventListener('fullscreenchange',fullscreen);document.addEventListener('webkitfullscreenchange',fullscreen);
+    if(!fullscreenAvailable&&!standalone&&unavailableRecorded.current!==test.exam_attempt_id){unavailableRecorded.current=test.exam_attempt_id;record('fullscreen_unavailable');}
+    return()=>{window.removeEventListener('blur',blur);document.removeEventListener('visibilitychange',hidden);document.removeEventListener('fullscreenchange',fullscreen);document.removeEventListener('webkitfullscreenchange',fullscreen);};
+  },[test?.exam_attempt_id,loading,submitting,fullscreenAvailable,standalone]);
+  const enterFullscreen=async()=>{
+    if(Platform.OS!=='web')return;
+    try{
+      const state=await requestPageFullscreen(document,window);
+      setFullScreen(state.active);wasFullscreen.current=state.active;
+      if(!state.active&&!state.supported)setExamNotice('Мобильді режим · уақыт пен терезе ауыстыру серверде бақыланады.');
+      if(state.supported&&!state.active)throw Error('Fullscreen did not activate');
+    }catch{
+      setFullscreenAvailable(false);
+      setExamNotice('Браузер толық экранды ашпады. Мобильді режимде жалғастыра аласыз; уақыт пен ауысулар бақыланады.');
+    }
+  };
 
   const fetchTest = async (beginExam=false) => {
     try {
@@ -378,7 +399,8 @@ export default function TestTake() {
     );
   }
 
-  if(examGate)return <SafeAreaView style={{flex:1,justifyContent:'center',padding:24,backgroundColor:'#F5F7FA'}}><Text style={{fontSize:24,fontWeight:'700',marginBottom:16}}>Емтихан режимі</Text><Text style={{lineHeight:24,marginBottom:20}}>Толық экраннан шығу мен терезелерді ауыстыру тіркеледі. 3 бұзушылықтан кейін емтихан аяқталады. Сервердегі уақыт тоқтамайды. ЖИ кеңестері өшірулі.</Text>{!!submitError&&<Text style={{color:'#990F2E'}}>{submitError}</Text>}<TouchableOpacity onPress={async()=>{try{await enterFullscreen();setLoading(true);await fetchTest(true);}catch{setSubmitError('Толық экранға рұқсат беріңіз.');}}} style={{padding:16,backgroundColor:'#990F2E',borderRadius:12}}><Text style={{color:'white'}}>Толық экранда бастау / жалғастыру</Text></TouchableOpacity></SafeAreaView>;
+  if(examGate)return <SafeAreaView className="exam-gate" style={{flex:1,justifyContent:'center',padding:24,backgroundColor:'#FCFAF7'}}><View style={{width:'100%',maxWidth:480,alignSelf:'center',padding:24,borderWidth:1,borderColor:'#E6E0D8',borderRadius:20,backgroundColor:'#FFF',gap:16}}><View style={{width:52,height:52,borderRadius:15,backgroundColor:'#FAE9EC',alignItems:'center',justifyContent:'center'}}><ShieldCheck size={29} color="#990F2E"/></View><Text style={{fontFamily:displayFont,fontSize:30,fontWeight:'700',color:'#101521'}}>Емтиханға дайынсыз ба?</Text><Text style={{fontSize:15,lineHeight:23,color:'#707B90'}}>Терезе ауыстыру тіркеледі. 3 бұзушылықтан кейін емтихан аяқталады. Сервердегі уақыт тоқтамайды. ЖИ кеңестері өшірулі.</Text>{!fullscreenAvailable&&!standalone&&<View style={{padding:14,borderRadius:12,backgroundColor:'#F8F1E6',gap:8}}><Text style={{fontSize:14,lineHeight:21,color:'#6F5937'}}>Бұл браузерде толық экран қолжетімсіз. Тест мобильді режимде ашылады. Бұл бұзушылық емес.</Text><Text style={{fontSize:12,lineHeight:19,color:'#807563'}}>iPhone: Safari → Бөлісу → Басты экранға қосу. Сайтты сол белгішеден ашсаңыз, браузер панельдерінсіз пайдалануға болады.</Text></View>}{!!submitError&&<Text accessibilityRole="alert" style={{color:'#990F2E',lineHeight:21}}>{submitError}</Text>}<TouchableOpacity accessibilityRole="button" onPress={async()=>{await enterFullscreen();setLoading(true);await fetchTest(true);}} style={{minHeight:50,alignItems:'center',justifyContent:'center',padding:14,backgroundColor:'#990F2E',borderRadius:12}}><Text style={{color:'white',fontSize:16,fontWeight:'600'}}>{fullscreenAvailable&&!standalone?'Толық экранда бастау':'Емтиханды бастау / жалғастыру'}</Text></TouchableOpacity></View></SafeAreaView>;
+
 
   if (!test || !test.questions?.length) {
     return (
@@ -400,19 +422,19 @@ export default function TestTake() {
   return (
     <SafeAreaView className="test-take-page" style={{ flex: 1, backgroundColor: '#FCFAF7' }} edges={['top', 'left', 'right']}>
       <View className="take-header" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:14,borderBottomWidth:1,borderBottomColor:'#E5DDD3',paddingHorizontal:20,paddingVertical:12,backgroundColor:'#FFF'}}>
-        <View style={{flexDirection:'row',alignItems:'center',gap:13,flex:1,minWidth:110}}><View style={{width:43,height:43,borderRadius:10,backgroundColor:'#FAE9EC',alignItems:'center',justifyContent:'center'}}><BookOpen size={25} color="#990F2E"/></View><View style={{flex:1}}><Text style={{fontSize:16,fontWeight:'700',color:'#142034'}} numberOfLines={1}>{test.title}</Text><Text style={{fontSize:12,color:'#7C879D',marginTop:3}}>{test.subject}</Text></View></View>
-        <View className="take-sync" accessibilityLiveRegion="polite" style={{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,maxWidth:360}}>{!saveFailed?<CloudCheck size={21} color="#3E9153"/>:<CloudOff size={21} color="#AD741B"/>}<Text style={{fontSize:12,lineHeight:19,color:'#7C879D',flexShrink:1}}>{restored?'Сессия қалпына келтірілді. ':''}{!online?'Байланыс жоқ. Жауаптар құрылғыда сақталады.':test.exam_mode?syncState:saveNotice}</Text></View>
-        <View style={{flex:1,alignItems:'flex-end'}}><TouchableOpacity accessibilityRole="button" onPress={confirmFinish} style={{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,borderWidth:1,borderColor:'#990F2E',borderRadius:9,paddingHorizontal:17,minHeight:39}}><Flag size={18} color="#990F2E"/><Text style={{fontSize:12,color:'#990F2E',fontWeight:'600'}}>Ерте аяқтау</Text></TouchableOpacity></View>
+        <View className="take-brand" style={{flexDirection:'row',alignItems:'center',gap:13,flex:1,minWidth:110}}><View style={{width:43,height:43,borderRadius:10,backgroundColor:'#FAE9EC',alignItems:'center',justifyContent:'center'}}><BookOpen size={25} color="#990F2E"/></View><View style={{flex:1}}><Text style={{fontSize:16,fontWeight:'700',color:'#142034'}} numberOfLines={1}>{test.title}</Text><Text style={{fontSize:12,color:'#7C879D',marginTop:3}}>{test.subject}</Text></View></View>
+        <View className="take-sync" accessibilityLiveRegion="polite" style={{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,maxWidth:360}}>{!saveFailed?<CloudCheck size={21} color="#3E9153"/>:<CloudOff size={21} color="#AD741B"/>}<Text numberOfLines={saveFailed?2:1} style={{fontSize:12,lineHeight:19,color:'#7C879D',flexShrink:1}}>{restored?'Сессия қалпына келтірілді. ':''}{!online?'Байланыс жоқ. Жауаптар құрылғыда сақталады.':test.exam_mode?syncState:saveNotice}</Text></View>
+        <View className="take-finish" style={{flex:1,alignItems:'flex-end'}}><TouchableOpacity accessibilityRole="button" onPress={confirmFinish} style={{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,borderWidth:1,borderColor:'#990F2E',borderRadius:9,paddingHorizontal:17,minHeight:39}}><Flag size={18} color="#990F2E"/><Text style={{fontSize:12,color:'#990F2E',fontWeight:'600'}}>Ерте аяқтау</Text></TouchableOpacity></View>
       </View>
-      <View className="take-mobile-toolbar" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10,padding:12,borderBottomWidth:1,borderBottomColor:'#E5DDD3',backgroundColor:'#FFF'}}><View style={{flexDirection:'row',alignItems:'center',gap:8}}><Clock size={18} color="#AA741B"/><Text style={{fontSize:20,fontWeight:'700',color:timeLeft<300?'#B42336':'#990F2E'}}>{formatTime(timeLeft)}</Text></View><TouchableOpacity accessibilityRole="button" accessibilityState={{expanded:navigationOpen}} onPress={()=>setNavigationOpen(!navigationOpen)} style={{flexDirection:'row',alignItems:'center',gap:8,padding:7}}><Text style={{fontSize:12,color:'#7C879D'}}>Сұрақтар · {currentQuestionIndex+1}/{test.questions.length}</Text><ChevronDown size={18} color="#990F2E"/></TouchableOpacity></View>
+      <View className="take-mobile-toolbar" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10,padding:12,borderBottomWidth:1,borderBottomColor:'#E5DDD3',backgroundColor:'#FFF'}}><View style={{flexDirection:'row',alignItems:'center',gap:8}}><Clock size={18} color="#AA741B"/><Text style={{fontSize:20,fontWeight:'700',color:timeLeft<300?'#B42336':'#990F2E'}}>{formatTime(timeLeft)}</Text></View><TouchableOpacity accessibilityRole="button" accessibilityState={{expanded:navigationOpen}} onPress={()=>{if(!navigationOpen)questionScroll.current?.scrollTo({y:0,animated:false});setNavigationOpen(!navigationOpen);}} style={{flexDirection:'row',alignItems:'center',gap:8,padding:7}}><Text style={{fontSize:12,color:'#7C879D'}}>Сұрақтар · {currentQuestionIndex+1}/{test.questions.length}</Text><ChevronDown size={18} color="#990F2E"/></TouchableOpacity></View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{flex:1}}>
-      <ScrollView ref={questionScroll} style={{flex:1}} contentContainerStyle={{padding:20,paddingBottom:24}} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={questionScroll} style={{flex:1}} contentContainerClassName="take-scroll-content" contentContainerStyle={{padding:20,paddingBottom:24}} keyboardShouldPersistTaps="handled">
        <View className="take-columns" style={{gap:20}}>
         <View className="take-main" style={{minWidth:0}}>
-        <Text style={{fontSize:12,color:'#7C879D',marginBottom:9}}>Бағалау  /  {test.title}</Text><Text className="take-page-title" style={{fontFamily:displayFont,fontSize:32,lineHeight:40,fontWeight:'700',color:'#101521',marginBottom:7}}>Тест тапсыру</Text>
+        <Text className="take-breadcrumb" style={{fontSize:12,color:'#7C879D',marginBottom:9}}>Бағалау  /  {test.title}</Text><Text className="take-page-title" style={{fontFamily:displayFont,fontSize:32,lineHeight:40,fontWeight:'700',color:'#101521',marginBottom:7}}>Тест тапсыру</Text>
         {!!submitError && <View style={{backgroundColor:'#FFF0F2',padding:14,borderRadius:10,marginBottom:14}}><Text accessibilityRole="alert" style={{color:'#990F2E'}}>{submitError}</Text><TouchableOpacity accessibilityRole="button" onPress={()=>handleFinish(true)} style={{paddingVertical:12}}><Text style={{color:'#990F2E',fontWeight:'600'}}>Қайта жіберу</Text></TouchableOpacity></View>}
         <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:14,gap:12}}><Text style={{color:'#707B90'}}>Сұрақ {currentQuestionIndex+1} / {test.questions.length}</Text><TouchableOpacity accessibilityRole="button" accessibilityState={{selected:flagged.includes(currentQuestionIndex)}} onPress={()=>setFlagged(old=>old.includes(currentQuestionIndex)?old.filter(i=>i!==currentQuestionIndex):[...old,currentQuestionIndex])} style={{flexDirection:'row',alignItems:'center',gap:6,padding:10}}><Flag size={17} color="#990F2E"/><Text style={{color:'#990F2E'}}>{flagged.includes(currentQuestionIndex)?'Белгіленді':'Кейін қарау'}</Text></TouchableOpacity></View>
-        {(test.exam_mode || !!examNotice) && <View style={{padding:14,backgroundColor:'#F8F1E6',borderRadius:10,marginBottom:12,flexDirection:'row',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}><ShieldCheck size={21} color="#AA741B"/><Text style={{color:'#990F2E',lineHeight:21,flex:1,fontSize:13}}>{examNotice || 'Емтихан · уақыт серверде бақыланады'}</Text>{!fullScreen&&Platform.OS==='web'&&<TouchableOpacity onPress={()=>enterFullscreen().catch(()=>setExamNotice('Толық экран бұл браузерде қолжетімсіз.'))} style={{paddingVertical:8,width:'100%'}}><Text style={{color:'#990F2E',fontWeight:'600'}}>Толық экранға оралу</Text></TouchableOpacity>}</View>}
+        {(test.exam_mode || !!examNotice) && <View className="take-exam-notice" style={{padding:14,backgroundColor:'#F8F1E6',borderRadius:10,marginBottom:12,flexDirection:'row',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}><ShieldCheck size={21} color="#AA741B"/><Text style={{color:'#990F2E',lineHeight:21,flex:1,fontSize:13}}>{examNotice || 'Емтихан · уақыт серверде бақыланады'}</Text>{!fullScreen&&fullscreenAvailable&&Platform.OS==='web'&&<TouchableOpacity onPress={()=>enterFullscreen().catch(()=>setExamNotice('Толық экран бұл браузерде қолжетімсіз.'))} style={{paddingVertical:8,width:'100%'}}><Text style={{color:'#990F2E',fontWeight:'600'}}>Толық экранға оралу</Text></TouchableOpacity>}</View>}
         {/* Question Card */}
         <View className="take-question-card" style={{ backgroundColor: 'white', borderRadius: 12, borderWidth: 1, borderColor: '#E4D9CB', padding: 20, marginBottom: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -587,7 +609,7 @@ export default function TestTake() {
             <View accessibilityRole="radiogroup" accessibilityLabel="Жауап нұсқалары" style={{gap:10}}>{currentQuestion.options?.map((option,idx)=>{
               const selected=answers[currentQuestionIndex]===option.id;const letter=String.fromCharCode(65+idx);
               return <TouchableOpacity className="take-option" key={option.id} accessibilityRole="radio" accessibilityLabel={`${letter}. ${option.text}`} accessibilityState={{checked:selected}} onPress={()=>setAnswers(prev=>({...prev,[currentQuestionIndex]:option.id}))} style={{flexDirection:'row',alignItems:'center',minHeight:51,paddingHorizontal:15,paddingVertical:12,borderWidth:1,borderColor:selected?'#990F2E':'#E0D3C3',borderRadius:9,backgroundColor:selected?'#FBEEF1':'#FFF',gap:16}}>
-                <View style={{width:22,height:22,borderWidth:1.5,borderColor:selected?'#990F2E':'#CBBAA5',borderRadius:11,alignItems:'center',justifyContent:'center'}}>{selected&&<View style={{width:12,height:12,borderRadius:6,backgroundColor:'#990F2E'}}/>}</View><Text style={{fontSize:15,color:'#182238',paddingRight:16,borderRightWidth:1,borderRightColor:'#E0D3C3'}}>{letter}</Text><Text style={{flex:1,minWidth:0,fontSize:16,lineHeight:23,fontWeight:'600',color:'#182238'}}>{option.text}</Text>
+                <View className="take-option-radio" style={{width:22,height:22,borderWidth:1.5,borderColor:selected?'#990F2E':'#CBBAA5',borderRadius:11,alignItems:'center',justifyContent:'center'}}>{selected&&<View style={{width:12,height:12,borderRadius:6,backgroundColor:'#990F2E'}}/>}</View><Text className="take-option-letter" style={{fontSize:15,color:'#182238',paddingRight:16,borderRightWidth:1,borderRightColor:'#E0D3C3'}}>{letter}</Text><Text className="take-option-text" style={{flex:1,minWidth:0,fontSize:16,lineHeight:23,fontWeight:'600',color:'#182238'}}>{option.text}</Text>
               </TouchableOpacity>;
             })}</View>
           )}

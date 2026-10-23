@@ -51,7 +51,7 @@ export default function RootLayout() {
       <AuthProvider>
         {/* On Web, we wrap the whole app in a flex-row View to put Sidebar next to Stack */}
         <View
-          className={isWeb ? "flex-1 min-h-screen w-full bg-[#FCFAF6] flex-col md:flex-row items-center md:items-stretch" : "flex-1 bg-white flex-col items-stretch"}
+          className={isWeb ? "app-shell flex-1 min-h-screen w-full bg-[#FCFAF6] flex-col md:flex-row items-center md:items-stretch" : "flex-1 bg-white flex-col items-stretch"}
         >
 
           {/* Sidebar conditionally renders visually on web desktop. Wait for mount to avoid SSR hydration crash. */}
@@ -69,7 +69,7 @@ export default function RootLayout() {
           <View className={isWeb ? "flex-[1] flex-col items-center bg-[#FCFAF6] w-full" : "flex-[1] items-center bg-white w-full"}>
 
             <View
-              className={isWeb ? "flex-[1] w-full overflow-hidden bg-white md:bg-transparent max-w-[500px] md:max-w-none  " : "flex-[1] w-full overflow-hidden bg-white"}
+              className={isWeb ? "app-canvas flex-[1] w-full overflow-hidden bg-white md:bg-transparent max-w-[500px] md:max-w-none  " : "flex-[1] w-full overflow-hidden bg-white"}
             >
               <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent', flex: 1 } }}>
                 <Stack.Screen name="index" />
