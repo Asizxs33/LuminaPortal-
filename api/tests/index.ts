@@ -1,3 +1,4 @@
+import {sharedAdminTest,testSettings} from '../_lib/test-versions';
 import {isStaff} from '../_lib/permissions';
 import { history, snapshot } from '../_lib/history';
 import { secure } from '../_lib/secure';
@@ -88,6 +89,7 @@ async function importWordTest(req: VercelRequest, res: VercelResponse) {
     if (!fileBase64 || !fileName || !title || !subject) return res.status(400).json({ error: 'File, title and subject are required' });
     if (!/\.docx$/i.test(fileName)) return res.status(400).json({ error: 'Only .docx Word files are supported' });
     if (!Number.isInteger(Number(duration_minutes ?? 30)) || Number(duration_minutes ?? 30)<1 || Number(duration_minutes ?? 30)>300 || !Number.isInteger(Number(passing_score ?? 70)) || Number(passing_score ?? 70)<0 || Number(passing_score ?? 70)>100) return res.status(400).json({error:'Уақыт 1–300 минут, өту шегі 0–100% болуы керек.'});
+    const settings=testSettings(req.body);
     const buffer = Buffer.from(String(fileBase64).replace(/^data:.*;base64,/, ''), 'base64');
     if (buffer.length > 4 * 1024 * 1024) return res.status(413).json({ error: 'The Word file must be smaller than 4 MB' });
     const extracted = await mammoth.extractRawText({ buffer });
@@ -96,22 +98,37 @@ async function importWordTest(req: VercelRequest, res: VercelResponse) {
 
     const detected = [...extracted.value.matchAll(/<question>/gi)].length || extracted.value.split(/\r?\n/).filter(line => /^(?:вопрос\s*)?\d{1,4}\s*[.)、:-]\s*.+/i.test(line.trim())).length;
     const report = { recognized: questions.length, skipped: Math.max(0, detected - questions.length), warnings: [ ...(extracted.value.includes('<variant>') ? ['Тегтер форматында бірінші жауап дұрыс деп қабылданды. Жариялау алдында тексеріңіз.'] : []), ...extracted.messages.map(m => m.message) ], sample: questions.slice(0, 3).map(q => q.text) };
-    if (req.body.previewOnly) return res.json({ report });
+
+    const versions=[{language:settings.language,fileName,questions}];
+    if(req.body.translation){
+      const v=req.body.translation;
+      if(!['kk','ru','en'].includes(v.language)||v.language===settings.language||typeof v.fileName!=='string'||!/\.docx$/i.test(v.fileName)||typeof v.fileBase64!=='string')return res.status(400).json({error:'Екінші тілдегі файл жарамсыз.'});
+      const bytes=Buffer.from(v.fileBase64.replace(/^data:.*;base64,/,''),'base64');
+      if(bytes.length>4*1024*1024)return res.status(413).json({error:'Файл 4 МБ-тан аспауы керек.'});
+      const text=await mammoth.extractRawText({buffer:bytes});const translated=parseQuestions(text.value);
+      if(!translated.length)return res.status(422).json({error:'Екінші файлда сұрақтар табылмады.'});
+      versions.push({language:v.language,fileName:v.fileName,questions:translated});
+    }
+    if(req.body.previewOnly)return res.json({report:{...report,versions:versions.map(v=>({language:v.language,count:v.questions.length}))}});
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
+        const group=crypto.randomUUID();let primary:any;const created=[];
+        for(const version of versions){
         const testId = crypto.randomUUID();
         const test = await client.query(
-            'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published, created_by) VALUES ($1,$2,$3,$4,$5,$6,false,$7) RETURNING *',
-            [testId, title.trim(), subject.trim(), `Imported from ${fileName}`, Number(duration_minutes) || 30, Number(passing_score ?? 70), session(req)!.id],
+            'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published, created_by,questions_per_attempt,language,language_group) VALUES ($1,$2,$3,$4,$5,$6,false,$7,$8,$9,$10) RETURNING *',
+            [testId, title.trim(), subject.trim(), `Imported from ${version.fileName}`, Number(duration_minutes) || 30, Number(passing_score ?? 70), session(req)!.id,settings.count,version.language,group],
         );
-        for (const [index, question] of questions.entries()) {
+        for (const [index, question] of version.questions.entries()) {
             const inserted = await client.query('INSERT INTO questions (test_id, text, type, order_index) VALUES ($1,$2,$3,$4) RETURNING id', [testId, question.text, 'MULTIPLE_CHOICE', index]);
             for (const option of question.options) await client.query('INSERT INTO options (question_id, text, is_correct) VALUES ($1,$2,$3)', [inserted.rows[0].id, option.text, option.is_correct]);
         }
         await snapshot(client,testId,session(req),'tests.import');
+        primary??=test.rows[0];created.push(test.rows[0]);
+        }
         await client.query('COMMIT');
-        return res.status(201).json({ ...test.rows[0], imported_questions: questions.length, report });
+        return res.status(201).json({ ...primary, variants:created, imported_questions: questions.length, report });
     } catch (error) {
         await client.query('ROLLBACK');
         throw error;
@@ -144,11 +161,12 @@ async function handler(req: VercelRequest, res: VercelResponse) {
                     GROUP BY t.id ORDER BY t.created_at DESC
                 `;
             }
-            if(user?.role==='teacher'&&all==='true')queryStr=queryStr.replace('GROUP BY t.id','WHERE t.created_by=$1 GROUP BY t.id');
+            if(user?.role==='teacher'&&all==='true')queryStr=queryStr.replace('GROUP BY t.id',`WHERE (t.created_by=$1 OR ${sharedAdminTest}) GROUP BY t.id`);
             const { rows } = await pool.query(queryStr,user?.role==='teacher'&&all==='true'?[user.id]:[]);
-            return res.json(rows);
+            return res.json(rows.map(t=>({...t,can_manage:user?.role==='admin'||t.created_by===user?.id})));
         }
         if (req.method === 'POST') {
+            let settings;try{settings=testSettings(req.body||{});}catch{return res.status(400).json({error:'Сұрақ саны 0–5000, тіл kk/ru/en болуы керек.'});}
             if (req.body?.fileBase64) return await importWordTest(req, res);
             const { title, subject, description, duration_minutes, passing_score, is_published = false } = req.body || {};
             if (!Number.isInteger(Number(duration_minutes ?? 30)) || Number(duration_minutes ?? 30)<1 || Number(duration_minutes ?? 30)>300 || !Number.isInteger(Number(passing_score ?? 70)) || Number(passing_score ?? 70)<0 || Number(passing_score ?? 70)>100) return res.status(400).json({error:'Уақыт 1–300 минут, өту шегі 0–100% болуы керек.'});
@@ -156,8 +174,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
             const testId = crypto.randomUUID();
             const { rows } = await pool.query(
-                'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',
-                [testId, title, subject || 'General', description || '', duration_minutes || 30, passing_score ?? 70, is_published, user!.id]
+                'INSERT INTO tests (id, title, subject, description, duration_minutes, passing_score, is_published, created_by,questions_per_attempt,language) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',
+                [testId, title, subject || 'General', description || '', duration_minutes || 30, passing_score ?? 70, is_published, user!.id,settings.count,settings.language]
             );
             return res.status(201).json(rows[0]);
         }

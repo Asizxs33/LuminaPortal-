@@ -15,7 +15,7 @@ export default function TestGroupResults() {
   const {id}=useLocalSearchParams<{id:string}>();
   const router=useRouter();
   const [results,setResults]=useState<Result[]>([]);
-  const [testInfo,setTestInfo]=useState<{title:string;subject:string;passing_score:number}|null>(null);
+  const [testInfo,setTestInfo]=useState<{title:string;subject:string;passing_score:number;round_number:number;language:string}|null>(null);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
   const [search,setSearch]=useState('');
@@ -48,7 +48,7 @@ export default function TestGroupResults() {
         <TouchableOpacity accessibilityRole="button" onPress={()=>router.push('/(admin)/dashboard')} style={{flexDirection:'row',alignItems:'center',gap:10,alignSelf:'flex-start',paddingVertical:3,marginBottom:13}}><ArrowLeft size={20} color="#7C889F"/><Text style={{fontSize:14,color:'#7C889F'}}>Артқа қайту</Text></TouchableOpacity>
         <Text style={{fontSize:13,color:'#7C889F',marginBottom:10}}>Нәтижелер  /  {testInfo?.title||'Тест'}</Text>
         <View style={{flexDirection:'row',alignItems:'center',flexWrap:'wrap',gap:17}}><Text className="test-results-title" style={{fontFamily:displayFont,fontSize:38,lineHeight:45,color:'#101521',fontWeight:'700'}}>{testInfo?.title||'Тест нәтижелері'}</Text>{!!testInfo?.subject&&<Text style={{fontSize:13,fontWeight:'600',color:'#990F2E',backgroundColor:'#FBEAF0',borderRadius:9,paddingHorizontal:14,paddingVertical:8}}>{testInfo.subject}</Text>}</View>
-        <Text className="test-results-subtitle" style={{fontFamily:displayFont,fontSize:19,lineHeight:27,color:'#7C889F',marginTop:3,marginBottom:21}}>Тест нәтижелері және емтихан журналы</Text>
+        <Text className="test-results-subtitle" style={{fontFamily:displayFont,fontSize:19,lineHeight:27,color:'#7C889F',marginTop:3,marginBottom:21}}>Тест нәтижелері және емтихан журналы · {testInfo?.round_number||1}-тапсыру · {testInfo?.language?.toUpperCase()}</Text>
         {!!error&&<View style={{backgroundColor:'#FBEAF0',padding:15,borderRadius:10,marginBottom:15,gap:10}}><Text accessibilityRole="alert" style={{fontSize:13,color:'#990F2E',lineHeight:21}}>{error}</Text><TouchableOpacity accessibilityRole="button" onPress={fetchTestAndResults}><Text style={{color:'#990F2E',fontWeight:'600'}}>Қайта жүктеу</Text></TouchableOpacity></View>}
         <View style={{flexDirection:'row',flexWrap:'wrap',gap:13,marginBottom:17}}>{stats.map(({label,value,Icon,color,bg})=><View key={label} className="test-results-stat" style={{flexGrow:1,flexBasis:'40%',borderWidth:1,borderColor:'#E6E3DF',borderRadius:12,backgroundColor:'#FFF',padding:16,gap:13}}><View className="test-results-stat-icon" style={{width:51,height:51,borderRadius:11,backgroundColor:bg,alignItems:'center',justifyContent:'center'}}><Icon size={27} color={color}/></View><View><Text className="test-results-stat-label" style={{fontSize:13,color:'#7C889F',marginBottom:5}}>{label}</Text><Text className="test-results-stat-value" style={{fontFamily:displayFont,fontSize:34,lineHeight:39,fontWeight:'700',color:'#101521'}}>{value}</Text></View></View>)}</View>
         <ExamControls testId={String(id)} variant="detailed" participantEmails={emails}/>

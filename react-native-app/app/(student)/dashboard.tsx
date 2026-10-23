@@ -17,7 +17,7 @@ interface Test {
   description: string;
   duration_minutes: number;
   passing_score: number;
-  question_count: number;
+  question_count: number; language?:string;round_number?:number;questions_per_attempt?:number;
   is_published: boolean;
 }
 
@@ -138,8 +138,8 @@ export default function StudentDashboard() {
                 {<View className="student-test-icon" style={{display:mobile?'none':'flex', width: 82, height: 82, backgroundColor: '#FAEAF0', borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}><FileText size={40} color={COLORS.primary} strokeWidth={1.7} /></View>}
                 <View style={{ flex: 1 }}>
                   <View style={{ alignSelf: 'flex-start', backgroundColor: '#FAEAF0', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 5 }}><Text style={{ color: COLORS.primary, fontWeight: '600', fontSize: 13 }}>{test.subject}</Text></View>
-                  <Text className="student-test-title" style={{fontFamily:displayFont, fontSize: mobile ? 25 : 30, lineHeight: mobile ? 26 : 31, color: COLORS.ink, fontWeight: '700', marginTop: 8 }}>{test.title}</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 22, marginTop: 14 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Clock3 size={21} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '600', fontSize: 15 }}>{test.duration_minutes} мин</Text></View><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HelpCircle size={21} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '600', fontSize: 15 }}>{test.question_count} сұрақ</Text></View></View>
+                  <Text className="student-test-title" style={{fontFamily:displayFont, fontSize: mobile ? 25 : 30, lineHeight: mobile ? 26 : 31, color: COLORS.ink, fontWeight: '700', marginTop: 8 }}>{test.title}</Text><Text style={{fontSize:12,color:COLORS.muted,marginTop:5}}>{test.language?.toUpperCase()||'KK'} · {test.round_number||1}-тапсыру</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 22, marginTop: 14 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><Clock3 size={21} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '600', fontSize: 15 }}>{test.duration_minutes} мин</Text></View><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><HelpCircle size={21} color={COLORS.muted} /><Text style={{ color: COLORS.muted, fontWeight: '600', fontSize: 15 }}>{test.questions_per_attempt===0?test.question_count:Math.min(test.questions_per_attempt??50,test.question_count)} / {test.question_count} сұрақ</Text></View></View>
                 </View>
               </View>
               <View className="student-test-actions" style={{ justifyContent: 'space-between', alignItems: compact ? 'stretch' : 'flex-end', gap: mobile ? 14 : 24 }}>

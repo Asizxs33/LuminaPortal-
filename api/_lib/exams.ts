@@ -13,7 +13,7 @@ export async function examAction(pool: Pool, req: any, res: any, actor: any) {
     await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`${actor.id}:${test.id}`]);
     let attempt = (await client.query('SELECT * FROM exam_attempts WHERE user_id=$1 AND test_id=$2 FOR UPDATE', [actor.id,test.id])).rows[0];
     if (!attempt && req.body.action === 'begin' && !test.answers_released && (test.is_published || actor.role==='admin')) {
-      const questions = (await client.query('SELECT * FROM questions WHERE test_id=$1 ORDER BY RANDOM() LIMIT 50',[test.id])).rows;
+      const questions = (await client.query('SELECT * FROM questions WHERE test_id=$1 ORDER BY RANDOM() LIMIT NULLIF($2,0)',[test.id,test.questions_per_attempt])).rows;
       if (!questions.length) { await client.query('ROLLBACK'); return res.status(400).json({error:'Сұрақтар жоқ.'}); }
       const options = (await client.query('SELECT * FROM options WHERE question_id=ANY($1::int[]) ORDER BY RANDOM()',[questions.map(q=>q.id)])).rows;
       const snapshot = questions.map(q=>({...q,options:options.filter(o=>o.question_id===q.id)}));

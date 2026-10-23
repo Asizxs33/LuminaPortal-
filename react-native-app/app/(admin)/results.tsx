@@ -12,6 +12,7 @@ import { API } from '../constants/api';
 
 interface Result {
   id: number;
+  can_delete?:boolean; language?:string; round_number?:number;
   user_id: number;
   test_id: string;
   score: number;
@@ -55,6 +56,7 @@ export default function ResultsDashboard() {
   };
 
   const toggleSelection = (id: number) => {
+    if(results.find(r=>r.id===id)?.can_delete===false)return;
     const newSet = new Set(selectedIds);
     if (newSet.has(id)) newSet.delete(id);
     else newSet.add(id);
@@ -111,8 +113,8 @@ export default function ResultsDashboard() {
   const avgScore=results.length?Math.round(results.reduce((sum,r)=>sum+percentage(r),0)/results.length):0;
   const passCount=results.filter(isPassed).length;
   const passRate=results.length?Math.round(passCount/results.length*100):0;
-  const allVisibleSelected=filtered.length>0&&filtered.every(r=>selectedIds.has(r.id));
-  const toggleAll=()=>setSelectedIds(previous=>{const next=new Set(previous);filtered.forEach(r=>allVisibleSelected?next.delete(r.id):next.add(r.id));return next;});
+  const allVisibleSelected=filtered.length>0&&filtered.filter(r=>r.can_delete!==false).every(r=>selectedIds.has(r.id));
+  const toggleAll=()=>setSelectedIds(previous=>{const next=new Set(previous);filtered.filter(r=>r.can_delete!==false).forEach(r=>allVisibleSelected?next.delete(r.id):next.add(r.id));return next;});
   const getInitials = (name: string) => {
     if (!name) return '?';
     return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -143,7 +145,7 @@ export default function ResultsDashboard() {
           <View className="results-table-heading" style={{display:'none',flexDirection:'row',alignItems:'center',gap:14,backgroundColor:'#FAF8F5',paddingHorizontal:12,minHeight:40}}><View style={{flex:1,flexDirection:'row',gap:12,alignItems:'center'}}>{checkbox(allVisibleSelected,toggleAll,'Көрсетілген нәтижелерді таңдау',!allVisibleSelected&&filtered.some(r=>selectedIds.has(r.id)))}<Text style={{fontSize:13,color:'#7C8290'}}>Студент</Text></View><Text style={{width:100,fontSize:13,color:'#7C8290'}}>Тест</Text><Text style={{width:160,fontSize:13,color:'#7C8290'}}>Нәтиже</Text><Text style={{width:112,fontSize:13,color:'#7C8290'}}>Мәртебе</Text><View style={{width:110}}/></View>
           {!filtered.length&&!loadError&&<View style={{padding:36,alignItems:'center',gap:12}}><BarChart3 size={34} color="#C6B6AC"/><Text style={{color:'#858998'}}>Нәтиже табылмады</Text></View>}
           {filtered.map((r,i)=>{const passed=isPassed(r),pct=Math.round(percentage(r));const color=passed?'#008A5B':'#B91436',bg=passed?'#E7F8EF':'#FDECEF';return <View className="results-row" key={r.id} style={{padding:12,gap:14,borderTopWidth:i?1:0,borderTopColor:'#EEE9E3',backgroundColor:selectedIds.has(r.id)?'#FFF7F8':'#FFF'}}>
-            <View className="results-person" style={{flexDirection:'row',alignItems:'center',gap:12,minWidth:0}}>{checkbox(selectedIds.has(r.id),()=>toggleSelection(r.id),`${r.student_name||'Студент'}: нәтижені таңдау`)}<View style={{width:44,height:44,borderRadius:24,backgroundColor:'#008D7F',alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:16,color:'white',fontWeight:'700'}}>{getInitials(r.student_name)}</Text></View><View style={{flex:1,minWidth:0}}><Text numberOfLines={1} style={{fontSize:15,lineHeight:21,fontWeight:'600',color:'#151C29'}}>{r.student_name||'Белгісіз'}</Text><Text numberOfLines={1} style={{fontSize:12,lineHeight:18,color:'#74829A',marginTop:2}}>{r.email||'—'}</Text></View></View>
+            <View className="results-person" style={{flexDirection:'row',alignItems:'center',gap:12,minWidth:0}}>{r.can_delete!==false&&checkbox(selectedIds.has(r.id),()=>toggleSelection(r.id),`${r.student_name||'Студент'}: нәтижені таңдау`)}<View style={{width:44,height:44,borderRadius:24,backgroundColor:'#008D7F',alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:16,color:'white',fontWeight:'700'}}>{getInitials(r.student_name)}</Text></View><View style={{flex:1,minWidth:0}}><Text numberOfLines={1} style={{fontSize:15,lineHeight:21,fontWeight:'600',color:'#151C29'}}>{r.student_name||'Белгісіз'}</Text><Text numberOfLines={1} style={{fontSize:12,lineHeight:18,color:'#74829A',marginTop:2}}>{r.email||'—'}</Text></View></View>
             <View className="results-test" style={{flexDirection:'row',alignItems:'center',gap:10}}><View style={{width:32,height:34,borderRadius:8,backgroundColor:'#FFF0F3',alignItems:'center',justifyContent:'center'}}><FileText size={20} color="#990E2C"/></View><Text numberOfLines={2} style={{flex:1,fontSize:13,color:'#66718A'}}>{r.test_title||r.test_id}</Text></View>
             <View className="results-score" style={{flexDirection:'row',alignItems:'center',gap:12}}><View style={{paddingHorizontal:10,paddingVertical:6,borderRadius:7,backgroundColor:bg}}><Text style={{fontSize:14,color,fontWeight:'700'}}>{pct}%</Text></View><View accessibilityRole="progressbar" accessibilityLabel="Нәтиже пайызы" accessibilityValue={{min:0,max:100,now:pct}} style={{flex:1,height:8,borderRadius:8,backgroundColor:'#ECECEF',overflow:'hidden'}}><View style={{width:`${pct}%`,height:8,borderRadius:8,backgroundColor:color}}/></View></View>
             <View className="results-status" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12}}><View style={{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:8,backgroundColor:bg,paddingHorizontal:10,paddingVertical:7,borderRadius:8}}>{passed?<CheckCircle2 size={18} color={color}/>:<XCircle size={18} color={color}/>}<Text style={{fontSize:13,color}}>{passed?'Өтті':'Өтпеді'}</Text></View></View>

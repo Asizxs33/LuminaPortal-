@@ -1,3 +1,4 @@
+import {sharedAdminTest} from '../_lib/test-versions';
 import {snapshot} from '../_lib/history';
 import {isStaff} from '../_lib/permissions';
 import { secure } from '../_lib/secure';
@@ -41,11 +42,11 @@ async function handler(req:VercelRequest,res:VercelResponse) {
   if(req.method==='GET') {
    if(req.query.audit_test && isStaff(user.role))return res.json((await pool.query('SELECT a.id,a.user_id,u.name,a.started_at,a.deadline,a.finished,a.events FROM exam_attempts a JOIN users u ON u.id=a.user_id WHERE a.test_id=$1 ORDER BY a.started_at DESC',[req.query.audit_test])).rows);
    if(req.query.id) {
-    const result=await pool.query('SELECT r.*,t.title AS test_title,t.subject,t.passing_score,t.exam_mode,t.answers_released FROM results r JOIN tests t ON t.id=r.test_id WHERE r.id=$1 AND (r.user_id=$2 OR $3 OR (t.created_by=$2 AND $4))',[req.query.id,user.id,user.role==='admin',user.role==='teacher']);
+    const result=await pool.query(`SELECT r.*,t.title AS test_title,t.subject,t.passing_score,t.exam_mode,t.answers_released FROM results r JOIN tests t ON t.id=r.test_id WHERE r.id=$1 AND (r.user_id=$2 OR $3 OR ((t.created_by=$2 OR ${sharedAdminTest}) AND $4))`,[req.query.id,user.id,user.role==='admin',user.role==='teacher']);
     return res.status(result.rows[0]?200:404).json(result.rows[0]?hideReview(result.rows[0],!isStaff(user.role)&&result.rows[0].exam_mode&&!result.rows[0].answers_released):{error:'Нәтиже табылмады.'});
    }
    if(!isStaff(user.role))return res.status(403).end();
-   return res.json((await pool.query('SELECT r.id,r.user_id,r.test_id,r.score,r.total,r.time_spent,r.completed_at,u.name AS student_name,u.email,t.title AS test_title,t.subject,t.passing_score FROM results r JOIN users u ON r.user_id=u.id JOIN tests t ON r.test_id=t.id WHERE ($1::boolean OR t.created_by=$2) ORDER BY r.completed_at DESC',[user.role==='admin',user.id])).rows);
+   return res.json((await pool.query(`SELECT r.id,r.user_id,r.test_id,r.score,r.total,r.time_spent,r.completed_at,u.name AS student_name,u.email,t.title AS test_title,t.subject,t.passing_score,COALESCE(t.created_by=$2 OR $1::boolean,false) AS can_delete,t.language,t.round_number FROM results r JOIN users u ON r.user_id=u.id JOIN tests t ON r.test_id=t.id WHERE ($1::boolean OR t.created_by=$2 OR ${sharedAdminTest}) ORDER BY r.completed_at DESC`,[user.role==='admin',user.id])).rows);
   }
   if(req.method==='DELETE' && isStaff(user.role)) {
    const {ids}=req.body||{};if(!Array.isArray(ids)||!ids.length)return res.status(400).end();

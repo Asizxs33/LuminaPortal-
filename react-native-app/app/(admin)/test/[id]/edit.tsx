@@ -98,7 +98,7 @@ export default function TestEditor() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
-        setTest(await res.json());
+        const data=await res.json();if(data.can_manage===false){router.replace(`/test/${id}/results` as any);return;}setTest(data);
       } else {
         notify.error('Тест табылмады');
         router.back();

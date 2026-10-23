@@ -1,3 +1,4 @@
+import {createRetake} from '../_lib/test-versions';
 import {isStaff} from '../_lib/permissions';
 import { secure } from '../_lib/secure';
 import { examAction } from '../_lib/exams';
@@ -17,7 +18,7 @@ function setCors(res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-const QUESTIONS_PER_STUDENT = 50;
+
 
 function shuffled<T>(items: T[]): T[] {
     const copy = [...items];
@@ -47,7 +48,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
             if (!testRes.rows[0]) return res.status(404).json({ error: 'Test not found' });
 
             if (!testRes.rows[0].is_published && !testRes.rows[0].answers_released && !isStaff(actor.role)) return res.status(403).json({error:'Тест жабық.'});
-            if(req.query.summary==='true')return res.json(testRes.rows[0]);
+            const info=testRes.rows[0];
+            const variants=(await pool.query('SELECT id,language,is_published FROM tests WHERE language_group=$1 AND (is_published=true OR $2) ORDER BY language',[info.language_group,isStaff(actor.role)])).rows;
+            info.variants=variants;
+            info.can_manage=actor.role==='admin'||(actor.role==='teacher'&&info.created_by===actor.id);
+            const bank=Number((await pool.query('SELECT COUNT(*) FROM questions WHERE test_id=$1',[id])).rows[0].count);
+            const perAttempt=info.questions_per_attempt===0?bank:Math.min(info.questions_per_attempt,bank);
+            info.bank_question_count=bank;
+            if(req.query.summary==='true')return res.json({...info,question_count:perAttempt});
             // A student keeps the same random set after refreshing or reopening a test.
             // Tests with fewer than 50 questions simply use every available question.
             let questionIds: number[] | null = null;
@@ -74,7 +82,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
                         } else {
                             const selected = await pool.query(
                                 'SELECT id FROM questions WHERE test_id = $1 ORDER BY RANDOM() LIMIT $2',
-                                [id, QUESTIONS_PER_STUDENT],
+                                [id, perAttempt],
                             );
                             questionIds = selected.rows.map(row => row.id);
                             if (questionIds.length > 0) {
@@ -92,12 +100,12 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
             // The test-taking screen always requests a 50-question attempt. The
             // editor intentionally omits this flag and continues to show the full bank.
-            if(testRes.rows[0].exam_mode && !isStaff(actor.role)) return res.json({...testRes.rows[0],questions:[],question_count:Math.min(50,Number((await pool.query('SELECT COUNT(*) FROM questions WHERE test_id=$1',[id])).rows[0].count))});
+            if(testRes.rows[0].exam_mode && !isStaff(actor.role)) return res.json({...testRes.rows[0],questions:[],question_count:perAttempt});
             const isAttempt = req.query.forAttempt === 'true';
             const questions = questionIds
                 ? await pool.query('SELECT * FROM questions WHERE id = ANY($1::int[])', [questionIds])
                 : isAttempt
-                    ? await pool.query('SELECT * FROM questions WHERE test_id = $1 ORDER BY RANDOM() LIMIT $2', [id, QUESTIONS_PER_STUDENT])
+                    ? await pool.query('SELECT * FROM questions WHERE test_id = $1 ORDER BY RANDOM() LIMIT $2', [id, perAttempt])
                     : await pool.query('SELECT * FROM questions WHERE test_id = $1 ORDER BY id', [id]);
             const optionsRes = await pool.query(
                 `SELECT o.* FROM options o
@@ -117,6 +125,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         if (req.method === 'PATCH') {
+            if(req.body?.action==='retake')return res.status(201).json(await createRetake(pool,String(id),actor));
             if (req.body?.answers_released === true) {
               await pool.query('UPDATE tests SET answers_released=true,is_published=false WHERE id=$1',[id]);
               await pool.query('UPDATE exam_attempts SET deadline=LEAST(deadline,NOW()) WHERE test_id=$1',[id]);

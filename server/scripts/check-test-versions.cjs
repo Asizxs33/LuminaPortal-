@@ -1,0 +1,42 @@
+const assert=require('node:assert/strict');const {randomUUID}=require('node:crypto');const {Pool}=require('pg');const jwt=require('jsonwebtoken');const JSZip=require('jszip');
+require('dotenv').config({path:'.env.local',quiet:true});
+const pool=new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:true}}),users=[],tests=[];let checked=0;
+async function call(user,path,method='GET',body){const r=await fetch('http://127.0.0.1:4189'+path,{method,headers:{Authorization:'Bearer '+jwt.sign(user,process.env.JWT_SECRET,{expiresIn:'10m'}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(30000)});return {status:r.status,data:await r.json().catch(()=>null)};}
+const ok=(condition,label)=>{assert.ok(condition,label);checked++;};
+async function docx(prefix){const zip=new JSZip();zip.file('[Content_Types].xml','<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/xml"/></Types>');zip.file('word/document.xml','<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+Array.from({length:4},(_,i)=>`<w:p><w:r><w:t>&lt;question&gt;${prefix} ${i}&lt;variant&gt;Yes&lt;variant&gt;No</w:t></w:r></w:p>`).join('')+'</w:body></w:document>');return zip.generateAsync({type:'base64'});}
+(async()=>{try{
+ for(const role of ['admin','teacher','student'])users.push((await pool.query('INSERT INTO users(name,email,password_hash,role) VALUES($1,$2,$3,$4) RETURNING id,role',['Versions QA',randomUUID()+'@example.invalid','unused',role])).rows[0]);
+ const [admin,teacher,student]=users;
+ const body={title:'Versions QA '+randomUUID(),subject:'QA',duration_minutes:10,passing_score:50,questions_per_attempt:2,language:'kk',fileName:'kk.docx',fileBase64:await docx('KK'),translation:{language:'ru',fileName:'ru.docx',fileBase64:await docx('RU')}};
+ const bad=await call(admin,'/api/tests','POST',{...body,translation:{...body.translation,language:'kk'}});ok(bad.status===400,'Duplicate languages rejected');ok((await pool.query('SELECT count(*)::int n FROM tests WHERE title=$1',[body.title])).rows[0].n===0,'Invalid import leaves no partial test');
+ const preview=await call(admin,'/api/tests','POST',{...body,previewOnly:true});ok(preview.status===200&&preview.data.report.versions.length===2,'Both language files previewed');
+ const imported=await call(admin,'/api/tests','POST',body);ok(imported.status===201,'Two-language import');tests.push(...imported.data.variants.map(t=>t.id));const id=imported.data.id;const ru=imported.data.variants.find(t=>t.language==='ru');
+ ok(ru&&ru.language_group===imported.data.language_group,'Variants linked in same language group');
+ ok(imported.data.questions_per_attempt===2,'Selected attempt size saved');
+ const listed=await call(teacher,'/api/tests?all=true');ok(listed.data.some(t=>t.id===id&&t.can_manage===false),'Admin test visible read-only to teacher');
+ ok((await call(teacher,`/api/tests/${id}?summary=true`)).status===200,'Teacher reads admin test summary');
+ ok((await call(teacher,`/api/tests/${id}`,'PATCH',{published:true})).status===403,'Teacher cannot publish admin test');
+ ok((await call(teacher,`/api/tests/${id}`,'PATCH',{action:'retake'})).status===403,'Teacher cannot clone admin exam for retake');
+ ok((await call(teacher,'/api/questions','POST',{test_id:id,type:'CODE',text:'No'})).status===403,'Teacher cannot alter admin bank');
+ ok((await call(admin,`/api/tests/${id}`,'PATCH',{exam_mode:true})).status===200,'Exam mode enabled');
+ await call(admin,`/api/tests/${id}`,'PATCH',{published:true});await call(admin,`/api/tests/${ru.id}`,'PATCH',{published:true});
+ const summary=await call(student,`/api/tests/${id}?summary=true`);ok(summary.data.question_count===2&&summary.data.bank_question_count===4,'Start shows 2 from 4');ok(summary.data.variants.length===2,'Student can choose published languages');
+ const attempt=await call(student,`/api/tests/${id}`,'POST',{action:'begin'});ok(attempt.status===200&&attempt.data.questions.length===2,'Server selects configured number of exam questions');
+ const originalAttempt=attempt.data.exam_attempt_id;
+ ok((await call(teacher,`/api/results?audit_test=${id}`)).status===200,'Teacher can view shared exam journal');
+ const result=(await pool.query('INSERT INTO results(user_id,test_id,score,total,time_spent,review) VALUES($1,$2,1,2,5,$3) RETURNING id',[student.id,id,JSON.stringify([{question_id:attempt.data.questions[0].id,selected:'Yes',correct:'Yes',is_correct:true}])])).rows[0];
+ const sharedResults=await call(teacher,'/api/results');ok(sharedResults.data.some(r=>r.id===result.id&&r.can_delete===false),'Shared results visible without deletion rights');
+ ok((await call(teacher,`/api/results?id=${result.id}`)).status===200,'Teacher opens shared result detail');ok((await call(teacher,'/api/results','DELETE',{ids:[result.id]})).status===403,'Shared result deletion blocked');
+ const retake=await call(admin,`/api/tests/${id}`,'PATCH',{action:'retake'});ok(retake.status===201,'Retake created');const copies=(await pool.query('SELECT * FROM tests WHERE language_group=$1',[retake.data.language_group])).rows;tests.push(...copies.map(t=>t.id));
+ ok(copies.length===2&&copies.every(t=>t.round_number===2&&!t.is_published&&!t.answers_released),'Retake clones both languages into new drafts');
+ ok((await pool.query('SELECT count(*)::int n FROM questions WHERE test_id=ANY($1::text[])',[copies.map(t=>t.id)])).rows[0].n===8,'All questions copied into independent bank');
+ ok((await pool.query('SELECT score,review FROM results WHERE id=$1',[result.id])).rows[0].review.length===1,'Original score and answer review preserved');
+ ok((await pool.query('SELECT id FROM exam_attempts WHERE test_id=$1',[id])).rows[0].id===originalAttempt,'Original exam attempt preserved');
+ await call(admin,`/api/tests/${retake.data.id}`,'PATCH',{published:true});const secondAttempt=await call(student,`/api/tests/${retake.data.id}`,'POST',{action:'begin'});ok(secondAttempt.status===200&&secondAttempt.data.exam_attempt_id!==originalAttempt,'Student starts fresh retake while old attempt remains');
+ const practice=await call(admin,'/api/tests','POST',{title:'All questions QA',subject:'QA',language:'en',questions_per_attempt:0});ok(practice.status===201,'All-questions setting accepted');tests.push(practice.data.id);
+ for(let i=0;i<3;i++)await call(admin,'/api/questions','POST',{test_id:practice.data.id,text:'Practice '+i,type:'MULTIPLE_CHOICE',options:[{text:'Yes',is_correct:true},{text:'No',is_correct:false}]});
+ await call(admin,`/api/tests/${practice.data.id}`,'PATCH',{published:true});await call(admin,`/api/tests/${practice.data.id}`,'PATCH',{exam_mode:false});
+ const all=await call(student,`/api/tests/${practice.data.id}?forAttempt=true`);ok(all.data.questions.length===3,'Practice uses all questions when count is zero');
+ ok((await call(admin,'/api/tests','POST',{title:'Bad count',questions_per_attempt:-1})).status===400,'Negative count rejected');
+ console.log(`PASS: ${checked} test count, language, read-only sharing and retake preservation checks.`);
+ }finally{const c=await pool.connect();try{await c.query('BEGIN');await c.query("SET LOCAL app.maintenance_user_purge='on'");await c.query('DELETE FROM tests WHERE id=ANY($1::text[])',[tests]);await c.query('DELETE FROM test_history WHERE test_id=ANY($1::text[])',[tests]);await c.query("DELETE FROM users WHERE id=ANY($1::int[]) AND email LIKE '%@example.invalid'",[users.map(u=>u.id)]);await c.query('DELETE FROM security_events WHERE actor_id=ANY($1::int[]) OR target_id=ANY($2::text[])',[users.map(u=>u.id),tests]);await c.query('COMMIT');console.log('Isolated version fixtures removed.');}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();await pool.end();}}})().catch(e=>{console.error(e.message);process.exitCode=1});

@@ -17,6 +17,7 @@ interface TestDetail {
   questions: any[];
   exam_mode?:boolean;
   question_count?:number;
+  variants?:{id:string;language:string}[]; language?:string; round_number?:number;
 }
 
 export default function TestStart() {
@@ -118,6 +119,7 @@ export default function TestStart() {
         <Text style={{fontSize:13,color:'#7A8191',marginBottom:9}}>Бағалау  /  <Text style={{color:'#5E5149'}}>{test.title}</Text></Text>
         <Text className="start-title" style={{fontFamily:displayFont,fontSize:39,lineHeight:47,fontWeight:'700',color:'#101521'}}>{test.title}</Text>
         <Text className="start-subtitle" style={{fontFamily:displayFont,fontSize:19,lineHeight:27,color:'#7A8191',marginTop:3,marginBottom:18}}>Бастамас бұрын ережелермен танысыңыз.</Text>
+        {!!test.variants?.length&&<View style={{marginBottom:16,gap:8}}><Text style={{color:'#62574B',fontWeight:'600'}}>Тест тілі · {test.round_number||1}-тапсыру</Text><View style={{flexDirection:'row',gap:10,flexWrap:'wrap'}}>{test.variants.map(v=><TouchableOpacity key={v.id} accessibilityRole="button" accessibilityState={{selected:v.id===test.id}} onPress={()=>{if(v.id!==test.id){setLoading(true);setError(null);router.replace(`/test/${v.id}/start` as any);}}} style={{padding:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:9,backgroundColor:v.id===test.id?'#940B27':'white'}}><Text style={{color:v.id===test.id?'white':'#62574B'}}>{({kk:'Қазақша',ru:'Русский',en:'English'} as Record<string,string>)[v.language]||v.language}</Text></TouchableOpacity>)}</View></View>}
         <View className="start-stats" style={{flexDirection:'row',gap:0,backgroundColor:'#FFF',borderWidth:1,borderColor:'#E4DCD0',borderRadius:12,marginBottom:15,paddingVertical:14}}>{stats.map(({label,value,Icon},i)=><View key={label} className="start-stat" style={{flex:1,minWidth:0,alignItems:'center',gap:9,paddingHorizontal:10,borderLeftWidth:i?1:0,borderLeftColor:'#E6DFD4'}}><View className="start-stat-icon" style={{width:45,height:45,borderRadius:12,backgroundColor:'#FCEEF1',alignItems:'center',justifyContent:'center'}}><Icon size={27} color="#990F2E"/></View><View style={{gap:4,minWidth:0}}><Text className="start-stat-label" style={{fontSize:12,color:'#7A8191',fontWeight:'600',textAlign:'center'}}>{label}</Text><Text className="start-stat-value" style={{fontFamily:displayFont,fontSize:22,lineHeight:28,fontWeight:'700',color:'#101521',textAlign:'center'}}>{value}</Text></View></View>)}</View>
         <View className="start-rules" style={{backgroundColor:'#FFF',borderWidth:1,borderColor:'#E4DCD0',borderRadius:13,paddingHorizontal:20,paddingTop:15,paddingBottom:12,marginBottom:10}}>
           <Text className="start-rules-title" style={{fontFamily:displayFont,fontSize:29,lineHeight:36,fontWeight:'700',color:'#101521',marginBottom:12}}>Тест ережелері</Text>

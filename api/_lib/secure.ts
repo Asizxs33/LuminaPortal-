@@ -1,3 +1,4 @@
+import {canReadTest} from './test-versions';
 import type {VercelRequest,VercelResponse} from './http';
 import {Pool} from 'pg';
 import jwt from 'jsonwebtoken';
@@ -33,12 +34,12 @@ export function secure(handler:(req:VercelRequest,res:VercelResponse)=>any, rout
  const staffOnly=route==='questions/index.ts'||(route.startsWith('tests/')&&req.method==='PATCH')||(route==='tests/index.ts'&&req.method==='POST')||(route==='results/index.ts'&&req.method==='DELETE');
  if(staffOnly&&!isStaff(user.role))return res.status(403).end();
  if(user.role==='teacher'){
-  if(route==='tests/[id].ts'&&['GET','PATCH'].includes(req.method||'')&&!await ownsTest(pool,user,req.query.id))return res.status(403).end();
+  if(route==='tests/[id].ts'&&['GET','PATCH'].includes(req.method||'')&&!await (req.method==='GET'?canReadTest:ownsTest)(pool,user,req.query.id))return res.status(403).end();
   if(route==='questions/index.ts'){
    const existing=['PATCH','DELETE'].includes(req.method||'')?(await pool.query('SELECT test_id FROM questions WHERE id=$1',[req.query.id])).rows[0]:null;
    if((['PATCH','DELETE'].includes(req.method||'')&&!await ownsTest(pool,user,existing?.test_id))||(req.method!=='DELETE'&&!await ownsTest(pool,user,req.body?.test_id)))return res.status(403).end();
   }
-  if(route==='results/index.ts'&&req.query.audit_test&&!await ownsTest(pool,user,req.query.audit_test))return res.status(403).end();
+  if(route==='results/index.ts'&&req.query.audit_test&&!await canReadTest(pool,user,req.query.audit_test))return res.status(403).end();
   if(route==='results/index.ts'&&req.method==='DELETE'){
    const ids=req.body?.ids;
    if(!Array.isArray(ids)||!ids.length||ids.some(id=>!Number.isSafeInteger(id)||id<1))return res.status(400).end();

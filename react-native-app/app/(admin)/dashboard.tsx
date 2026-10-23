@@ -19,6 +19,7 @@ interface Test {
   passing_score: number;
   is_published: boolean;
   question_count: number;
+  can_manage?:boolean; language?:string;round_number?:number;questions_per_attempt?:number;
 }
 
 export default function AdminDashboard() {
@@ -98,6 +99,11 @@ export default function AdminDashboard() {
     }
   };
 
+  const [retaking,setRetaking]=useState(false);
+  const retake=async(test:Test)=>{
+    if(retaking||!await confirmAction('Жаңа қайта тапсыру жобасы жасалады. Бұрынғы нәтижелер мен жауаптар сақталады. Жалғастыру керек пе?'))return;
+    setRetaking(true);try{const token=await AsyncStorage.getItem('lumina_token');const res=await fetch(`${API}/api/tests/${test.id}`,{method:'PATCH',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({action:'retake'})});if(!res.ok)throw Error();notify.success('Қайта тапсыру жобасы дайын. Сұрақтарды тексеріп, жариялаңыз.');await fetchTests();}catch{notify.error('Қайта тапсыру жасалмады.');}finally{setRetaking(false);}
+  };
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FCFAF6', justifyContent: 'center', alignItems: 'center' }}>
@@ -192,7 +198,7 @@ export default function AdminDashboard() {
                   <Text style={{color:'#A00D30',backgroundColor:'#FAEAF0',paddingHorizontal:13,paddingVertical:6,borderRadius:9,fontSize:12}}>{test.subject}</Text>
                   <View style={{flexDirection:'row',gap:7,alignItems:'center',paddingHorizontal:11,paddingVertical:8,borderRadius:10,backgroundColor:test.is_published?'#E3F8EF':'#F0F2F6'}}><View style={{width:7,height:7,borderRadius:4,backgroundColor:test.is_published?'#00A56C':'#707D93'}}/><Text style={{fontSize:11,color:test.is_published?'#00895A':'#69768D'}}>{test.is_published?'Жарияланған':'Жоба'}</Text></View>
                 </View>
-                <Text style={{fontFamily:displayFont,fontSize:compact?26:30,fontWeight:'700',color:'#101827'}}>{test.title}</Text>
+                <Text style={{fontFamily:displayFont,fontSize:compact?26:30,fontWeight:'700',color:'#101827'}}>{test.title}</Text><Text style={{color:'#788294',fontSize:12,marginTop:5}}>{test.language?.toUpperCase()||'KK'} · {test.round_number||1}-тапсыру · {test.questions_per_attempt===0?test.question_count:Math.min(test.questions_per_attempt??50,test.question_count)} / {test.question_count} сұрақ{test.can_manage===false?' · Тек қарау':''}</Text>
                 {!!(test.description && !test.description.startsWith('Imported from')) && <Text style={{fontSize:15,lineHeight:22,color:'#707D93',marginTop:4}}>{test.description}</Text>}
                 {test.title==='АКТ' && (!test.description || test.description.startsWith('Imported from')) && <Text style={{fontSize:compact?13:15,lineHeight:22,color:'#707D93',marginTop:4}}>Ақпараттық-коммуникациялық технологиялар</Text>}
                 <View style={{flexDirection:'row',flexWrap:'wrap',gap:compact?12:22,marginTop:14}}>
@@ -201,9 +207,10 @@ export default function AdminDashboard() {
               </View>
             </View>
             <View style={{flexDirection:'row',flexWrap:'wrap',alignItems:'center',gap:10,borderTopWidth:1,borderTopColor:'#E8E1DD',marginTop:20,paddingTop:14}}>
-              <TouchableOpacity accessibilityRole="button" onPress={()=>router.push(`/test/${test.id}/edit` as any)} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:compact?12:20,paddingVertical:13,borderRadius:10,backgroundColor:'#FAE5EC'}}><Edit2 size={20} color="#A00D30"/><Text style={{fontSize:14,color:'#A00D30',fontWeight:'600'}}>Өңдеу</Text></TouchableOpacity>
+              {test.can_manage!==false&&<TouchableOpacity accessibilityRole="button" onPress={()=>router.push(`/test/${test.id}/edit` as any)} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:compact?12:20,paddingVertical:13,borderRadius:10,backgroundColor:'#FAE5EC'}}><Edit2 size={20} color="#A00D30"/><Text style={{fontSize:14,color:'#A00D30',fontWeight:'600'}}>Өңдеу</Text></TouchableOpacity>}
               <TouchableOpacity accessibilityRole="button" onPress={()=>router.push(`/test/${test.id}/results` as any)} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:compact?12:20,paddingVertical:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10}}><BarChart3 size={20} color="#69768D"/><Text style={{fontSize:14,color:'#536078',fontWeight:'600'}}>Нәтижелер</Text></TouchableOpacity>
-              <TouchableOpacity accessibilityRole="button" onPress={async()=>{if(!test.is_published&&!test.question_count){setActionError('Жариялау үшін кемінде бір сұрақ қосыңыз.');return;}const message=test.is_published?'Тестті жабу керек пе?':'Тестті оқушыларға жариялау керек пе?';if(Platform.OS==='web'){if(await confirmAction(message))togglePublish(test);}else Alert.alert('Растау',message,[{text:'Бас тарту',style:'cancel'},{text:'Растау',onPress:()=>togglePublish(test)}]);}} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:12,paddingVertical:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10}}>{test.is_published?<EyeOff size={21} color="#69768D"/>:<Eye size={21} color="#69768D"/>}<Text style={{color:'#69768D',fontSize:14,fontWeight:'500'}}>{test.is_published?'Жабу':'Жариялау'}</Text></TouchableOpacity>
+              {test.can_manage!==false&&<TouchableOpacity accessibilityRole="button" onPress={async()=>{if(!test.is_published&&!test.question_count){setActionError('Жариялау үшін кемінде бір сұрақ қосыңыз.');return;}const message=test.is_published?'Тестті жабу керек пе?':'Тестті оқушыларға жариялау керек пе?';if(Platform.OS==='web'){if(await confirmAction(message))togglePublish(test);}else Alert.alert('Растау',message,[{text:'Бас тарту',style:'cancel'},{text:'Растау',onPress:()=>togglePublish(test)}]);}} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:12,paddingVertical:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10}}>{test.is_published?<EyeOff size={21} color="#69768D"/>:<Eye size={21} color="#69768D"/>}<Text style={{color:'#69768D',fontSize:14,fontWeight:'500'}}>{test.is_published?'Жабу':'Жариялау'}</Text></TouchableOpacity>}
+              {test.can_manage!==false&&<TouchableOpacity accessibilityRole="button" disabled={retaking} onPress={()=>retake(test)} style={{padding:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10}}><Text style={{color:'#940B27'}}>Қайта тапсыру</Text></TouchableOpacity>}
               {user?.role==='admin'&&<TouchableOpacity accessibilityRole="button" accessibilityLabel={`${test.title} тестін жою`} onPress={()=>deleteTest(test)} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:14,paddingVertical:13,marginLeft:'auto',borderLeftWidth:compact?0:1,borderLeftColor:'#E7E1DC'}}><Trash2 size={21} color="#A00D30"/><Text style={{color:'#A00D30',fontSize:14,fontWeight:'600'}}>Жою</Text></TouchableOpacity>}
             </View>
           </View>)}

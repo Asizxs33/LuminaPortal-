@@ -1,0 +1,11 @@
+BEGIN;
+ALTER TABLE tests ADD COLUMN IF NOT EXISTS questions_per_attempt integer NOT NULL DEFAULT 50 CHECK (questions_per_attempt BETWEEN 0 AND 5000);
+ALTER TABLE tests ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'kk' CHECK (language IN ('kk','ru','en'));
+ALTER TABLE tests ADD COLUMN IF NOT EXISTS language_group text;
+UPDATE tests SET language_group=id WHERE language_group IS NULL;
+ALTER TABLE tests ALTER COLUMN language_group SET DEFAULT gen_random_uuid()::text;
+ALTER TABLE tests ALTER COLUMN language_group SET NOT NULL;
+ALTER TABLE tests ADD COLUMN IF NOT EXISTS round_number integer NOT NULL DEFAULT 1;
+ALTER TABLE tests ADD COLUMN IF NOT EXISTS previous_test_id text;
+CREATE UNIQUE INDEX IF NOT EXISTS tests_language_version_unique ON tests(language_group,language);
+COMMIT;

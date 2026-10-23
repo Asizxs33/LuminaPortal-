@@ -30,15 +30,22 @@ export default function CreateTest() {
   const [newSubject, setNewSubject] = useState('');
   const [newDuration, setNewDuration] = useState('30');
   const [newPassing, setNewPassing] = useState('70');
+  const [questionLimit,setQuestionLimit]=useState('50');
+  const [language,setLanguage]=useState('kk');
+  const [secondLanguage,setSecondLanguage]=useState('ru');
+  const [secondFile,setSecondFile]=useState<any>(null);
+  const secondInput=useRef<any>(null);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const [wordFile, setWordFile] = useState<any>(null);
   const wordInputRef = useRef<any>(null);
 
-  const draft = useLocalDraft(user ? `create-draft:${user.id}` : null, {newTitle,newSubject,newDuration,newPassing}, saved => {setNewTitle(saved.newTitle);setNewSubject(saved.newSubject);setNewDuration(saved.newDuration);setNewPassing(saved.newPassing);});
+  const draft = useLocalDraft(user ? `create-draft:${user.id}` : null, {newTitle,newSubject,newDuration,newPassing,questionLimit,language,secondLanguage}, saved => {setNewTitle(saved.newTitle);setNewSubject(saved.newSubject);setNewDuration(saved.newDuration);setNewPassing(saved.newPassing);setQuestionLimit(saved.questionLimit??'50');setLanguage(saved.language??'kk');setSecondLanguage(saved.secondLanguage??'ru');});
 
   const createTest = async () => {
+    if(secondFile){setMessage('Алдымен негізгі тілдегі Word файлын таңдаңыз.');return;}
     if (creating || importing) return;
+    if(!Number.isInteger(Number(questionLimit))||Number(questionLimit)<0||Number(questionLimit)>5000){setMessage('Сұрақ саны 0–5000 болуы керек.');return;}
     if (!newTitle.trim() || !newSubject.trim()) {
       setMessage('Атауы мен пәнді толтырыңыз.');
       notify.error('Атауы мен пәнді толтырыңыз.');
@@ -60,6 +67,7 @@ export default function CreateTest() {
           description: '',
           duration_minutes: parseInt(newDuration) || 30,
           passing_score: Number(newPassing),
+          questions_per_attempt:Number(questionLimit),language,
           is_published: false
         })
       });
@@ -81,6 +89,7 @@ export default function CreateTest() {
 
   const importWordTest = async (forcePreview = false) => {
     if (creating || importing) return;
+    if(!Number.isInteger(Number(questionLimit))||Number(questionLimit)<0||Number(questionLimit)>5000){setMessage('Сұрақ саны 0–5000 болуы керек.');return;}
     if (!newTitle.trim() || !newSubject.trim()) {
       setMessage('Атауы мен пәнді толтырыңыз.');
       notify.error('Атауы мен пәнді толтырыңыз.');
@@ -108,6 +117,12 @@ export default function CreateTest() {
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(wordFile);
       });
+      let translation;
+      if(secondFile){
+        if(secondLanguage===language||secondFile.size>4*1024*1024||!/\.docx$/i.test(secondFile.name))throw Error('Екінші файлдың тілі немесе көлемі жарамсыз.');
+        const secondBase64=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result as string);reader.onerror=reject;reader.readAsDataURL(secondFile);});
+        translation={fileBase64:secondBase64,fileName:secondFile.name,language:secondLanguage};
+      }
       const res = await fetch(`${API}/api/tests`, {
         method: 'POST',
         headers: {
@@ -115,13 +130,14 @@ export default function CreateTest() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileBase64,
+          fileBase64,translation,
           previewOnly: preview,
           fileName: wordFile.name,
           title: newTitle,
           subject: newSubject,
           duration_minutes: parseInt(newDuration) || 30,
           passing_score: Number(newPassing),
+          questions_per_attempt:Number(questionLimit),language,
         }),
       });
       const data = await res.json();
@@ -163,6 +179,10 @@ export default function CreateTest() {
             <FormField label="Тест атауы" required value={newTitle} onChangeText={setNewTitle} placeholder="Мысалы: Жоғары математика" Icon={FileText}/>
             <FormField label="Пән" required value={newSubject} onChangeText={setNewSubject} placeholder="Мысалы: Математика" Icon={BookOpen}/>
             <View className="create-number-fields" style={{flexDirection:width<380?'column':'row',gap:mobile?12:28}}><FormField label="Уақыт (мин)" value={newDuration} onChangeText={setNewDuration} placeholder="30" Icon={Clock3} numeric/><FormField label="Өту баллы (%)" value={newPassing} onChangeText={setNewPassing} placeholder="70" Icon={Target} numeric/></View>
+            <FormField label="Бір оқушыға берілетін сұрақ саны" value={questionLimit} onChangeText={setQuestionLimit} placeholder="50" Icon={FileText} numeric/>
+            <Text style={{fontSize:12,color:'#788294'}}>Мысалы: банктағы 500 сұрақтан 30. 0 — барлық сұрақ. Банк кішірек болса, барлығы беріледі.</Text>
+            <Text style={{fontWeight:'600',color:'#302B32'}}>Негізгі тест тілі</Text>
+            <View style={{flexDirection:'row',gap:10,flexWrap:'wrap'}}>{[{id:'kk',label:'Қазақша'},{id:'ru',label:'Русский'},{id:'en',label:'English'}].map(l=><TouchableOpacity key={l.id} accessibilityRole="button" accessibilityState={{selected:language===l.id}} onPress={()=>{setLanguage(l.id);if(secondLanguage===l.id)setSecondLanguage(l.id==='kk'?'ru':'kk');setReport(null);}} style={{padding:12,borderRadius:8,backgroundColor:language===l.id?'#940B27':'#F7F1EC'}}><Text style={{color:language===l.id?'white':'#62574B'}}>{l.label}</Text></TouchableOpacity>)}</View>
           </View>
           {Platform.OS==='web'&&<View style={{borderTopWidth:1,borderTopColor:'#DFE2E8',marginTop:20,paddingTop:16}}>
             <Text style={{fontFamily:displayFont,fontSize:mobile?23:26,fontWeight:'700',color:'#10151E',marginBottom:10}}>Word файлынан импорттау</Text>
@@ -172,7 +192,16 @@ export default function CreateTest() {
             {/* @ts-ignore Web-only input */}
             <input ref={wordInputRef} type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style={{display:'none'}} onChange={(event:any)=>{chooseFile(event.target.files?.[0]);event.target.value='';}}/>
             <View className="create-import-bottom" style={{flexDirection:mobile?'column':'row',alignItems:mobile?'flex-start':'center',gap:12,justifyContent:'space-between',marginTop:10}}><View style={{flex:1}}><Text style={{fontSize:12,lineHeight:18,color:'#7A8598'}}>Сұрақтар мен жауаптарды .docx файлынан жүктеңіз. Ең көбі 4 МБ.</Text>{!!wordFile&&<TouchableOpacity accessibilityRole="button" onPress={()=>chooseFile(null)} disabled={busy} style={{flexDirection:'row',alignItems:'center',gap:5,paddingVertical:7}}><X size={14} color="#940B27"/><Text style={{fontSize:12,color:'#940B27'}}>Файлды алып тастау</Text></TouchableOpacity>}</View><TouchableOpacity accessibilityRole="button" accessibilityLabel="Файлды тексеру" onPress={()=>importWordTest(true)} disabled={busy||!wordFile} style={{flexDirection:'row',alignItems:'center',gap:10,paddingHorizontal:16,minHeight:36,borderWidth:1,borderColor:'#B6BECD',borderRadius:8,opacity:(busy||!wordFile)?0.5:1}}><FileText size={18} color="#5D687E"/><Text style={{fontSize:13,fontWeight:'600',color:'#5D687E'}}>{importing?'Өңделуде…':'Файлды тексеру'}</Text></TouchableOpacity></View>
-            {report&&<View accessibilityLiveRegion="polite" style={{backgroundColor:'#FFF7E6',borderRadius:10,padding:14,marginTop:14,gap:6}}><Text style={{fontWeight:'700',color:'#634A1E'}}>Табылды: {report.recognized} · Өткізілді: {report.skipped}</Text><Text style={{fontSize:13,lineHeight:19,color:'#756643'}}>Толық емес немесе дұрыс жауабы белгіленбеген сұрақтар импортталмайды.</Text>{report.warnings.map((warning:string,i:number)=><Text key={i} style={{fontSize:13,color:'#756643'}}>{warning}</Text>)}{report.sample.map((text:string,i:number)=><Text key={i} numberOfLines={2} style={{fontSize:13}}>{i+1}. {text}</Text>)}<Text style={{fontSize:13,color:'#634A1E'}}>«Сақтау және жалғастыру» арқылы сұрақтарды жобаға қосыңыз.</Text></View>}
+            <View style={{gap:10,marginTop:15,paddingTop:15,borderTopWidth:1,borderTopColor:'#E6E0D8'}}>
+              <Text style={{fontWeight:'600',color:'#302B32'}}>Екінші тілдегі нұсқа (міндетті емес)</Text>
+              <Text style={{fontSize:12,color:'#788294'}}>Екі файл бірге сақталады. Оқушы бастамас бұрын тілін таңдайды. Әр нұсқаны редактордан тексеріп, жариялаңыз.</Text>
+              <View style={{flexDirection:'row',gap:8}}>{[{id:'kk',label:'Қазақша'},{id:'ru',label:'Русский'},{id:'en',label:'English'}].filter(l=>l.id!==language).map(l=><TouchableOpacity key={l.id} accessibilityRole="button" onPress={()=>{setSecondLanguage(l.id);setReport(null);}} style={{padding:10,borderRadius:8,backgroundColor:secondLanguage===l.id?'#940B27':'#F7F1EC'}}><Text style={{color:secondLanguage===l.id?'white':'#62574B'}}>{l.label}</Text></TouchableOpacity>)}</View>
+              <TouchableOpacity accessibilityRole="button" disabled={busy} onPress={()=>secondInput.current?.click()} style={{padding:14,borderWidth:1,borderColor:'#DADCE3',borderRadius:9}}><Text style={{color:'#940B27'}}>{secondFile?.name||'Екінші .docx файлын таңдау'}</Text></TouchableOpacity>
+              {/* @ts-ignore Web-only input */}
+              <input ref={secondInput} type="file" accept=".docx" style={{display:'none'}} onChange={(e:any)=>{setSecondFile(e.target.files?.[0]||null);setReport(null);e.target.value='';}}/>
+              {secondFile&&<TouchableOpacity onPress={()=>{setSecondFile(null);setReport(null);}}><Text style={{color:'#940B27'}}>Екінші файлды алып тастау</Text></TouchableOpacity>}
+            </View>
+            {report&&<View accessibilityLiveRegion="polite" style={{backgroundColor:'#FFF7E6',borderRadius:10,padding:14,marginTop:14,gap:6}}><Text style={{fontWeight:'700',color:'#634A1E'}}>Табылды: {report.recognized} · Өткізілді: {report.skipped}</Text><Text style={{fontSize:13,lineHeight:19,color:'#756643'}}>Толық емес немесе дұрыс жауабы белгіленбеген сұрақтар импортталмайды.</Text>{report.versions?.map((v:any)=><Text key={v.language} style={{color:'#634A1E'}}>{v.language.toUpperCase()}: {v.count} сұрақ</Text>)}{report.warnings.map((warning:string,i:number)=><Text key={i} style={{fontSize:13,color:'#756643'}}>{warning}</Text>)}{report.sample.map((text:string,i:number)=><Text key={i} numberOfLines={2} style={{fontSize:13}}>{i+1}. {text}</Text>)}<Text style={{fontSize:13,color:'#634A1E'}}>«Сақтау және жалғастыру» арқылы сұрақтарды жобаға қосыңыз.</Text></View>}
           </View>}
           <View className="create-form-footer" style={{borderTopWidth:1,borderTopColor:'#DFE2E8',paddingTop:14,marginTop:14,flexDirection:mobile?'column-reverse':'row',justifyContent:'space-between',gap:12}}>
             <TouchableOpacity accessibilityRole="button" disabled={busy} onPress={()=>router.push('/(admin)/dashboard')} style={{minHeight:42,paddingHorizontal:30,borderWidth:1,borderColor:'#B6BECD',borderRadius:8,alignItems:'center',justifyContent:'center'}}><Text style={{fontSize:14,fontWeight:'600',color:'#4D576A'}}>Болдырмау</Text></TouchableOpacity>

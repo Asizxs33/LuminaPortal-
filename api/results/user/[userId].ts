@@ -26,7 +26,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         const { rows } = await pool.query(
-            `SELECT r.id,r.user_id,r.test_id,r.score,r.total,r.completed_at,r.time_spent, t.title as test_title, t.subject, t.passing_score FROM results r
+            `SELECT r.id,r.user_id,r.test_id,r.score,r.total,r.completed_at,r.time_spent, t.title as test_title, t.subject, t.passing_score,t.language,t.round_number FROM results r
              JOIN tests t ON r.test_id = t.id
              WHERE r.user_id = $1 ORDER BY r.completed_at DESC`,
             [userId]

@@ -13,7 +13,7 @@ function expect(r,status,label){assert.equal(r.status,status,label);checks++;}
  const created=await call(a,'/api/tests','POST',{title:'Teacher permission QA',subject:'QA',duration_minutes:10,passing_score:60});expect(created,201,'teacher create');tests.push(created.data.id);const id=created.data.id;
  assert.equal(created.data.created_by,a.id);checks++;
  expect(await call(a,`/api/tests/${id}`),200,'own bank');expect(await call(b,`/api/tests/${id}`),403,'foreign bank');
- const list=await call(a,'/api/tests?all=true');expect(list,200,'own test list');assert(list.data.every(t=>t.created_by===a.id));checks++;
+ const list=await call(a,'/api/tests?all=true');expect(list,200,'own test list');assert(list.data.some(t=>t.created_by===a.id)&&list.data.every(t=>t.created_by===a.id||t.can_manage===false));checks++;
  const question={test_id:id,type:'MULTIPLE_CHOICE',text:'QA question',options:[{text:'A',is_correct:true},{text:'B',is_correct:false}]};
  const q=await call(a,'/api/questions','POST',question);expect(q,201,'own question create');
  expect(await call(b,'/api/questions','POST',question),403,'foreign question create');expect(await call(b,`/api/questions?id=${q.data.id}`,'DELETE'),403,'foreign question delete');
