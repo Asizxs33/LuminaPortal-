@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import {DesktopResultImport} from '../../components/DesktopTransfer';
 import { displayFont } from '../../theme';
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Image, Platform } from 'react-native';
@@ -9,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API } from '../constants/api';
 
 interface Result {
- id:number; test_id:string; score:number; total:number; completed_at:string; test_title:string; subject:string; percentage?:number; passing_score:number; language?:string;round_number?:number;
+ id:number; test_id:string; score:number; total:number; completed_at:string; test_title:string; subject:string; percentage?:number; passing_score:number; language?:string;round_number?:number;source?:string;
 }
 type Tab='latest'|'subjects'|'history';
 const burgundy='#990F2E', muted='#7C879D';
@@ -37,6 +38,7 @@ export default function StudentResults(){
   <ScrollView contentContainerStyle={{paddingBottom:28}}>
    <View className="student-results-campus" pointerEvents="none" style={{display:'none',position:'absolute',top:0,right:0,width:'78%',height:245,overflow:'hidden'}}><Image source={require('../../assets/campus-header.png')} resizeMode="cover" style={{width:'100%',height:'100%'}}/>{Platform.OS==='web'&&<View style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(90deg,#FCFAF7 0%,rgba(252,250,247,.6) 27%,rgba(252,250,247,.04) 73%),linear-gradient(0deg,#FCFAF7 0%,rgba(252,250,247,0) 70%)'} as any}/>}</View>
    <View className="student-results-content" style={{padding:20}}>
+    <DesktopResultImport onImported={()=>void fetchResults()}/>
     <Text style={{fontSize:13,color:muted,marginBottom:13}}>Студент кабинеті  /  Нәтижелер</Text>
     <Text className="student-results-title" style={{fontFamily:displayFont,fontSize:37,lineHeight:45,fontWeight:'700',color:'#101521'}}>Нәтижелерім</Text>
     <Text className="student-results-subtitle" style={{fontSize:15,lineHeight:23,color:muted,marginTop:5,marginBottom:22}}>Оқу нәтижелеріңіз бен ілгерілеуіңіз</Text>

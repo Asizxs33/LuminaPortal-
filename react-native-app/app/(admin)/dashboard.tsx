@@ -1,4 +1,5 @@
 import { displayFont } from '../../theme';
+import {DesktopExport,DesktopDownload} from '../../components/DesktopTransfer';
 import { confirmAction } from '../../lib/confirmAction';
 import { notify } from '../../lib/notify';
 import React, { useState, useEffect } from 'react';
@@ -211,11 +212,13 @@ export default function AdminDashboard() {
               <TouchableOpacity accessibilityRole="button" onPress={()=>router.push(`/test/${test.id}/results` as any)} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:compact?12:20,paddingVertical:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10}}><BarChart3 size={20} color="#69768D"/><Text style={{fontSize:14,color:'#536078',fontWeight:'600'}}>Нәтижелер</Text></TouchableOpacity>
               {test.can_manage!==false&&<TouchableOpacity accessibilityRole="button" onPress={async()=>{if(!test.is_published&&!test.question_count){setActionError('Жариялау үшін кемінде бір сұрақ қосыңыз.');return;}const message=test.is_published?'Тестті жабу керек пе?':'Тестті оқушыларға жариялау керек пе?';if(Platform.OS==='web'){if(await confirmAction(message))togglePublish(test);}else Alert.alert('Растау',message,[{text:'Бас тарту',style:'cancel'},{text:'Растау',onPress:()=>togglePublish(test)}]);}} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:12,paddingVertical:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10}}>{test.is_published?<EyeOff size={21} color="#69768D"/>:<Eye size={21} color="#69768D"/>}<Text style={{color:'#69768D',fontSize:14,fontWeight:'500'}}>{test.is_published?'Жабу':'Жариялау'}</Text></TouchableOpacity>}
               {test.can_manage!==false&&<TouchableOpacity accessibilityRole="button" disabled={retaking} onPress={()=>retake(test)} style={{padding:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10}}><Text style={{color:'#940B27'}}>Қайта тапсыру</Text></TouchableOpacity>}
+              {test.can_manage!==false&&<DesktopExport testId={test.id}/>}
               {user?.role==='admin'&&<TouchableOpacity accessibilityRole="button" accessibilityLabel={`${test.title} тестін жою`} onPress={()=>deleteTest(test)} style={{flexDirection:'row',gap:10,alignItems:'center',paddingHorizontal:14,paddingVertical:13,marginLeft:'auto',borderLeftWidth:compact?0:1,borderLeftColor:'#E7E1DC'}}><Trash2 size={21} color="#A00D30"/><Text style={{color:'#A00D30',fontSize:14,fontWeight:'600'}}>Жою</Text></TouchableOpacity>}
             </View>
           </View>)}
         </View>
         <View style={{flexDirection:'row',alignItems:'flex-start',gap:12,marginTop:20}}><Info size={22} color="#707D93"/><Text style={{flex:1,color:'#707D93',fontSize:compact?12:14,lineHeight:21}}>Тест сұрақтарын «Өңдеу» арқылы өзгерте аласыз.</Text></View>
+        <DesktopDownload/>
       </ScrollView>
     </View>
   );

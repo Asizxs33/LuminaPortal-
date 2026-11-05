@@ -1,4 +1,5 @@
 import {sharedAdminTest} from '../_lib/test-versions';
+import {importDesktop,DesktopError} from '../_lib/desktop';
 import {snapshot} from '../_lib/history';
 import {isStaff} from '../_lib/permissions';
 import { secure } from '../_lib/secure';
@@ -16,6 +17,7 @@ async function handler(req:VercelRequest,res:VercelResponse) {
  const user=session(req);if(!user)return res.status(401).json({error:'Кіру қажет.'});
  try {
   if(req.method==='POST') {
+   if(req.body?.action==='desktopImport')return res.status(201).json(await importDesktop(pool,user,req.body));
    const {test_id,submission_id,attempt_token,answers={},code_answers={},code_proofs={},time_spent=0}=req.body||{};
    if(!test_id || typeof submission_id!=='string' || submission_id.length>100) return res.status(400).json({error:'Жарамсыз әрекет.'});
    let attempt:any;try{attempt=jwt.verify(attempt_token,process.env.JWT_SECRET!);}catch{return res.status(400).json({error:'Тест сессиясы жарамсыз. Тестті қайта ашыңыз.'});}
@@ -46,14 +48,14 @@ async function handler(req:VercelRequest,res:VercelResponse) {
     return res.status(result.rows[0]?200:404).json(result.rows[0]?hideReview(result.rows[0],!isStaff(user.role)&&result.rows[0].exam_mode&&!result.rows[0].answers_released):{error:'Нәтиже табылмады.'});
    }
    if(!isStaff(user.role))return res.status(403).end();
-   return res.json((await pool.query(`SELECT r.id,r.user_id,r.test_id,r.score,r.total,r.time_spent,r.completed_at,u.name AS student_name,u.email,t.title AS test_title,t.subject,t.passing_score,COALESCE(t.created_by=$2 OR $1::boolean,false) AS can_delete,t.language,t.round_number FROM results r JOIN users u ON r.user_id=u.id JOIN tests t ON r.test_id=t.id WHERE ($1::boolean OR t.created_by=$2 OR ${sharedAdminTest}) ORDER BY r.completed_at DESC`,[user.role==='admin',user.id])).rows);
+   return res.json((await pool.query(`SELECT r.id,r.user_id,r.test_id,r.score,r.total,r.time_spent,r.completed_at,r.source,u.name AS student_name,u.email,t.title AS test_title,t.subject,t.passing_score,COALESCE(t.created_by=$2 OR $1::boolean,false) AS can_delete,t.language,t.round_number FROM results r JOIN users u ON r.user_id=u.id JOIN tests t ON r.test_id=t.id WHERE ($1::boolean OR t.created_by=$2 OR ${sharedAdminTest}) ORDER BY r.completed_at DESC`,[user.role==='admin',user.id])).rows);
   }
   if(req.method==='DELETE' && isStaff(user.role)) {
    const {ids}=req.body||{};if(!Array.isArray(ids)||!ids.length)return res.status(400).end();
    const c=await pool.connect();try{await c.query('BEGIN');const affected=(await c.query('SELECT DISTINCT r.test_id FROM results r JOIN tests t ON t.id=r.test_id WHERE r.id=ANY($1::int[]) AND ($2::boolean OR t.created_by=$3)',[ids,user.role==='admin',user.id])).rows;for(const row of affected)await snapshot(c,row.test_id,user,'results.delete');const deleted=await c.query('DELETE FROM results r USING tests t WHERE r.test_id=t.id AND r.id=ANY($1::int[]) AND ($2::boolean OR t.created_by=$3) RETURNING r.id',[ids,user.role==='admin',user.id]);await c.query('COMMIT');return res.json({success:true,deleted_count:deleted.rowCount});}catch{await c.query('ROLLBACK');throw Error('Delete failed');}finally{c.release();}
   }
   return res.status(405).end();
- }catch{return res.status(500).json({error:'Нәтижені сақтау немесе оқу мүмкін болмады. Жауаптарыңыз құрылғыда сақталған.'});}
+ }catch(e){if(e instanceof DesktopError)return res.status(e.status).json({error:e.message});return res.status(500).json({error:'Нәтижені сақтау немесе оқу мүмкін болмады. Жауаптарыңыз құрылғыда сақталған.'});}
 }
 
 export default secure(handler, 'results/index.ts');

@@ -17,3 +17,11 @@ react-native-app/assets/informatics2-questions/q27.jpg
 marketing-assets/
 
 backups/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+desktop/releases/
+desktop/src-tauri/icons/android/
+desktop/src-tauri/icons/ios/
+desktop/src-tauri/icons/Square*.png
+desktop/src-tauri/icons/StoreLogo.png
+desktop/src-tauri/icons/*.icns

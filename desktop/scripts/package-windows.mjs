@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const releases=path.join(root,'releases'),downloads=path.resolve(root,'../react-native-app/public/downloads');
+fs.mkdirSync(releases,{recursive:true});fs.mkdirSync(downloads,{recursive:true});
+const installer=path.join(root,'src-tauri/target/release/bundle/nsis/LuminaPortal_0.1.0_x64-setup.exe');
+fs.copyFileSync(installer,path.join(releases,'LuminaPortal-setup.exe'));
+fs.copyFileSync(installer,path.join(downloads,'LuminaPortal-setup.exe'));
+fs.copyFileSync(path.join(root,'src-tauri/target/release/lumina-desktop.exe'),path.join(releases,'LuminaPortal.exe'));
+fs.copyFileSync(path.join(root,'README.md'),path.join(releases,'README.md'));
+const hashes=['LuminaPortal-setup.exe','LuminaPortal.exe'].map(name=>`${createHash('sha256').update(fs.readFileSync(path.join(releases,name))).digest('hex')}  ${name}`);
+fs.writeFileSync(path.join(releases,'SHA256SUMS.txt'),hashes.join('\n')+'\n');
+for(const name of ['LuminaPortal-setup.exe','LuminaPortal.exe'])console.log(`${name}: ${fs.statSync(path.join(releases,name)).size} bytes`);

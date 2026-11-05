@@ -47,7 +47,7 @@ export function secure(handler:(req:VercelRequest,res:VercelResponse)=>any, rout
    if(allowed.rowCount!==new Set(ids).size)return res.status(403).end();
   }
  }
- if(req.method==='POST' && (route==='execute.ts'||route==='mentor/hint.ts'||(route==='tests/index.ts'&&req.query.history==='true'))){
+ if(req.method==='POST' && (route==='execute.ts'||route==='mentor/hint.ts'||(route==='tests/index.ts'&&req.query.history==='true')||(route==='results/index.ts'&&req.body?.action==='desktopImport'))){
   const key=`operation:${route}:${user.id}`;
   const limit=route==='execute.ts'?30:10;
   const row=(await pool.query("INSERT INTO security_rate_limits(key,hits,expires_at) VALUES($1,1,now()+interval '1 minute') ON CONFLICT(key) DO UPDATE SET hits=CASE WHEN security_rate_limits.expires_at<now() THEN 1 ELSE security_rate_limits.hits+1 END,expires_at=CASE WHEN security_rate_limits.expires_at<now() THEN now()+interval '1 minute' ELSE security_rate_limits.expires_at END RETURNING hits",[key])).rows[0];

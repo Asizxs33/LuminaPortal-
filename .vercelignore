@@ -3,4 +3,5 @@ react-native-app/node_modules
 .git
 backups
 marketing-assets
+desktop
 .env*

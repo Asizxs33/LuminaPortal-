@@ -1,4 +1,5 @@
 import {createRetake} from '../_lib/test-versions';
+import {exportDesktop,DesktopError} from '../_lib/desktop';
 import {isStaff} from '../_lib/permissions';
 import { secure } from '../_lib/secure';
 import { examAction } from '../_lib/exams';
@@ -44,6 +45,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         if (req.method === 'POST') return await examAction(pool,req,res,actor);
         if (req.method === 'GET') {
+            if(req.query.desktopExport==='true')return res.json(await exportDesktop(pool,actor,String(id)));
             const testRes = await pool.query('SELECT * FROM tests WHERE id = $1', [id]);
             if (!testRes.rows[0]) return res.status(404).json({ error: 'Test not found' });
 
@@ -153,6 +155,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
             return res.json({ success: true, deleted_id: rows[0].id });
         }
     } catch (err: any) {
+        if(err instanceof DesktopError)return res.status(err.status).json({error:err.message});
         console.error('Test operation error:', err.message);
         res.status(500).json({ error: 'Қызмет қатесі. Қайта көріңіз.' });
     }

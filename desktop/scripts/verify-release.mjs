@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
+const files=['desktop/releases/LuminaPortal-setup.exe','react-native-app/public/downloads/LuminaPortal-setup.exe','react-native-app/dist/downloads/LuminaPortal-setup.exe'];
+const hashes=files.map(p=>createHash('sha256').update(fs.readFileSync(path.join(root,p))).digest('hex'));
+if(new Set(hashes).size!==1)throw Error('Installer copies do not match');
+const secret=/(?:postgres(?:ql)?:\/\/|ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{30,}|-----BEGIN (?:RSA |EC )?PRIVATE KEY-----)/;
+const scan=p=>{const full=path.join(root,p);if(fs.statSync(full).isDirectory()){for(const item of fs.readdirSync(full))scan(path.join(p,item));}else if(/\.(?:ts|css|html|rs|json)$/.test(p)&&secret.test(fs.readFileSync(full,'utf8')))throw Error(`Credential-like content in ${p}`);};
+for(const p of ['desktop/src','desktop/src-tauri/src','api/_lib/desktop.ts','react-native-app/components/DesktopTransfer.tsx'])scan(p);
+const response=await fetch('http://127.0.0.1:4189/downloads/LuminaPortal-setup.exe',{signal:AbortSignal.timeout(15000)});
+if(response.status!==200||createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex')!==hashes[0])throw Error('Installer download failed or bytes differ');
+console.log('Installer copies match; local site serves verified installer; changed application sources contain no credential patterns.');
+console.log(`SHA256 ${hashes[0]}`);
