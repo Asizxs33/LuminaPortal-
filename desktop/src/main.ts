@@ -2,13 +2,14 @@ import {invoke} from '@tauri-apps/api/core';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import {begin,parseTest,score,resultPayload,clock,type Attempt,type State,type Test} from './model';
 import './style.css';
+import logoUrl from './assets/lumina-symbol.png';
 
 const native=!!(window as any).__TAURI_INTERNALS__;
 const root=document.querySelector<HTMLDivElement>('#app')!;
 let state:State={history:[]},view:'home'|'exam'|'result'='home',language='',busy=false;
 let saveQueue=Promise.resolve();
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-const book='<svg viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M18 30C12 25 6 26 3 27V7c5-1 10 0 15 4m0 19c6-5 12-4 15-3V7c-5-1-10 0-15 4v19ZM18 5v6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+const book=`<img src="${logoUrl}" alt="" class="brand-symbol" aria-hidden="true">`;
 const label=(t:Test)=>({kk:'Қазақша',ru:'Русский',en:'English'}[t.language]||t.language);
 const current=()=>state.attempt!;
 const testOf=(a:Attempt)=>a.file.package.tests.find(t=>t.id===a.testId)!;
@@ -48,5 +49,8 @@ function renderResult(){const a=current(),t=testOf(a),points=score(a),pct=Math.r
 function render(){if(view==='exam')renderExam();else if(view==='result'&&state.attempt?.finishedAt)renderResult();else renderHome();}
 function tick(){if(view!=='exam'||!state.attempt||state.attempt.finishedAt)return;const remaining=Math.max(0,Math.ceil((state.attempt.deadline-Date.now())/1000));const el=document.querySelector('#timer');if(el){el.textContent=clock(remaining);el.classList.toggle('urgent',remaining<60);}if(remaining===0)void finish();}
 setInterval(tick,1000);
-async function boot(){try{const raw=native?await invoke<string>('load_state'):localStorage.getItem('lumina-desktop-preview');if(raw&&raw!=='null'){const saved=JSON.parse(raw);if(!Array.isArray(saved.history))throw Error();if(saved.file)parseTest(JSON.stringify(saved.file));if(saved.attempt)parseTest(JSON.stringify(saved.attempt.file));state=saved;}}catch{render();notify('Не удалось прочитать сохранённые данные. Предыдущие файлы оставлены на диске.');return;}render();}
+async function boot(){let warning='';try{const raw=native?await invoke<string>('load_state'):localStorage.getItem('lumina-desktop-preview');if(raw&&raw!=='null'){const saved=JSON.parse(raw);if(!Array.isArray(saved.history))throw Error();if(saved.file)parseTest(JSON.stringify(saved.file));if(saved.attempt)parseTest(JSON.stringify(saved.attempt.file));state=saved;}}catch{render();notify('Не удалось прочитать сохранённые данные. Предыдущие файлы оставлены на диске.');return;}
+ if(native){try{const raw=await invoke<string|null>('read_bundled_test');if(raw){const bundled=parseTest(raw);if(state.attempt&&!state.attempt.finishedAt&&state.attempt.file.package.id!==bundled.package.id){warning='Сначала завершите сохранённую попытку. Затем откройте эту программу снова — её тест загрузится автоматически.';}else{state.file=bundled;language=bundled.package.tests[0].id;}}}catch(e){warning=String(e);}}
+ render();if(warning)notify(warning);
+}
 void boot();

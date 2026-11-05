@@ -5,6 +5,7 @@ import {Download,Upload} from 'lucide-react-native';
 import {API} from '../app/constants/api';
 import {notify} from '../lib/notify';
 import {confirmAction} from '../lib/confirmAction';
+import {portableTest} from '../lib/portableTest';
 
 export function DesktopDownload(){
  if(Platform.OS!=='web')return null;
@@ -16,8 +17,8 @@ export function DesktopExport({testId}:{testId:string}){
  if(Platform.OS!=='web')return null;
  return <TouchableOpacity accessibilityRole="button" disabled={busy} onPress={async()=>{
   if(busy||!await confirmAction('Автономды файлда дұрыс жауаптар болады. Оны тек офлайн тестілеуге таратыңыз. Серверлік емтихан қорғанысы бұл файлға қолданылмайды. Жалғастыру керек пе?'))return;
-  setBusy(true);try{const token=await AsyncStorage.getItem('lumina_token');const res=await fetch(`${API}/api/tests/${encodeURIComponent(testId)}?desktopExport=true`,{headers:{Authorization:`Bearer ${token}`}});const data=await res.json();if(!res.ok)throw Error(data.error||'Файл жүктелмеді.');const url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=`lumina-${testId}.lumina-test`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify.success('Бағдарламаға арналған тест дайын.');}catch(e){notify.error((e as Error).message);}finally{setBusy(false);}
- }} style={{padding:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10,flexDirection:'row',gap:8,alignItems:'center'}}><Download size={18} color="#940B27"/><Text style={{color:'#940B27',fontSize:13}}>{busy?'Жүктелуде…':'Бағдарламаға жүктеу'}</Text></TouchableOpacity>;
+  setBusy(true);try{const token=await AsyncStorage.getItem('lumina_token');const res=await fetch(`${API}/api/tests/${encodeURIComponent(testId)}?desktopExport=true`,{headers:{Authorization:`Bearer ${token}`}});const data=await res.json();if(!res.ok)throw Error(data.error||'Файл жүктелмеді.');const app=await fetch(`${API}/downloads/LuminaPortal-portable.exe`,{cache:'no-store'});if(!app.ok)throw Error('Бағдарлама қолжетімсіз. Қайта көріңіз.');const url=URL.createObjectURL(portableTest(await app.arrayBuffer(),data));const link=document.createElement('a');link.href=url;link.download=`Lumina-test-${testId}.exe`;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);notify.success('Тесті бар дайын Windows бағдарламасы жүктелді.');}catch(e){notify.error((e as Error).message);}finally{setBusy(false);}
+ }} style={{padding:12,borderWidth:1,borderColor:'#DAD8DD',borderRadius:10,flexDirection:'row',gap:8,alignItems:'center'}}><Download size={18} color="#940B27"/><Text style={{color:'#940B27',fontSize:13}}>{busy?'Бағдарлама дайындалуда…':'Тестті .exe жүктеу'}</Text></TouchableOpacity>;
 }
 
 export function DesktopResultImport({onImported}:{onImported:()=>void}){

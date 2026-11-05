@@ -1,6 +1,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use tauri::Manager;
 use std::{fs, io::Write};
+mod bundle;
+
+#[tauri::command]
+fn read_bundled_test()->Result<Option<String>,String>{
+ let path=std::env::current_exe().map_err(|_|"Не удалось найти программу")?;
+ let mut file=fs::File::open(path).map_err(|_|"Не удалось прочитать программу")?;
+ bundle::read(&mut file)
+}
 
 #[tauri::command]
 fn load_state(app: tauri::AppHandle) -> Result<String,String> {
@@ -44,4 +52,4 @@ async fn api_request(local:bool, action:String, body:serde_json::Value, token:Op
  let status=response.status();let data:serde_json::Value=response.json().await.map_err(|_|"Сайт вернул неверный ответ")?;
  if !status.is_success(){return Err(data["error"].as_str().unwrap_or("Не удалось выполнить запрос. Проверьте вход и повторите.").into())}Ok(data)
 }
-fn main(){tauri::Builder::default().invoke_handler(tauri::generate_handler![load_state,save_state,export_result,api_request]).run(tauri::generate_context!()).expect("LuminaPortal failed to start");}
+fn main(){tauri::Builder::default().invoke_handler(tauri::generate_handler![load_state,save_state,export_result,api_request,read_bundled_test]).run(tauri::generate_context!()).expect("LuminaPortal failed to start");}

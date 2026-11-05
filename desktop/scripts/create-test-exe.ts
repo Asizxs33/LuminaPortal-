@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {portableTest} from '../../react-native-app/lib/portableTest';
+import {parseTest} from '../src/model';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const [source,destination]=process.argv.slice(2);
+if(!source||!destination)throw Error('Usage: create-test-exe.ts source.lumina-test output.exe');
+const file=parseTest(fs.readFileSync(source,'utf8'));
+const bytes=fs.readFileSync(path.join(root,'releases/LuminaPortal.exe'));
+const base=new Uint8Array(bytes).buffer;
+const result=portableTest(base,file);
+fs.mkdirSync(path.dirname(path.resolve(destination)),{recursive:true});
+fs.writeFileSync(destination,Buffer.from(await result.arrayBuffer()));
+console.log(`Created ${path.basename(destination)}: ${fs.statSync(destination).size} bytes; ${file.package.tests.length} language version(s).`);

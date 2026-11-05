@@ -9,6 +9,7 @@ const installer=path.join(root,'src-tauri/target/release/bundle/nsis/LuminaPorta
 fs.copyFileSync(installer,path.join(releases,'LuminaPortal-setup.exe'));
 fs.copyFileSync(installer,path.join(downloads,'LuminaPortal-setup.exe'));
 fs.copyFileSync(path.join(root,'src-tauri/target/release/lumina-desktop.exe'),path.join(releases,'LuminaPortal.exe'));
+fs.copyFileSync(path.join(root,'src-tauri/target/release/lumina-desktop.exe'),path.join(downloads,'LuminaPortal-portable.exe'));
 fs.copyFileSync(path.join(root,'README.md'),path.join(releases,'README.md'));
 const hashes=['LuminaPortal-setup.exe','LuminaPortal.exe'].map(name=>`${createHash('sha256').update(fs.readFileSync(path.join(releases,name))).digest('hex')}  ${name}`);
 fs.writeFileSync(path.join(releases,'SHA256SUMS.txt'),hashes.join('\n')+'\n');
