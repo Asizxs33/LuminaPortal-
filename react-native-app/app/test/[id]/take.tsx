@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
+import QuestionSpeech from '../../../components/QuestionSpeech';
 
 import { API } from '../../constants/api';
 
@@ -31,6 +32,7 @@ interface Question {
 }
 
 interface TestDetail {
+  language?: string;
   id: string;
   title: string;
   subject: string;
@@ -446,6 +448,7 @@ export default function TestTake() {
             </Text>
           </View>
 
+          {Platform.OS === 'web' && <QuestionSpeech key={`${test.id}:${currentQuestion.id}`} language={test.language} text={currentQuestion.text} options={isCodeQuestion ? [] : currentQuestion.options ?? []} testId={test.id} questionId={currentQuestion.id} attemptToken={test.attempt_token}/>}
           <Text className="take-question-text" style={{ fontSize: 21, fontWeight: '800', color: '#10131B', marginBottom: currentQuestion.image_url ? 16 : (isCodeQuestion ? 16 : 24), lineHeight: 28 }}>
             {currentQuestion.text}
           </Text>

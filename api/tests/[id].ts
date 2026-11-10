@@ -4,6 +4,7 @@ import {isStaff} from '../_lib/permissions';
 import { secure } from '../_lib/secure';
 import { examAction } from '../_lib/exams';
 import { session } from '../_lib/session';
+import { questionAudio } from '../_lib/question-audio';
 import type { VercelRequest, VercelResponse } from '../_lib/http';
 import { Pool } from '../_lib/db';
 import jwt from 'jsonwebtoken';
@@ -43,7 +44,10 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'GET' && req.method !== 'POST' && !isStaff(actor.role)) return res.status(403).json({error:'Мұғалім рұқсаты қажет.'});
 
     try {
-        if (req.method === 'POST') return await examAction(pool,req,res,actor);
+        if (req.method === 'POST') {
+            if (req.body?.action === 'question-audio') return await questionAudio(pool, req, res, actor);
+            return await examAction(pool,req,res,actor);
+        }
         if (req.method === 'GET') {
             if(req.query.desktopExport==='true')return res.json(await exportDesktop(pool,actor,String(id)));
             const testRes = await pool.query('SELECT * FROM tests WHERE id = $1', [id]);
