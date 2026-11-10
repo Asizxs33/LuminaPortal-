@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import type {Pool} from './db';
 import type {VercelRequest, VercelResponse} from './http';
+import {isStaff} from './permissions';
 
 export function audioKey(language: string, text: string) {
   return createHash('sha256').update(JSON.stringify([language, text])).digest('hex');
@@ -11,7 +12,7 @@ export function audioLabel(index: number) {
   return `Жауап нұсқасы ${String.fromCharCode(65 + index)}.`;
 }
 
-export async function questionAudio(pool: Pool, req: VercelRequest, res: VercelResponse, actor: {id: number}) {
+export async function questionAudio(pool: Pool, req: VercelRequest, res: VercelResponse, actor: {id: number; role: string}) {
   const {attempt_token, question_id, option_ids} = req.body ?? {};
   if (typeof attempt_token !== 'string' || !Number.isSafeInteger(question_id) || !Array.isArray(option_ids)
     || option_ids.length > 20 || option_ids.some(id => !Number.isSafeInteger(id)) || new Set(option_ids).size !== option_ids.length) {
@@ -30,11 +31,11 @@ export async function questionAudio(pool: Pool, req: VercelRequest, res: VercelR
   }
 
   const test = (await pool.query('SELECT language, exam_mode, is_published, answers_released FROM tests WHERE id=$1', [testId])).rows[0];
-  if (!test || !test.is_published || test.answers_released) return res.status(403).end();
+  if (!test) return res.status(403).end();
   if (test.language !== 'kk') return res.status(404).end();
   let question: {text: string; options: {id: number; text: string}[] } | undefined;
   if (test.exam_mode) {
-    if (typeof token.exam_attempt_id !== 'string') return res.status(403).end();
+    if (test.answers_released || typeof token.exam_attempt_id !== 'string') return res.status(403).end();
     const attempt = (await pool.query(
       'SELECT questions FROM exam_attempts WHERE id=$1 AND user_id=$2 AND test_id=$3 AND NOT finished AND deadline>NOW()',
       [token.exam_attempt_id, actor.id, testId],
@@ -42,7 +43,7 @@ export async function questionAudio(pool: Pool, req: VercelRequest, res: VercelR
     if (!attempt) return res.status(403).end();
     question = attempt.questions.find((item: {id: number}) => item.id === question_id);
   } else {
-    if (token.exam_attempt_id) return res.status(403).end();
+    if (token.exam_attempt_id || (!test.is_published && !test.answers_released && !isStaff(actor.role))) return res.status(403).end();
     const row = (await pool.query('SELECT text FROM questions WHERE id=$1 AND test_id=$2', [question_id, testId])).rows[0];
     if (row) {
       const options = await pool.query('SELECT id,text FROM options WHERE question_id=$1', [question_id]);
